@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthService
 {
     /**
-     * Login
+     * LOGIN
      */
     public function login($request)
     {
@@ -17,182 +17,90 @@ class AuthService
             ->where('username', $request->identifier)
             ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | USER NOT FOUND
-        |--------------------------------------------------------------------------
-        */
-
         if (!$user) {
-
             return response()->json([
-
                 'success' => false,
-
                 'message' => 'User tidak ditemukan',
-
                 'data' => null
-
             ], 404);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PASSWORD INVALID
-        |--------------------------------------------------------------------------
-        */
-
         if (!Hash::check($request->password, $user->password)) {
-
             return response()->json([
-
                 'success' => false,
-
                 'message' => 'Password salah',
-
                 'data' => null
-
             ], 401);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | ACCOUNT NOT ACTIVE
-        |--------------------------------------------------------------------------
-        */
-
         if (!$user->is_active) {
-
             return response()->json([
-
                 'success' => false,
-
                 'message' => 'Akun tidak aktif',
-
                 'data' => null
-
             ], 403);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE TOKEN
-        |--------------------------------------------------------------------------
-        */
+        // 🔥 PENTING: HAPUS TOKEN LAMA (biar ga numpuk & debug lebih gampang)
+        $user->tokens()->delete();
 
+        // 🔥 CREATE TOKEN SANCTUM
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE
-        |--------------------------------------------------------------------------
-        */
-
         return response()->json([
-
             'success' => true,
-
             'message' => 'Login successful',
-
             'data' => [
-
                 'access_token' => $token,
-
                 'token_type' => 'Bearer',
-
-                'expires_in' => 86400,
-
-                'user' => [
-
-                    'id' => $user->id,
-
-                    'full_name' => $user->full_name,
-
-                    'username' => $user->username,
-
-                    'email' => $user->email,
-
-                    'phone' => $user->phone,
-
-                    'role' => [
-
-                        'id' => $user->role?->id,
-
-                        'name' => $user->role?->name,
-                    ],
-
-                    'class' => $user->class ? [
-
-                        'id' => $user->class->id,
-
-                        'name' => $user->class->name,
-
-                        'grade_level' => $user->class->grade_level,
-
-                    ] : null
-                ]
+                'user' => $user
             ]
         ]);
     }
 
     /**
-     * Current user
+     * CURRENT USER (ME)
      */
     public function me(Request $request)
     {
+        // 🔥 FIX: guard safety
+        if (!$request->user()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null
+            ], 401);
+        }
+
         $user = $request->user()->load(['role', 'class']);
 
         return response()->json([
-
             'success' => true,
-
             'message' => 'Success',
-
-            'data' => [
-
-                'id' => $user->id,
-
-                'full_name' => $user->full_name,
-
-                'username' => $user->username,
-
-                'email' => $user->email,
-
-                'phone' => $user->phone,
-
-                'role' => [
-
-                    'id' => $user->role?->id,
-
-                    'name' => $user->role?->name,
-                ],
-
-                'class' => $user->class ? [
-
-                    'id' => $user->class->id,
-
-                    'name' => $user->class->name,
-
-                    'grade_level' => $user->class->grade_level,
-
-                ] : null
-            ]
+            'data' => $user
         ]);
     }
 
     /**
-     * Logout
+     * LOGOUT
      */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        // 🔥 FIX: safety check
+        if (!$request->user()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'data' => null
+            ], 401);
+        }
+
+        // 🔥 HAPUS TOKEN YANG SEDANG DIPAKAI
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Success',
-
+            'message' => 'Logout success',
             'data' => null
         ]);
     }
