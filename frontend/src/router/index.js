@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import LoginPage from '../pages/auth/LoginPage.vue'
+import DashboardPage from '../pages/student/StudentDashboard.vue'
+
+import { useAuthStore } from '../stores/authStore'
 
 const routes = [
   {
@@ -8,6 +11,22 @@ const routes = [
     name: 'login',
     component: LoginPage,
   },
+
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginPage,
+  },
+
+  {
+    path:'/dashboard',
+    name:'dashboard',
+    component: DashboardPage,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  
 ]
 
 const router = createRouter({
@@ -15,4 +34,14 @@ const router = createRouter({
   routes,
 })
 
+router.beforeEach((to, from, next) => {
+
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return next('/login')
+  }
+
+  next()
+})
 export default router
