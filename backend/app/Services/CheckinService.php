@@ -17,7 +17,7 @@ class CheckinService
     {
         $habits = Habit::active()->get();
 
-        $todayCheckin = DailyCheckin::with('items.habit', 'items.validation')
+        $todayCheckin = DailyCheckin::with('items.habit', 'items.validation.validator')
             ->forStudent($studentId)
             ->whereDate('checkin_date', today())
             ->first();
@@ -70,8 +70,8 @@ class CheckinService
 
                 if ($existingItem) {
                     // Cek apakah is_done atau activity_context berubah
-                    $isDoneChanged    = $existingItem->is_done !== (bool) $itemData['is_done'];
-                    $contextChanged   = $existingItem->activity_context !== ($itemData['activity_context'] ?? null);
+                    $isDoneChanged  = $existingItem->is_done !== (bool) $itemData['is_done'];
+                    $contextChanged = $existingItem->activity_context !== ($itemData['activity_context'] ?? null);
 
                     // Jika berubah → batalkan validasi item ini
                     if ($isDoneChanged || $contextChanged) {
@@ -93,7 +93,7 @@ class CheckinService
                 }
             }
 
-            return $checkin->fresh(['items.habit', 'items.validation']);
+            return $checkin->fresh(['items.habit', 'items.validation.validator']);
         });
     }
 
@@ -104,7 +104,7 @@ class CheckinService
     public function getHistory(int $studentId, array $filters = [])
     {
         $query = DailyCheckin::forStudent($studentId)
-            ->with('items.habit')
+            ->with('items.habit', 'items.validation.validator')
             ->orderByDesc('checkin_date');
 
         if (!empty($filters['start_date'])) {
@@ -126,7 +126,7 @@ class CheckinService
      */
     public function findForStudent(int $checkinId, int $studentId): DailyCheckin
     {
-        return DailyCheckin::with('items.habit', 'items.validation')
+        return DailyCheckin::with('items.habit', 'items.validation.validator')
             ->where('id', $checkinId)
             ->forStudent($studentId)
             ->firstOrFail();

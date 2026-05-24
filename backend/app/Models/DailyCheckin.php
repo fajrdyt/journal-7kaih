@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyCheckin extends Model
 {
-    public $timestamps = false;
-    
+    const CREATED_AT = null; // tidak ada created_at di tabel
+
     protected $fillable = [
         'student_id',
         'checkin_date',
@@ -20,8 +20,8 @@ class DailyCheckin extends Model
     protected $casts = [
         'checkin_date' => 'date',
         'submitted_at' => 'datetime',
+        'updated_at'   => 'datetime',
     ];
-
 
     public function student(): BelongsTo
     {
@@ -42,7 +42,6 @@ class DailyCheckin extends Model
     {
         return $query->whereBetween('checkin_date', [$from, $to]);
     }
-
 
     public function getDoneCountAttribute(): int
     {

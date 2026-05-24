@@ -86,7 +86,7 @@ class CheckinController extends Controller
                 'status'  => 'success',
                 'message' => 'Check-in berhasil disimpan.',
                 'data'    => new CheckinResource($checkin),
-            ], 201);
+            ], 200);
 
         } catch (\Exception $e) {
     return response()->json([

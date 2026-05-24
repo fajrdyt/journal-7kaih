@@ -37,7 +37,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/classes', [ClassController::class,  'index']);
 
         // ── Student Endpoints ──────────────────────────────────
-        Route::middleware('role:student')->prefix('student')->group(function () {
+        Route::middleware('role:siswa')->prefix('student')->group(function () {
 
             // GET  /api/v1/student/checkins/today  — Form + data checkin hari ini
             // ⚠ Didaftarkan SEBELUM /{id}
