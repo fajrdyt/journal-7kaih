@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CheckinController;
 use App\Http\Controllers\API\HabitController;
-use App\Http\Controllers\API\ClassController;  
+use App\Http\Controllers\API\ClassController;
+use App\Http\Controllers\API\RecapController;   // → feature/backend-report
 use App\Models\Role;
 
 Route::get('/test', function () {
@@ -27,25 +27,33 @@ Route::prefix('v1')->group(function () {
     // ── Protected ─────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Master Data — roles (tidak ada RoleController di root project)
-        Route::get('/roles', function () {
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Daftar role berhasil diambil.',
-                'data'    => Role::all(['id', 'name']),
-            ]);
-        });
+        // Master Data — semua role
+        Route::get('/roles',   fn() => response()->json([
+            'status'  => 'success',
+            'message' => 'Daftar role berhasil diambil.',
+            'data'    => Role::all(['id', 'name']),
+        ]));
+        Route::get('/habits',  [HabitController::class,  'index']);
+        Route::get('/classes', [ClassController::class,  'index']);
 
-        // Master Data — habits & classes
-        Route::get('/habits',  [HabitController::class, 'index']);
-        Route::get('/classes', [ClassController::class, 'index']);
+        // ── Student Endpoints ──────────────────────────────────
+        Route::middleware('role:student')->prefix('student')->group(function () {
 
-        // Journal — khusus student
-        Route::middleware('role:student')->prefix('checkins')->group(function () {
-            Route::get('/',             [CheckinController::class, 'index']);
-            Route::get('/today-status', [CheckinController::class, 'todayStatus']);
-            Route::post('/',            [CheckinController::class, 'store']);
-            Route::get('/{id}',         [CheckinController::class, 'show']);
+            // GET  /api/v1/student/checkins/today  — Form + data checkin hari ini
+            // ⚠ Didaftarkan SEBELUM /{id}
+            Route::get('/checkins/today',   [CheckinController::class, 'today']);
+
+            // GET  /api/v1/student/checkins        — Riwayat checkin
+            Route::get('/checkins',         [CheckinController::class, 'index']);
+
+            // POST /api/v1/student/checkins        — Upsert checkin harian
+            Route::post('/checkins',        [CheckinController::class, 'store']);
+
+            // GET  /api/v1/student/checkins/{id}   — Detail checkin
+            Route::get('/checkins/{id}',    [CheckinController::class, 'show']);
+
+            // GET  /api/v1/student/recap           — Rekap personal (→ backend-report)
+            Route::get('/recap',            [RecapController::class,   'personal']);
         });
     });
 });

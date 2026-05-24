@@ -16,17 +16,42 @@ class CheckinController extends Controller
     ) {}
 
     /**
-     * GET /api/checkins
-     * Riwayat checkin milik siswa yang sedang login.
-     *
-     * Query params:
-     *   - from (Y-m-d)
-     *   - to   (Y-m-d)
-     *   - per_page (default: 10)
+     * GET /api/v1/student/checkins/today
+     * Ambil habits aktif + data checkin hari ini jika sudah ada.
+     * Hanya role: student.
+     */
+    public function today(Request $request): JsonResponse
+    {
+        $data = $this->checkinService->getTodayForm(
+            studentId: $request->user()->id
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Form check-in hari ini berhasil diambil.',
+            'data'    => [
+                'habits' => $data['habits']->map(fn($habit) => [
+                    'id'                       => $habit->id,
+                    'code'                     => $habit->code,
+                    'name'                     => $habit->name,
+                    'default_activity_context' => $habit->default_activity_context,
+                    'sort_order'               => $habit->sort_order,
+                ]),
+                'today_checkin' => $data['today_checkin']
+                    ? new CheckinResource($data['today_checkin'])
+                    : null,
+            ],
+        ]);
+    }
+
+    /**
+     * GET /api/v1/student/checkins
+     * Riwayat checkin siswa login.
+     * Params: page, per_page, start_date, end_date.
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['from', 'to', 'per_page']);
+        $filters = $request->only(['start_date', 'end_date', 'per_page']);
         $history = $this->checkinService->getHistory(
             studentId: $request->user()->id,
             filters: $filters
@@ -46,13 +71,13 @@ class CheckinController extends Controller
     }
 
     /**
-     * POST /api/checkins
-     * Submit checkin harian siswa.
+     * POST /api/v1/student/checkins
+     * Upsert checkin harian siswa.
      */
     public function store(StoreCheckinRequest $request): JsonResponse
     {
         try {
-            $checkin = $this->checkinService->store(
+            $checkin = $this->checkinService->upsert(
                 studentId: $request->user()->id,
                 data: $request->validated()
             );
@@ -64,16 +89,16 @@ class CheckinController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => $e->getMessage(),
-            ], $e->getCode() ?: 500);
-        }
+    return response()->json([
+        'status'  => 'error',
+        'message' => $e->getMessage(),
+    ], 500);
+}
     }
 
     /**
-     * GET /api/checkins/{id}
-     * Detail satu checkin milik siswa yang sedang login.
+     * GET /api/v1/student/checkins/{id}
+     * Detail satu checkin milik siswa login.
      */
     public function show(Request $request, int $id): JsonResponse
     {
@@ -95,24 +120,5 @@ class CheckinController extends Controller
                 'message' => 'Data check-in tidak ditemukan.',
             ], 404);
         }
-    }
-
-    /**
-     * GET /api/checkins/today-status
-     * Cek apakah siswa sudah checkin hari ini.
-     */
-    public function todayStatus(Request $request): JsonResponse
-    {
-        $hasCheckedIn = $this->checkinService->hasCheckedInToday(
-            studentId: $request->user()->id
-        );
-
-        return response()->json([
-            'status' => 'success',
-            'data'   => [
-                'has_checked_in' => $hasCheckedIn,
-                'date'           => today()->format('Y-m-d'),
-            ],
-        ]);
     }
 }

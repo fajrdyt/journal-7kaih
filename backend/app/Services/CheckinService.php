@@ -3,80 +3,103 @@
 namespace App\Services;
 
 use App\Models\DailyCheckin;
+use App\Models\DailyCheckinItem;
 use App\Models\Habit;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Collection;
 
 class CheckinService
 {
     /**
-     * Submit checkin harian siswa.
-     *
-     * Flow:
-     * 1. Cek apakah siswa sudah checkin hari ini (unique constraint)
-     * 2. Ambil semua 7 habit aktif
-     * 3. Buat DailyCheckin + 7 DailyCheckinItem dalam satu transaksi
-     *
-     * @param  int    $studentId
-     * @param  array  $data  { checkin_date, notes, items: [{habit_id, is_done, activity_context}] }
-     * @return DailyCheckin
-     *
-     * @throws \Exception jika sudah checkin hari ini
+     * GET /student/checkins/today
+     * Ambil habits aktif + data checkin hari ini jika sudah ada.
      */
-    public function store(int $studentId, array $data): DailyCheckin
+    public function getTodayForm(int $studentId): array
     {
-        // Cek duplikat checkin di hari yang sama
-        $alreadyCheckin = DailyCheckin::where('student_id', $studentId)
-            ->whereDate('checkin_date', $data['checkin_date'])
-            ->exists();
+        $habits = Habit::active()->get();
 
-        if ($alreadyCheckin) {
-            throw new \Exception('Kamu sudah melakukan check-in untuk hari ini.', 409);
-        }
+        $todayCheckin = DailyCheckin::with('items.habit', 'items.validation')
+            ->forStudent($studentId)
+            ->whereDate('checkin_date', today())
+            ->first();
 
-        // Ambil semua habit aktif untuk validasi
-        $activeHabits = Habit::active()->pluck('id');
+        return [
+            'habits'        => $habits,
+            'today_checkin' => $todayCheckin,
+        ];
+    }
 
-        // Validasi: semua habit_id yang dikirim harus ada di daftar habit aktif
-        $submittedHabitIds = collect($data['items'])->pluck('habit_id');
-        $invalidHabits = $submittedHabitIds->diff($activeHabits);
+    /**
+     * POST /student/checkins
+     * Upsert checkin harian siswa.
+     *
+     * Aturan:
+     * - checkin_date kosong → pakai hari ini
+     * - checkin_date diisi → wajib hari ini (validasi di Request)
+     * - Jika checkin sudah ada → update (upsert)
+     * - Ubah notes → validasi item TIDAK batal
+     * - Ubah is_done / activity_context → validasi item DIBATALKAN
+     */
+    public function upsert(int $studentId, array $data): DailyCheckin
+    {
+        $checkinDate = $data['checkin_date'] ?? today()->format('Y-m-d');
 
-        if ($invalidHabits->isNotEmpty()) {
-            throw new \Exception('Terdapat habit tidak valid: ' . $invalidHabits->implode(', '), 422);
-        }
+        return DB::transaction(function () use ($studentId, $checkinDate, $data) {
 
-        return DB::transaction(function () use ($studentId, $data) {
-            // Buat header checkin
-            $checkin = DailyCheckin::create([
-                'student_id'   => $studentId,
-                'checkin_date' => $data['checkin_date'],
-                'notes'        => $data['notes'] ?? null,
+            // Cari checkin yang sudah ada atau buat baru
+            $checkin = DailyCheckin::firstOrCreate(
+                [
+                    'student_id'   => $studentId,
+                    'checkin_date' => $checkinDate,
+                ],
+                [
+                    'submitted_at' => now(),
+                ]
+            );
+
+            // Update notes (tidak membatalkan validasi)
+            $checkin->update([
+                'notes'        => $data['notes'] ?? $checkin->notes,
                 'submitted_at' => now(),
             ]);
 
-            // Buat semua item checkin sekaligus
-            $items = collect($data['items'])->map(fn($item) => [
-                'daily_checkin_id' => $checkin->id,
-                'habit_id'         => $item['habit_id'],
-                'is_done'          => $item['is_done'],
-                'activity_context' => $item['activity_context'] ?? null,
-                'created_at'       => now(),
-                'updated_at'       => now(),
-            ])->toArray();
+            // Proses setiap item
+            foreach ($data['items'] as $itemData) {
+                $existingItem = DailyCheckinItem::where('daily_checkin_id', $checkin->id)
+                    ->where('habit_id', $itemData['habit_id'])
+                    ->first();
 
-            $checkin->items()->insert($items);
+                if ($existingItem) {
+                    // Cek apakah is_done atau activity_context berubah
+                    $isDoneChanged    = $existingItem->is_done !== (bool) $itemData['is_done'];
+                    $contextChanged   = $existingItem->activity_context !== ($itemData['activity_context'] ?? null);
 
-            // Load relasi untuk response
-            return $checkin->load('items.habit');
+                    // Jika berubah → batalkan validasi item ini
+                    if ($isDoneChanged || $contextChanged) {
+                        $existingItem->validation()?->delete();
+                    }
+
+                    $existingItem->update([
+                        'is_done'          => $itemData['is_done'],
+                        'activity_context' => $itemData['activity_context'] ?? null,
+                    ]);
+                } else {
+                    // Item belum ada → buat baru
+                    DailyCheckinItem::create([
+                        'daily_checkin_id' => $checkin->id,
+                        'habit_id'         => $itemData['habit_id'],
+                        'is_done'          => $itemData['is_done'],
+                        'activity_context' => $itemData['activity_context'] ?? null,
+                    ]);
+                }
+            }
+
+            return $checkin->fresh(['items.habit', 'items.validation']);
         });
     }
 
     /**
-     * Ambil riwayat checkin milik siswa.
-     *
-     * @param  int    $studentId
-     * @param  array  $filters  { from?, to?, per_page? }
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * GET /student/checkins
+     * Riwayat checkin siswa dengan filter start_date & end_date.
      */
     public function getHistory(int $studentId, array $filters = [])
     {
@@ -84,8 +107,12 @@ class CheckinService
             ->with('items.habit')
             ->orderByDesc('checkin_date');
 
-        if (!empty($filters['from']) && !empty($filters['to'])) {
-            $query->betweenDates($filters['from'], $filters['to']);
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('checkin_date', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('checkin_date', '<=', $filters['end_date']);
         }
 
         $perPage = $filters['per_page'] ?? 10;
@@ -94,30 +121,14 @@ class CheckinService
     }
 
     /**
-     * Ambil detail satu checkin.
-     * Memastikan checkin milik student yang sedang login.
-     *
-     * @param  int  $checkinId
-     * @param  int  $studentId
-     * @return DailyCheckin
-     *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * GET /student/checkins/{id}
+     * Detail satu checkin milik siswa yang sedang login.
      */
     public function findForStudent(int $checkinId, int $studentId): DailyCheckin
     {
-        return DailyCheckin::with('items.habit')
-            ->where('id', $studentId)
+        return DailyCheckin::with('items.habit', 'items.validation')
+            ->where('id', $checkinId)
             ->forStudent($studentId)
             ->firstOrFail();
-    }
-
-    /**
-     * Cek apakah siswa sudah checkin hari ini.
-     */
-    public function hasCheckedInToday(int $studentId): bool
-    {
-        return DailyCheckin::where('student_id', $studentId)
-            ->whereDate('checkin_date', today())
-            ->exists();
     }
 }

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DailyCheckinItem extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'daily_checkin_id',
         'habit_id',

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyCheckin extends Model
 {
+    public $timestamps = false;
+    
     protected $fillable = [
         'student_id',
         'checkin_date',
