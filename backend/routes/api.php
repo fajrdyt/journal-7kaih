@@ -5,7 +5,8 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CheckinController;
 use App\Http\Controllers\API\HabitController;
 use App\Http\Controllers\API\ClassController;
-use App\Http\Controllers\API\RecapController;   // → feature/backend-report
+use App\Http\Controllers\API\ValidationController;
+# use App\Http\Controllers\API\RecapController;
 use App\Models\Role;
 
 Route::get('/test', function () {
@@ -27,33 +28,41 @@ Route::prefix('v1')->group(function () {
     // ── Protected ─────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Master Data — semua role
-        Route::get('/roles',   fn() => response()->json([
+        // Master Data
+        Route::get('/roles', fn() => response()->json([
             'status'  => 'success',
             'message' => 'Daftar role berhasil diambil.',
             'data'    => Role::all(['id', 'name']),
         ]));
-        Route::get('/habits',  [HabitController::class,  'index']);
-        Route::get('/classes', [ClassController::class,  'index']);
+        Route::get('/habits',  [HabitController::class, 'index']);
+        Route::get('/classes', [ClassController::class, 'index']);
 
-        // ── Student Endpoints ──────────────────────────────────
+        // ── Student ───────────────────────────────────────────
         Route::middleware('role:siswa')->prefix('student')->group(function () {
+            Route::get('/checkins/today',  [CheckinController::class, 'today']);
+            Route::get('/checkins',        [CheckinController::class, 'index']);
+            Route::post('/checkins',       [CheckinController::class, 'store']);
+            Route::get('/checkins/{id}',   [CheckinController::class, 'show']);
+#            Route::get('/recap',           [RecapController::class,   'personal']);
+        });
 
-            // GET  /api/v1/student/checkins/today  — Form + data checkin hari ini
-            // ⚠ Didaftarkan SEBELUM /{id}
-            Route::get('/checkins/today',   [CheckinController::class, 'today']);
+        // ── Parent ────────────────────────────────────────────
+        Route::middleware('role:orang_tua')->prefix('parent')->group(function () {
+            Route::get('/children',                                [ValidationController::class, 'children']);
+            Route::get('/children/{studentId}/checkins',           [ValidationController::class, 'childCheckins']);
+            Route::get('/checkins/{id}',                           [ValidationController::class, 'parentCheckinDetail']);
+            Route::post('/checkins/{id}/validate-home',            [ValidationController::class, 'validateHome']);
+            Route::post('/checkin-items/{id}/validate',            [ValidationController::class, 'validateHomeItem']);
+        });
 
-            // GET  /api/v1/student/checkins        — Riwayat checkin
-            Route::get('/checkins',         [CheckinController::class, 'index']);
-
-            // POST /api/v1/student/checkins        — Upsert checkin harian
-            Route::post('/checkins',        [CheckinController::class, 'store']);
-
-            // GET  /api/v1/student/checkins/{id}   — Detail checkin
-            Route::get('/checkins/{id}',    [CheckinController::class, 'show']);
-
-            // GET  /api/v1/student/recap           — Rekap personal (→ backend-report)
-            Route::get('/recap',            [RecapController::class,   'personal']);
+        // ── Teacher ───────────────────────────────────────────
+        Route::middleware('role:guru')->prefix('teacher')->group(function () {
+            Route::get('/classes',                                 [ClassController::class,      'teacherClasses']);
+            Route::get('/classes/{classId}/students',              [ClassController::class,      'classStudents']);
+            Route::get('/classes/{classId}/checkins',              [ClassController::class,      'classCheckins']);
+            Route::get('/checkins/{id}',                           [ValidationController::class, 'teacherCheckinDetail']);
+            Route::post('/checkins/{id}/validate-school',          [ValidationController::class, 'validateSchool']);
+            Route::post('/checkin-items/{id}/validate',            [ValidationController::class, 'validateSchoolItem']);
         });
     });
 });

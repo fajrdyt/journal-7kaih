@@ -3,20 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\HandleCors;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
-
 
 return Application::configure(basePath: dirname(__DIR__))
-
-    ->withMiddleware(function (Middleware $middleware) {
-
-        $middleware->api(prepend: [
-            EnsureFrontendRequestsAreStateful::class,
-        ]);
-
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-    })
 
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -26,20 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
 
     ->withMiddleware(function (Middleware $middleware) {
-    $middleware->alias([
-        'role' => \App\Http\Middleware\RoleMiddleware::class,
-    ]);
+
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        $middleware->alias([
+            'role'          => \App\Http\Middleware\RoleMiddleware::class,
+            'parent.relation' => \App\Http\Middleware\EnsureParentRelation::class,
+        ]);
     })
-    
-    ->withMiddleware(function (Middleware $middleware) {
 
-    $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-
-    $middleware->api(prepend: [
-        \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-    ]);
-
-    })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

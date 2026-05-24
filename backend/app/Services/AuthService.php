@@ -13,15 +13,16 @@ class AuthService
      */
     public function login($request)
     {
-        $user = User::with(['role', 'class'])
+        $user = User::with(['role', 'classRoom'])
             ->where('username', $request->identifier)
+            ->orWhere('email', $request->identifier)
             ->first();
 
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'User tidak ditemukan',
-                'data' => null
+                'data'    => null,
             ], 404);
         }
 
@@ -29,7 +30,7 @@ class AuthService
             return response()->json([
                 'success' => false,
                 'message' => 'Password salah',
-                'data' => null
+                'data'    => null,
             ], 401);
         }
 
@@ -37,24 +38,22 @@ class AuthService
             return response()->json([
                 'success' => false,
                 'message' => 'Akun tidak aktif',
-                'data' => null
+                'data'    => null,
             ], 403);
         }
 
-        // 🔥 PENTING: HAPUS TOKEN LAMA (biar ga numpuk & debug lebih gampang)
         $user->tokens()->delete();
 
-        // 🔥 CREATE TOKEN SANCTUM
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => [
+            'data'    => [
                 'access_token' => $token,
-                'token_type' => 'Bearer',
-                'user' => $user
-            ]
+                'token_type'   => 'Bearer',
+                'user'         => $user,
+            ],
         ]);
     }
 
@@ -63,21 +62,20 @@ class AuthService
      */
     public function me(Request $request)
     {
-        // 🔥 FIX: guard safety
         if (!$request->user()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
-                'data' => null
+                'data'    => null,
             ], 401);
         }
 
-        $user = $request->user()->load(['role', 'class']);
+        $user = $request->user()->load(['role', 'classRoom']);
 
         return response()->json([
             'success' => true,
             'message' => 'Success',
-            'data' => $user
+            'data'    => $user,
         ]);
     }
 
@@ -86,22 +84,20 @@ class AuthService
      */
     public function logout(Request $request)
     {
-        // 🔥 FIX: safety check
         if (!$request->user()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
-                'data' => null
+                'data'    => null,
             ], 401);
         }
 
-        // 🔥 HAPUS TOKEN YANG SEDANG DIPAKAI
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Logout success',
-            'data' => null
+            'data'    => null,
         ]);
     }
 }
