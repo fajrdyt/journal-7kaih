@@ -8,6 +8,8 @@ use App\Http\Controllers\API\ClassController;
 use App\Http\Controllers\API\ValidationController;
 use App\Http\Controllers\API\RecapController;
 use App\Http\Controllers\API\UserController;
+use App\Services\AnalyticsService;
+use Illuminate\Http\Request;
 use App\Models\Role;
 
 Route::get('/test', function () {
@@ -38,6 +40,32 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/habits',  [HabitController::class, 'index']);
         Route::get('/classes', [ClassController::class, 'index']);
+
+        // ── Analytics ─────────────────────────────────────────
+        Route::post('/events/track', function (Request $request, AnalyticsService $analyticsService) {
+            $validated = $request->validate([
+                'event_name' => ['required', 'string', 'max:255'],
+                'properties' => ['nullable', 'array'],
+            ]);
+
+            $event = $analyticsService->trackEvent(
+                userId: $request->user()->id,
+                eventName: $validated['event_name'],
+                properties: $validated['properties'] ?? null
+            );
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Event berhasil dicatat.',
+                'data'    => [
+                    'id'         => $event->id,
+                    'user_id'    => $event->user_id,
+                    'event_name' => $event->event_name,
+                    'properties' => $event->properties,
+                    'created_at' => $event->created_at,
+                ],
+            ], 201);
+        });
 
         // ── Admin ─────────────────────────────────────────────
         Route::middleware('role:admin')->prefix('admin')->group(function () {
