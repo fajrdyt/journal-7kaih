@@ -7,6 +7,7 @@ use App\Http\Controllers\API\HabitController;
 use App\Http\Controllers\API\ClassController;
 use App\Http\Controllers\API\ValidationController;
 use App\Http\Controllers\API\RecapController;
+use App\Http\Controllers\API\UserController;
 use App\Models\Role;
 
 Route::get('/test', function () {
@@ -28,7 +29,7 @@ Route::prefix('v1')->group(function () {
     // ── Protected ─────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Master Data
+        // ── Master Data ───────────────────────────────────────
         Route::get('/roles', fn() => response()->json([
             'status'  => 'success',
             'message' => 'Daftar role berhasil diambil.',
@@ -38,44 +39,70 @@ Route::prefix('v1')->group(function () {
         Route::get('/habits',  [HabitController::class, 'index']);
         Route::get('/classes', [ClassController::class, 'index']);
 
+        // ── Admin ─────────────────────────────────────────────
+        Route::middleware('role:admin')->prefix('admin')->group(function () {
+
+            // User Management
+            Route::get('/users',                      [UserController::class, 'index']);
+            Route::post('/users',                     [UserController::class, 'store']);
+            Route::get('/users/{id}',                 [UserController::class, 'show']);
+            Route::put('/users/{id}',                 [UserController::class, 'update']);
+            Route::delete('/users/{id}',              [UserController::class, 'destroy']);
+            Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
+
+            // Class Management
+            Route::get('/classes',                    [ClassController::class, 'index']);
+            Route::post('/classes',                   [ClassController::class, 'store']);
+            Route::get('/classes/{id}',               [ClassController::class, 'show']);
+            Route::put('/classes/{id}',               [ClassController::class, 'update']);
+            Route::delete('/classes/{id}',            [ClassController::class, 'destroy']);
+
+            // Student Parent Relation Management
+            Route::get('/student-parent-relations',         [UserController::class, 'studentParentRelations']);
+            Route::post('/student-parent-relations',        [UserController::class, 'storeStudentParentRelation']);
+            Route::get('/student-parent-relations/{id}',    [UserController::class, 'showStudentParentRelation']);
+            Route::put('/student-parent-relations/{id}',    [UserController::class, 'updateStudentParentRelation']);
+            Route::delete('/student-parent-relations/{id}', [UserController::class, 'deleteStudentParentRelation']);
+        });
+
         // ── Student ───────────────────────────────────────────
         Route::middleware('role:siswa')->prefix('student')->group(function () {
-            Route::get('/checkins/today',  [CheckinController::class, 'today']);
-            Route::get('/checkins',        [CheckinController::class, 'index']);
-            Route::post('/checkins',       [CheckinController::class, 'store']);
-            Route::get('/checkins/{id}',   [CheckinController::class, 'show']);
+            Route::get('/checkins/today', [CheckinController::class, 'today']);
+            Route::get('/checkins',       [CheckinController::class, 'index']);
+            Route::post('/checkins',      [CheckinController::class, 'store']);
+            Route::get('/checkins/{id}',  [CheckinController::class, 'show']);
 
             // Report / Recap
-            Route::get('/recap',           [RecapController::class, 'personal']);
+            Route::get('/recap',          [RecapController::class, 'personal']);
         });
 
         // ── Parent ────────────────────────────────────────────
         Route::middleware('role:orang_tua')->prefix('parent')->group(function () {
-            Route::get('/children',                              [ValidationController::class, 'children']);
-            Route::get('/children/{studentId}/checkins',         [ValidationController::class, 'childCheckins']);
+            Route::get('/children',                      [ValidationController::class, 'children']);
+            Route::get('/children/{studentId}/checkins', [ValidationController::class, 'childCheckins']);
 
             // Report / Recap
-            Route::get('/children/{studentId}/recap',            [RecapController::class, 'childRecap']);
+            Route::get('/children/{studentId}/recap',    [RecapController::class, 'childRecap']);
 
-            Route::get('/checkins/{id}',                         [ValidationController::class, 'parentCheckinDetail']);
-            Route::post('/checkins/{id}/validate-home',          [ValidationController::class, 'validateHome']);
-            Route::post('/checkin-items/{id}/validate',          [ValidationController::class, 'validateHomeItem']);
+            Route::get('/checkins/{id}',                 [ValidationController::class, 'parentCheckinDetail']);
+            Route::post('/checkins/{id}/validate-home',  [ValidationController::class, 'validateHome']);
+            Route::post('/checkin-items/{id}/validate',  [ValidationController::class, 'validateHomeItem']);
         });
 
         // ── Teacher ───────────────────────────────────────────
         Route::middleware('role:guru')->prefix('teacher')->group(function () {
-            Route::get('/classes',                               [ClassController::class,      'teacherClasses']);
-            Route::get('/classes/{classId}/students',            [ClassController::class,      'classStudents']);
-            Route::get('/classes/{classId}/checkins',            [ClassController::class,      'classCheckins']);
+            Route::get('/classes',                         [ClassController::class,      'teacherClasses']);
+            Route::get('/classes/{classId}/students',      [ClassController::class,      'classStudents']);
+            Route::get('/classes/{classId}/checkins',      [ClassController::class,      'classCheckins']);
 
             // Report / Recap
-            Route::get('/classes/{classId}/weekly-recap',        [RecapController::class,      'classWeeklyRecap']);
-            Route::get('/classes/{classId}/monthly-recap',       [RecapController::class,      'classMonthlyRecap']);
-            Route::get('/students/{studentId}/recap',            [RecapController::class,      'studentRecap']);
+            Route::get('/classes/{classId}/weekly-recap',  [RecapController::class,      'classWeeklyRecap']);
+            Route::get('/classes/{classId}/monthly-recap', [RecapController::class,      'classMonthlyRecap']);
+            Route::get('/students/{studentId}/recap',      [RecapController::class,      'studentRecap']);
 
-            Route::get('/checkins/{id}',                         [ValidationController::class, 'teacherCheckinDetail']);
-            Route::post('/checkins/{id}/validate-school',        [ValidationController::class, 'validateSchool']);
-            Route::post('/checkin-items/{id}/validate',          [ValidationController::class, 'validateSchoolItem']);
+            Route::get('/checkins/{id}',                   [ValidationController::class, 'teacherCheckinDetail']);
+            Route::post('/checkins/{id}/validate-school',  [ValidationController::class, 'validateSchool']);
+            Route::post('/checkin-items/{id}/validate',    [ValidationController::class, 'validateSchoolItem']);
         });
     });
 });
