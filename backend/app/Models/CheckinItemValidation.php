@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CheckinItemValidation extends Model
 {
-    // Tabel tidak punya updated_at, hanya validated_at
     public $timestamps = false;
 
     protected $fillable = [
@@ -21,15 +21,27 @@ class CheckinItemValidation extends Model
         'validated_at' => 'datetime',
     ];
 
-    // Relasi ke DailyCheckinItem
-    public function checkinItem()
+    // ─── Relasi ──────────────────────────────────────────────
+
+    public function checkinItem(): BelongsTo
     {
         return $this->belongsTo(DailyCheckinItem::class, 'daily_checkin_item_id');
     }
 
-    // Relasi ke User (validator = parent/teacher)
-    public function validator()
+    public function validator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'validator_id');
+    }
+
+    // ─── Scope ───────────────────────────────────────────────
+
+    public function scopeParent($query)
+    {
+        return $query->where('validator_role', 'orang_tua');
+    }
+
+    public function scopeTeacher($query)
+    {
+        return $query->where('validator_role', 'guru');
     }
 }

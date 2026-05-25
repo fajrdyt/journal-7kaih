@@ -2,313 +2,391 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\Habit;
 use App\Models\ClassRoom;
 use App\Models\DailyCheckin;
-use App\Models\DailyCheckinItem;
-use App\Models\StudentParentRelation;
+use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Http\Request;
 
 class RecapService
 {
-    public function getStudentRecap(
-        int $studentId,
-        ?string $startDate = null,
-        ?string $endDate = null
-    ): array {
-        $student = User::query()->find($studentId);
+    /**
+     * GET /api/v1/student/recap
+     */
+    public function personal(Request $request)
+    {
+        $student = $request->user();
 
-        if (!$student) {
-            throw new NotFoundHttpException('Siswa tidak ditemukan.');
+        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+        $endDate   = $request->query('end_date', now()->toDateString());
+
+        $data = $this->buildStudentRecap(
+            studentId: $student->id,
+            startDate: $startDate,
+            endDate: $endDate
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Rekap personal berhasil diambil.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/parent/children/{studentId}/recap
+     */
+    public function childRecap(Request $request, int $studentId)
+    {
+        $parent = $request->user();
+
+        $hasAccess = $parent->parentRelations()
+            ->where('student_id', $studentId)
+            ->where('is_active', true)
+            ->exists();
+
+        if (!$hasAccess) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses ke rekap siswa ini.',
+                'data'    => null,
+            ], 403);
         }
 
-        [$start, $end, $totalDays] = $this->resolvePeriod($startDate, $endDate);
+        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+        $endDate   = $request->query('end_date', now()->toDateString());
 
-        $habits = Habit::query()
-            ->where('is_active', true)
-            ->orderBy('id')
+        $data = $this->buildStudentRecap(
+            studentId: $studentId,
+            startDate: $startDate,
+            endDate: $endDate
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Rekap anak berhasil diambil.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/teacher/students/{studentId}/recap
+     */
+    public function studentRecap(Request $request, int $studentId)
+    {
+        $teacher = $request->user();
+
+        if (!$this->teacherCanAccessStudent($teacher->id, $studentId)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses ke rekap siswa ini.',
+                'data'    => null,
+            ], 403);
+        }
+
+        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+        $endDate   = $request->query('end_date', now()->toDateString());
+
+        $data = $this->buildStudentRecap(
+            studentId: $studentId,
+            startDate: $startDate,
+            endDate: $endDate
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Rekap siswa berhasil diambil.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/teacher/classes/{classId}/weekly-recap
+     */
+    public function classWeeklyRecap(Request $request, int $classId)
+    {
+        $teacher = $request->user();
+
+        $class = ClassRoom::query()
+            ->where('id', $classId)
+            ->where('teacher_id', $teacher->id)
+            ->first();
+
+        if (!$class) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kelas tidak ditemukan atau bukan kelas Anda.',
+                'data'    => null,
+            ], 404);
+        }
+
+        $week = $request->query('week');
+
+        if ($week) {
+            $startDate = Carbon::parse($week)->startOfWeek()->toDateString();
+            $endDate   = Carbon::parse($week)->endOfWeek()->toDateString();
+        } else {
+            $startDate = now()->startOfWeek()->toDateString();
+            $endDate   = now()->endOfWeek()->toDateString();
+        }
+
+        $data = $this->buildClassRecap(
+            classId: $classId,
+            startDate: $startDate,
+            endDate: $endDate
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Rekap mingguan kelas berhasil diambil.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/teacher/classes/{classId}/monthly-recap
+     */
+    public function classMonthlyRecap(Request $request, int $classId)
+    {
+        $teacher = $request->user();
+
+        $class = ClassRoom::query()
+            ->where('id', $classId)
+            ->where('teacher_id', $teacher->id)
+            ->first();
+
+        if (!$class) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kelas tidak ditemukan atau bukan kelas Anda.',
+                'data'    => null,
+            ], 404);
+        }
+
+        $month = $request->query('month', now()->format('Y-m'));
+
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+        $endDate   = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+
+        $data = $this->buildClassRecap(
+            classId: $classId,
+            startDate: $startDate,
+            endDate: $endDate
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Rekap bulanan kelas berhasil diambil.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Build rekap personal siswa.
+     */
+    private function buildStudentRecap(int $studentId, string $startDate, string $endDate): array
+    {
+        $student = User::query()
+            ->with(['role', 'classRoom'])
+            ->find($studentId);
+
+        $checkins = DailyCheckin::query()
+            ->with([
+                'items.habit',
+                'items.validations.validator',
+            ])
+            ->where('student_id', $studentId)
+            ->whereBetween('checkin_date', [$startDate, $endDate])
+            ->orderBy('checkin_date')
             ->get();
 
-        $checkinIds = DailyCheckin::query()
-            ->where('student_id', $studentId)
-            ->whereBetween('checkin_date', [
-                $start->toDateString(),
-                $end->toDateString(),
-            ])
-            ->pluck('id');
+        $totalCheckins = $checkins->count();
+        $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
+        $totalDoneItems = $checkins->sum(
+            fn ($checkin) => $checkin->items->where('is_done', true)->count()
+        );
 
-        $totalCheckinDays = $checkinIds->count();
+        $parentValidatedItems = $checkins->sum(function ($checkin) {
+            return $checkin->items->sum(function ($item) {
+                return $item->validations
+                    ->where('validator_role', 'orang_tua')
+                    ->count();
+            });
+        });
 
-        $itemStats = DailyCheckinItem::query()
-            ->select(
-                'daily_checkin_items.habit_id',
-                DB::raw('COUNT(CASE WHEN daily_checkin_items.is_done = 1 THEN 1 END) as done_days'),
-                DB::raw('COUNT(checkin_item_validations.id) as validated_days')
-            )
-            ->leftJoin(
-                'checkin_item_validations',
-                'checkin_item_validations.daily_checkin_item_id',
-                '=',
-                'daily_checkin_items.id'
-            )
-            ->whereIn('daily_checkin_items.daily_checkin_id', $checkinIds)
-            ->groupBy('daily_checkin_items.habit_id')
-            ->get()
-            ->keyBy('habit_id');
+        $teacherValidatedItems = $checkins->sum(function ($checkin) {
+            return $checkin->items->sum(function ($item) {
+                return $item->validations
+                    ->where('validator_role', 'guru')
+                    ->count();
+            });
+        });
 
-        $totalHabitsDone = 0;
-        $totalValidatedItems = 0;
+        $totalValidatedItems = $parentValidatedItems + $teacherValidatedItems;
 
-        $habitRecaps = $habits->map(function ($habit) use (
-            $itemStats,
-            $totalDays,
-            &$totalHabitsDone,
-            &$totalValidatedItems
-        ) {
-            $row = $itemStats->get($habit->id);
+        $pendingValidationItems = $checkins->sum(function ($checkin) {
+            return $checkin->items
+                ->where('is_done', true)
+                ->filter(fn ($item) => $item->validations->count() === 0)
+                ->count();
+        });
 
-            $doneDays = (int) ($row->done_days ?? 0);
-            $validatedDays = (int) ($row->validated_days ?? 0);
+        $habitSummary = [];
 
-            $totalHabitsDone += $doneDays;
-            $totalValidatedItems += $validatedDays;
+        foreach ($checkins as $checkin) {
+            foreach ($checkin->items as $item) {
+                $habitId = $item->habit_id;
 
-            return [
-                'habit_id'              => $habit->id,
-                'habit_name'            => $habit->name,
-                'done_days'             => $doneDays,
-                'validated_days'        => $validatedDays,
-                'completion_percentage' => $totalDays > 0
-                    ? round(($doneDays / $totalDays) * 100, 2)
-                    : 0,
-            ];
-        })->values();
+                if (!isset($habitSummary[$habitId])) {
+                    $habitSummary[$habitId] = [
+                        'habit_id'                  => $habitId,
+                        'habit'                     => $item->habit ? [
+                            'id'         => $item->habit->id,
+                            'code'       => $item->habit->code,
+                            'name'       => $item->habit->name,
+                            'sort_order' => $item->habit->sort_order,
+                        ] : null,
+                        'done_count'                => 0,
+                        'not_done_count'            => 0,
+                        'parent_validated_count'    => 0,
+                        'teacher_validated_count'   => 0,
+                        'total_validation_count'    => 0,
+                    ];
+                }
 
-        $maxPossibleItems = $totalDays * max($habits->count(), 1);
+                if ($item->is_done) {
+                    $habitSummary[$habitId]['done_count']++;
+                } else {
+                    $habitSummary[$habitId]['not_done_count']++;
+                }
+
+                $parentCount = $item->validations
+                    ->where('validator_role', 'orang_tua')
+                    ->count();
+
+                $teacherCount = $item->validations
+                    ->where('validator_role', 'guru')
+                    ->count();
+
+                $habitSummary[$habitId]['parent_validated_count'] += $parentCount;
+                $habitSummary[$habitId]['teacher_validated_count'] += $teacherCount;
+                $habitSummary[$habitId]['total_validation_count'] += ($parentCount + $teacherCount);
+            }
+        }
 
         return [
-            'student' => [
+            'student' => $student ? [
                 'id'        => $student->id,
                 'full_name' => $student->full_name,
-                'class_id'  => $student->class_id,
-            ],
+                'username'  => $student->username,
+                'class'     => $student->classRoom ? [
+                    'id'          => $student->classRoom->id,
+                    'name'        => $student->classRoom->name,
+                    'grade_level' => $student->classRoom->grade_level,
+                ] : null,
+            ] : null,
             'period' => [
-                'start_date' => $start->toDateString(),
-                'end_date'   => $end->toDateString(),
-                'total_days' => $totalDays,
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
             ],
             'summary' => [
-                'total_checkin_days'       => $totalCheckinDays,
-                'total_habits_done'        => $totalHabitsDone,
+                'total_checkins'           => $totalCheckins,
+                'total_items'              => $totalItems,
+                'total_done_items'         => $totalDoneItems,
+                'total_not_done_items'     => max($totalItems - $totalDoneItems, 0),
                 'total_validated_items'    => $totalValidatedItems,
-                'completion_percentage'    => $maxPossibleItems > 0
-                    ? round(($totalHabitsDone / $maxPossibleItems) * 100, 2)
-                    : 0,
-                'validation_percentage'    => $totalHabitsDone > 0
-                    ? round(($totalValidatedItems / $totalHabitsDone) * 100, 2)
+                'parent_validated_items'   => $parentValidatedItems,
+                'teacher_validated_items'  => $teacherValidatedItems,
+                'pending_validation_items' => $pendingValidationItems,
+                'completion_percentage'    => $totalItems > 0
+                    ? round(($totalDoneItems / $totalItems) * 100, 2)
                     : 0,
             ],
-            'habits' => $habitRecaps,
+            'habit_summary' => collect($habitSummary)
+                ->sortBy(fn ($item) => $item['habit']['sort_order'] ?? 999)
+                ->values(),
+            'daily_checkins' => $checkins->map(fn ($checkin) => [
+                'id'           => $checkin->id,
+                'checkin_date' => $checkin->checkin_date,
+                'notes'        => $checkin->notes,
+                'total_items'  => $checkin->items->count(),
+                'done_items'   => $checkin->items->where('is_done', true)->count(),
+                'parent_validated_items' => $checkin->items->sum(
+                    fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
+                ),
+                'teacher_validated_items' => $checkin->items->sum(
+                    fn ($item) => $item->validations->where('validator_role', 'guru')->count()
+                ),
+                'total_validated_items' => $checkin->items->sum(
+                    fn ($item) => $item->validations->count()
+                ),
+            ])->values(),
         ];
     }
 
-    public function getClassWeeklyRecap(
-        int $teacherId,
-        int $classId,
-        ?string $startDate = null,
-        ?string $endDate = null
-    ): array {
-        $this->ensureTeacherCanAccessClass($teacherId, $classId);
-
-        [$start, $end] = $this->resolveWeeklyPeriod($startDate, $endDate);
-
-        return $this->getClassRecap(
-            classId: $classId,
-            startDate: $start->toDateString(),
-            endDate: $end->toDateString()
-        );
-    }
-
-    public function getClassMonthlyRecap(
-        int $teacherId,
-        int $classId,
-        string $month
-    ): array {
-        $this->ensureTeacherCanAccessClass($teacherId, $classId);
-
-        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        $end = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
-
-        return $this->getClassRecap(
-            classId: $classId,
-            startDate: $start->toDateString(),
-            endDate: $end->toDateString()
-        );
-    }
-
-    public function getClassRecap(
-        int $classId,
-        string $startDate,
-        string $endDate
-    ): array {
+    /**
+     * Build rekap kelas.
+     */
+    private function buildClassRecap(int $classId, string $startDate, string $endDate): array
+    {
         $class = ClassRoom::query()
-            ->active()
-            ->with(['students' => function ($query) {
-                $query->orderBy('full_name');
-            }])
+            ->with('teacher')
             ->find($classId);
 
-        if (!$class) {
-            throw new NotFoundHttpException('Kelas tidak ditemukan.');
-        }
+        $students = User::query()
+            ->where('class_id', $classId)
+            ->whereHas('role', fn ($query) => $query->where('name', 'siswa'))
+            ->orderBy('full_name')
+            ->get();
 
-        [$start, $end, $totalDays] = $this->resolvePeriod($startDate, $endDate);
-
-        $students = $class->students;
-
-        $studentRecaps = $students->map(function ($student) use ($start, $end) {
-            $recap = $this->getStudentRecap(
+        $studentItems = $students->map(function ($student) use ($startDate, $endDate) {
+            $recap = $this->buildStudentRecap(
                 studentId: $student->id,
-                startDate: $start->toDateString(),
-                endDate: $end->toDateString()
+                startDate: $startDate,
+                endDate: $endDate
             );
 
             return [
-                'student_id'              => $student->id,
-                'student_name'            => $student->full_name,
-                'total_checkin_days'      => $recap['summary']['total_checkin_days'],
-                'total_habits_done'       => $recap['summary']['total_habits_done'],
-                'total_validated_items'   => $recap['summary']['total_validated_items'],
-                'completion_percentage'   => $recap['summary']['completion_percentage'],
-                'validation_percentage'   => $recap['summary']['validation_percentage'],
+                'student' => $recap['student'],
+                'summary' => $recap['summary'],
             ];
-        })->values();
-
-        $totalStudents = $students->count();
-        $totalCheckins = $studentRecaps->sum('total_checkin_days');
-        $totalHabitsDone = $studentRecaps->sum('total_habits_done');
-        $totalValidatedItems = $studentRecaps->sum('total_validated_items');
+        });
 
         return [
-            'class' => [
+            'class' => $class ? [
                 'id'          => $class->id,
                 'name'        => $class->name,
                 'grade_level' => $class->grade_level,
-                'teacher_id'  => $class->teacher_id,
-            ],
+                'teacher'     => $class->teacher ? [
+                    'id'        => $class->teacher->id,
+                    'full_name' => $class->teacher->full_name,
+                    'username'  => $class->teacher->username,
+                ] : null,
+            ] : null,
             'period' => [
-                'start_date' => $start->toDateString(),
-                'end_date'   => $end->toDateString(),
-                'total_days' => $totalDays,
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
             ],
             'summary' => [
-                'total_students'              => $totalStudents,
-                'total_checkins'              => $totalCheckins,
-                'total_habits_done'           => $totalHabitsDone,
-                'total_validated_items'       => $totalValidatedItems,
-                'average_checkin_percentage'  => $totalStudents > 0 && $totalDays > 0
-                    ? round(($totalCheckins / ($totalStudents * $totalDays)) * 100, 2)
-                    : 0,
-                'average_validation_percentage' => $totalHabitsDone > 0
-                    ? round(($totalValidatedItems / $totalHabitsDone) * 100, 2)
-                    : 0,
+                'total_students'           => $students->count(),
+                'total_checkins'           => $studentItems->sum(fn ($item) => $item['summary']['total_checkins']),
+                'total_done_items'         => $studentItems->sum(fn ($item) => $item['summary']['total_done_items']),
+                'total_validated_items'    => $studentItems->sum(fn ($item) => $item['summary']['total_validated_items']),
+                'parent_validated_items'   => $studentItems->sum(fn ($item) => $item['summary']['parent_validated_items']),
+                'teacher_validated_items'  => $studentItems->sum(fn ($item) => $item['summary']['teacher_validated_items']),
+                'pending_validation_items' => $studentItems->sum(fn ($item) => $item['summary']['pending_validation_items']),
             ],
-            'students' => $studentRecaps,
+            'students' => $studentItems->values(),
         ];
     }
 
-    public function ensureParentCanAccessStudent(
-        int $parentId,
-        int $studentId
-    ): void {
-        $allowed = StudentParentRelation::query()
-            ->where('parent_id', $parentId)
-            ->where('student_id', $studentId)
-            ->where('is_active', true)
+    private function teacherCanAccessStudent(int $teacherId, int $studentId): bool
+    {
+        return User::query()
+            ->where('id', $studentId)
+            ->whereHas('classRoom', function ($query) use ($teacherId) {
+                $query->where('teacher_id', $teacherId);
+            })
             ->exists();
-
-        if (!$allowed) {
-            throw new HttpException(403, 'Orang tua tidak memiliki akses ke siswa ini.');
-        }
-    }
-
-    public function ensureTeacherCanAccessClass(
-        int $teacherId,
-        int $classId
-    ): void {
-        $allowed = ClassRoom::query()
-            ->active()
-            ->where('id', $classId)
-            ->where('teacher_id', $teacherId)
-            ->exists();
-
-        if (!$allowed) {
-            throw new HttpException(403, 'Guru tidak memiliki akses ke kelas ini.');
-        }
-    }
-
-    public function ensureTeacherCanAccessStudent(
-        int $teacherId,
-        int $studentId
-    ): void {
-        $student = User::query()->find($studentId);
-
-        if (!$student) {
-            throw new NotFoundHttpException('Siswa tidak ditemukan.');
-        }
-
-        if (!$student->class_id) {
-            throw new HttpException(403, 'Siswa belum memiliki kelas.');
-        }
-
-        $this->ensureTeacherCanAccessClass($teacherId, $student->class_id);
-    }
-
-    private function resolvePeriod(
-        ?string $startDate,
-        ?string $endDate
-    ): array {
-        $start = $startDate
-            ? Carbon::parse($startDate)->startOfDay()
-            : now()->startOfMonth();
-
-        $end = $endDate
-            ? Carbon::parse($endDate)->startOfDay()
-            : now()->endOfMonth()->startOfDay();
-
-        if ($end->lt($start)) {
-            throw new HttpException(422, 'end_date tidak boleh lebih kecil dari start_date.');
-        }
-
-        return [
-            $start,
-            $end,
-            $start->diffInDays($end) + 1,
-        ];
-    }
-
-    private function resolveWeeklyPeriod(
-        ?string $startDate,
-        ?string $endDate
-    ): array {
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->startOfDay();
-
-            if ($end->lt($start)) {
-                throw new HttpException(422, 'end_date tidak boleh lebih kecil dari start_date.');
-            }
-
-            return [$start, $end];
-        }
-
-        return [
-            now()->startOfWeek()->startOfDay(),
-            now()->endOfWeek()->startOfDay(),
-        ];
     }
 }

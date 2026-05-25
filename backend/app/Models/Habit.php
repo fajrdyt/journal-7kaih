@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Habit extends Model
 {
     public $timestamps = false;
-    
+
     protected $fillable = [
         'code',
         'name',
-        'default_activity_context',
         'sort_order',
         'is_active',
     ];
@@ -31,9 +30,6 @@ class Habit extends Model
 
     // ─── Scope ───────────────────────────────────────────────
 
-    /**
-     * Hanya ambil kebiasaan yang aktif, urut berdasarkan sort_order.
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true)->orderBy('sort_order');

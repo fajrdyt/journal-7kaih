@@ -7,8 +7,10 @@ info:
 
     Revisi utama versi 2.0:
     - Validasi dilakukan pada level item kebiasaan, bukan hanya daily check-in.
-    - Orang tua/wali memvalidasi item dengan activity_context = rumah.
-    - Guru memvalidasi item dengan activity_context = sekolah.
+    - Siswa tidak perlu mengirim konteks rumah/sekolah saat check-in.
+    - Orang tua/wali memvalidasi item anak berdasarkan relasi aktif student_parent_relations.
+    - Guru memvalidasi item siswa berdasarkan kelas yang dia ampu.
+    - Satu item check-in dapat memiliki validasi terpisah dari orang tua dan guru.
     - Orang tua/wali juga dapat memonitor perkembangan anaknya.
     - Guru tetap menjadi aktor utama untuk monitoring kelas dan rekap.
 
@@ -183,7 +185,7 @@ paths:
 
         Jika siswa mengubah item yang sudah tervalidasi:
         - perubahan notes tidak membatalkan validasi;
-        - perubahan is_done atau activity_context pada item membatalkan validasi item tersebut.
+        - perubahan is_done pada item dapat membatalkan atau memerlukan ulang validasi item tersebut.
       requestBody:
         required: true
         content:
@@ -278,10 +280,6 @@ paths:
           schema:
             type: integer
             enum: [0, 1]
-        - in: query
-          name: activity_context
-          schema:
-            $ref: '#/components/schemas/ActivityContext'
       responses:
         '200':
           description: Daftar check-in anak
@@ -320,15 +318,15 @@ paths:
   /parent/checkins/{id}/validate-home:
     post:
       tags: [Parent]
-      summary: Validasi batch item konteks rumah pada satu check-in
+      summary: Validasi batch item check-in oleh orang tua
       description: |
         Hanya role orang_tua. Endpoint ini memvalidasi item yang:
         - milik anak dengan relasi aktif;
-        - is_done = true;
-        - activity_context = rumah.
+        - is_done = true.
 
-        Jika item_ids tidak dikirim, backend memvalidasi semua item eligible pada check-in tersebut.
-        Endpoint idempotent: item yang sudah tervalidasi tidak membuat error.
+        Backend menyimpan validasi dengan validator_role = orang_tua dan validation_source = rumah.
+        Jika item_ids tidak dikirim, backend memvalidasi semua item is_done = true pada check-in tersebut.
+        Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
       parameters:
         - $ref: '#/components/parameters/IdPath'
       requestBody:
@@ -356,11 +354,12 @@ paths:
   /parent/checkin-items/{id}/validate:
     post:
       tags: [Parent]
-      summary: Validasi satu item konteks rumah
+      summary: Validasi satu item check-in oleh orang tua
       description: |
-        Hanya role orang_tua. Item harus is_done = true dan activity_context = rumah.
+        Hanya role orang_tua. Item harus is_done = true.
         Orang tua harus punya relasi aktif dengan siswa pemilik item.
-        Endpoint idempotent.
+        Backend menyimpan validasi dengan validator_role = orang_tua dan validation_source = rumah.
+        Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
       parameters:
         - $ref: '#/components/parameters/IdPath'
       responses:
@@ -470,10 +469,6 @@ paths:
           schema:
             type: integer
             enum: [0, 1]
-        - in: query
-          name: activity_context
-          schema:
-            $ref: '#/components/schemas/ActivityContext'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
       responses:
@@ -514,15 +509,15 @@ paths:
   /teacher/checkins/{id}/validate-school:
     post:
       tags: [Teacher]
-      summary: Validasi batch item konteks sekolah pada satu check-in
+      summary: Validasi batch item check-in oleh guru
       description: |
         Hanya role guru. Endpoint ini memvalidasi item yang:
         - milik siswa pada kelas yang dia ampu;
-        - is_done = true;
-        - activity_context = sekolah.
+        - is_done = true.
 
-        Jika item_ids tidak dikirim, backend memvalidasi semua item eligible pada check-in tersebut.
-        Endpoint idempotent.
+        Backend menyimpan validasi dengan validator_role = guru dan validation_source = sekolah.
+        Jika item_ids tidak dikirim, backend memvalidasi semua item is_done = true pada check-in tersebut.
+        Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
       parameters:
         - $ref: '#/components/parameters/IdPath'
       requestBody:
@@ -550,10 +545,12 @@ paths:
   /teacher/checkin-items/{id}/validate:
     post:
       tags: [Teacher]
-      summary: Validasi satu item konteks sekolah
+      summary: Validasi satu item check-in oleh guru
       description: |
-        Hanya role guru. Item harus is_done = true dan activity_context = sekolah.
-        Guru harus mengampu kelas siswa pemilik item. Endpoint idempotent.
+        Hanya role guru. Item harus is_done = true.
+        Guru harus mengampu kelas siswa pemilik item.
+        Backend menyimpan validasi dengan validator_role = guru dan validation_source = sekolah.
+        Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
       parameters:
         - $ref: '#/components/parameters/IdPath'
       responses:
@@ -1095,15 +1092,10 @@ components:
             $ref: '#/components/schemas/ErrorResponseValidation'
 
   schemas:
-    ActivityContext:
+    ValidationSource:
       type: string
       enum: [rumah, sekolah]
       example: rumah
-
-    DefaultActivityContext:
-      type: string
-      enum: [rumah, sekolah, fleksibel]
-      example: fleksibel
 
     ValidatorRole:
       type: string
@@ -1268,8 +1260,6 @@ components:
         name:
           type: string
           example: Bangun Pagi
-        default_activity_context:
-          $ref: '#/components/schemas/DefaultActivityContext'
         sort_order:
           type: integer
           example: 1
@@ -1291,7 +1281,7 @@ components:
         validator_role:
           $ref: '#/components/schemas/ValidatorRole'
         validation_source:
-          $ref: '#/components/schemas/ActivityContext'
+          $ref: '#/components/schemas/ValidationSource'
         validated_at:
           type: string
           format: date-time
@@ -1307,11 +1297,6 @@ components:
         is_done:
           type: boolean
           example: true
-        activity_context:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ActivityContext'
-          description: Wajib jika is_done = true. Harus null jika is_done = false.
 
     CheckinItemDetail:
       type: object
@@ -1334,14 +1319,10 @@ components:
         is_done:
           type: boolean
           example: true
-        activity_context:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ActivityContext'
-        validation:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ValidationDetail'
+        validations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationDetail'
 
     LoginRequest:
       type: object
@@ -1566,10 +1547,10 @@ components:
         total_items_validated:
           type: integer
           example: 4
-        home_validated_count:
+        parent_validated_items:
           type: integer
           example: 2
-        school_validated_count:
+        teacher_validated_items:
           type: integer
           example: 2
 
@@ -1635,9 +1616,9 @@ components:
           type: integer
         total_items_validated:
           type: integer
-        home_pending_validation_count:
+        parent_pending_validation_count:
           type: integer
-        school_validated_count:
+        teacher_validated_items:
           type: integer
 
     ParentChildCheckinListResponse:
@@ -1853,9 +1834,9 @@ components:
                     type: integer
                   total_items_validated:
                     type: integer
-                  school_pending_validation_count:
+                  teacher_pending_validation_count:
                     type: integer
-                  home_pending_validation_count:
+                  parent_pending_validation_count:
                     type: integer
             pagination:
               $ref: '#/components/schemas/PaginationMeta'

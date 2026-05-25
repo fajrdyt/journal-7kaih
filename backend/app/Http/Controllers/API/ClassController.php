@@ -283,86 +283,95 @@ class ClassController extends Controller
      * GET /api/v1/teacher/classes/{classId}/checkins
      */
     public function classCheckins(Request $request, int $classId): JsonResponse
-    {
-        $class = ClassRoom::where('id', $classId)
-            ->where('teacher_id', $request->user()->id)
-            ->firstOrFail();
+{
+    $class = ClassRoom::where('id', $classId)
+        ->where('teacher_id', $request->user()->id)
+        ->firstOrFail();
 
-        $date = $request->date ?? today()->format('Y-m-d');
+    $date = $request->date ?? today()->format('Y-m-d');
 
-        $students = User::where('class_id', $classId)
-            ->whereHas('role', fn ($q) => $q->where('name', 'siswa'))
-            ->with([
-                'checkins' => fn ($q) => $q->whereDate('checkin_date', $date)
-                    ->with('items.validation'),
-            ])
-            ->orderBy('full_name')
-            ->paginate($request->integer('per_page', 10));
+    $students = User::where('class_id', $classId)
+        ->whereHas('role', fn ($q) => $q->where('name', 'siswa'))
+        ->with([
+            'checkins' => fn ($q) => $q->whereDate('checkin_date', $date)
+                ->with([
+                    'items.habit',
+                    'items.validations.validator',
+                ]),
+        ])
+        ->orderBy('full_name')
+        ->paginate($request->integer('per_page', 10));
 
-        $items = $students->getCollection()->map(function ($student) {
-            $checkin = $student->checkins->first();
+    $items = $students->getCollection()->map(function ($student) {
+        $checkin = $student->checkins->first();
 
-            return [
-                'student_id'                      => $student->id,
-                'student_name'                    => $student->full_name,
-                'checked_in'                      => (bool) $checkin,
-                'daily_checkin_id'                => $checkin?->id,
-                'total_habits_done'               => $checkin
-                    ? $checkin->items->where('is_done', true)->count()
-                    : 0,
-                'total_items_validated'           => $checkin
-                    ? $checkin->items->filter(fn ($item) => $item->validation)->count()
-                    : 0,
-                'school_pending_validation_count' => $checkin
-                    ? $checkin->items->filter(
-                        fn ($item) => $item->is_done
-                            && $item->activity_context === 'sekolah'
-                            && !$item->validation
-                    )->count()
-                    : 0,
-                'home_pending_validation_count'   => $checkin
-                    ? $checkin->items->filter(
-                        fn ($item) => $item->is_done
-                            && $item->activity_context === 'rumah'
-                            && !$item->validation
-                    )->count()
-                    : 0,
-            ];
-        });
+        $doneItems = $checkin
+            ? $checkin->items->where('is_done', true)
+            : collect();
 
-        $totalStudents = $students->total();
-        $checkedInCount = $items->where('checked_in', true)->count();
+        $parentValidatedCount = $doneItems->sum(
+            fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
+        );
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Monitoring check-in berhasil diambil.',
-            'data'    => [
-                'class' => [
-                    'id'          => $class->id,
-                    'name'        => $class->name,
-                    'grade_level' => $class->grade_level,
-                ],
-                'date'    => $date,
-                'summary' => [
-                    'total_students'             => $totalStudents,
-                    'checked_in_count'           => $checkedInCount,
-                    'not_checked_in_count'       => $totalStudents - $checkedInCount,
-                    'total_done_items'           => $items->sum('total_habits_done'),
-                    'total_validated_items'      => $items->sum('total_items_validated'),
-                    'parent_validated_items'     => 0,
-                    'teacher_validated_items'    => 0,
-                    'pending_validation_items'   => $items->sum('school_pending_validation_count'),
-                ],
-                'items'      => $items->values(),
-                'pagination' => [
-                    'page'        => $students->currentPage(),
-                    'per_page'    => $students->perPage(),
-                    'total'       => $students->total(),
-                    'total_pages' => $students->lastPage(),
-                ],
+        $teacherValidatedCount = $doneItems->sum(
+            fn ($item) => $item->validations->where('validator_role', 'guru')->count()
+        );
+
+        $pendingTeacherValidationCount = $doneItems->filter(
+            fn ($item) => $item->validations->where('validator_role', 'guru')->count() === 0
+        )->count();
+
+        $pendingParentValidationCount = $doneItems->filter(
+            fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count() === 0
+        )->count();
+
+        return [
+            'student_id'                       => $student->id,
+            'student_name'                     => $student->full_name,
+            'checked_in'                       => (bool) $checkin,
+            'daily_checkin_id'                 => $checkin?->id,
+            'total_habits_done'                => $doneItems->count(),
+            'total_items_validated'            => $parentValidatedCount + $teacherValidatedCount,
+            'parent_validated_items'           => $parentValidatedCount,
+            'teacher_validated_items'          => $teacherValidatedCount,
+            'parent_pending_validation_count'  => $pendingParentValidationCount,
+            'teacher_pending_validation_count' => $pendingTeacherValidationCount,
+        ];
+    });
+
+    $totalStudents = $students->total();
+    $checkedInCount = $items->where('checked_in', true)->count();
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Monitoring check-in berhasil diambil.',
+        'data'    => [
+            'class' => [
+                'id'          => $class->id,
+                'name'        => $class->name,
+                'grade_level' => $class->grade_level,
             ],
-        ]);
-    }
+            'date'    => $date,
+            'summary' => [
+                'total_students'             => $totalStudents,
+                'checked_in_count'           => $checkedInCount,
+                'not_checked_in_count'       => $totalStudents - $checkedInCount,
+                'total_done_items'           => $items->sum('total_habits_done'),
+                'total_validated_items'      => $items->sum('total_items_validated'),
+                'parent_validated_items'     => $items->sum('parent_validated_items'),
+                'teacher_validated_items'    => $items->sum('teacher_validated_items'),
+                'pending_validation_items'   => $items->sum('teacher_pending_validation_count'),
+            ],
+            'items'      => $items->values(),
+            'pagination' => [
+                'page'        => $students->currentPage(),
+                'per_page'    => $students->perPage(),
+                'total'       => $students->total(),
+                'total_pages' => $students->lastPage(),
+            ],
+        ],
+    ]);
+}
 
     // ── Helper ────────────────────────────────────────────────
 
