@@ -81,6 +81,66 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+
+  /profile:
+    get:
+      tags: [Auth]
+      summary: Ambil profil user login
+      description: Digunakan oleh semua role untuk melihat data profil sendiri.
+      responses:
+        '200':
+          description: Profil berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [Auth]
+      summary: Update profil user login
+      description: Digunakan oleh semua role untuk mengubah data profil sendiri.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profil berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /profile/password:
+    put:
+      tags: [Auth]
+      summary: Update password user login
+      description: Digunakan oleh semua role untuk mengubah password akun sendiri.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicNullResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
   /roles:
     get:
       tags: [Master Data]
@@ -641,6 +701,24 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+
+
+  /admin/dashboard-summary:
+    get:
+      tags: [Admin]
+      summary: Ambil ringkasan dashboard admin
+      description: Ringkasan statistik utama untuk halaman Dashboard Admin.
+      responses:
+        '200':
+          description: Ringkasan dashboard admin berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboardSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /admin/users:
     get:
@@ -1246,6 +1324,193 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/ClassRef'
+
+
+    ProfileData:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        full_name:
+          type: string
+          example: Budi Santoso
+        username:
+          type: string
+          example: budi123
+        email:
+          type: string
+          format: email
+          example: budi@example.com
+        phone:
+          type: string
+          nullable: true
+          example: '081234567890'
+        is_active:
+          type: boolean
+          example: true
+        role:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Role'
+        class:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ClassRef'
+
+    ProfileResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Profil berhasil diambil.
+        data:
+          $ref: '#/components/schemas/ProfileData'
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          maxLength: 255
+          example: Budi Santoso
+        username:
+          type: string
+          maxLength: 255
+          example: budi123
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: budi@example.com
+        phone:
+          type: string
+          nullable: true
+          maxLength: 20
+          example: '081234567890'
+
+    UpdatePasswordRequest:
+      type: object
+      required: [current_password, new_password, new_password_confirmation]
+      properties:
+        current_password:
+          type: string
+          example: password123
+        new_password:
+          type: string
+          minLength: 8
+          example: passwordbaru123
+        new_password_confirmation:
+          type: string
+          minLength: 8
+          example: passwordbaru123
+
+    AdminDashboardSummaryResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Ringkasan dashboard admin berhasil diambil.
+        data:
+          type: object
+          properties:
+            users:
+              type: object
+              properties:
+                total_students:
+                  type: integer
+                  example: 120
+                total_teachers:
+                  type: integer
+                  example: 10
+                total_parents:
+                  type: integer
+                  example: 95
+                total_admins:
+                  type: integer
+                  example: 1
+                active_students:
+                  type: integer
+                  example: 115
+            classes:
+              type: object
+              properties:
+                total_classes:
+                  type: integer
+                  example: 6
+                active_classes:
+                  type: integer
+                  example: 6
+            today_activity:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                  example: '2026-05-25'
+                today_checkins:
+                  type: integer
+                  example: 80
+                students_checked_in_today:
+                  type: integer
+                  example: 80
+                students_not_checked_in_today:
+                  type: integer
+                  example: 40
+                today_total_items:
+                  type: integer
+                  example: 560
+                today_done_items:
+                  type: integer
+                  example: 420
+                today_parent_validations:
+                  type: integer
+                  example: 300
+                today_teacher_validations:
+                  type: integer
+                  example: 250
+                today_total_validations:
+                  type: integer
+                  example: 550
+                pending_validation_items:
+                  type: integer
+                  example: 290
+            recent_checkins:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 1001
+                  student_id:
+                    type: integer
+                    format: int64
+                    example: 12
+                  student_name:
+                    type: string
+                    nullable: true
+                    example: Budi Santoso
+                  class:
+                    nullable: true
+                    allOf:
+                      - $ref: '#/components/schemas/ClassRef'
+                  checkin_date:
+                    type: string
+                    format: date
+                    example: '2026-05-25'
+                  created_at:
+                    type: string
+                    format: date-time
+                    nullable: true
 
     Habit:
       type: object

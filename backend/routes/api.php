@@ -41,6 +41,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/habits',  [HabitController::class, 'index']);
         Route::get('/classes', [ClassController::class, 'index']);
 
+        // ── Profile ───────────────────────────────────────────
+        Route::get('/profile',           [AuthController::class, 'profile']);
+        Route::put('/profile',           [AuthController::class, 'updateProfile']);
+        Route::put('/profile/password',  [AuthController::class, 'updatePassword']);
+
         // ── Analytics ─────────────────────────────────────────
         Route::post('/events/track', function (Request $request, AnalyticsService $analyticsService) {
             $validated = $request->validate([
@@ -69,6 +74,9 @@ Route::prefix('v1')->group(function () {
 
         // ── Admin ─────────────────────────────────────────────
         Route::middleware('role:admin')->prefix('admin')->group(function () {
+            
+            // Dashboard Summary
+            Route::get('/dashboard-summary', [UserController::class, 'dashboardSummary']);  
 
             // User Management
             Route::get('/users',                      [UserController::class, 'index']);

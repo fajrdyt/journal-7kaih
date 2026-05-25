@@ -3,6 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CheckinItemValidation;
+use App\Models\ClassRoom;
+use App\Models\DailyCheckin;
+use App\Models\DailyCheckinItem;
+use App\Models\Role;
 use App\Models\StudentParentRelation;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -69,6 +74,116 @@ class UserController extends Controller
                     'total'       => $users->total(),
                     'total_pages' => $users->lastPage(),
                 ],
+            ],
+        ]);
+    }
+
+    /**
+     * GET /api/v1/admin/dashboard-summary
+     */
+    public function dashboardSummary()
+    {
+        $today = now()->toDateString();
+
+        $studentRoleId = Role::where('name', 'siswa')->value('id');
+        $teacherRoleId = Role::where('name', 'guru')->value('id');
+        $parentRoleId  = Role::where('name', 'orang_tua')->value('id');
+        $adminRoleId   = Role::where('name', 'admin')->value('id');
+
+        $totalStudents = User::where('role_id', $studentRoleId)->count();
+        $totalTeachers = User::where('role_id', $teacherRoleId)->count();
+        $totalParents  = User::where('role_id', $parentRoleId)->count();
+        $totalAdmins   = User::where('role_id', $adminRoleId)->count();
+
+        $activeStudents = User::where('role_id', $studentRoleId)
+            ->where('is_active', true)
+            ->count();
+
+        $totalClasses = ClassRoom::count();
+        $activeClasses = ClassRoom::where('is_active', true)->count();
+
+        $todayCheckins = DailyCheckin::whereDate('checkin_date', $today)->count();
+
+        $studentsCheckedInToday = DailyCheckin::whereDate('checkin_date', $today)
+            ->distinct('student_id')
+            ->count('student_id');
+
+        $studentsNotCheckedInToday = max($activeStudents - $studentsCheckedInToday, 0);
+
+        $todayCheckinIds = DailyCheckin::whereDate('checkin_date', $today)
+            ->pluck('id');
+
+        $todayItemsQuery = DailyCheckinItem::whereIn('daily_checkin_id', $todayCheckinIds);
+
+        $todayTotalItems = (clone $todayItemsQuery)->count();
+
+        $todayDoneItems = (clone $todayItemsQuery)
+            ->where('is_done', true)
+            ->count();
+
+        $todayParentValidations = CheckinItemValidation::whereHas('checkinItem.dailyCheckin', function ($query) use ($today) {
+            $query->whereDate('checkin_date', $today);
+        })
+            ->where('validator_role', 'orang_tua')
+            ->count();
+
+        $todayTeacherValidations = CheckinItemValidation::whereHas('checkinItem.dailyCheckin', function ($query) use ($today) {
+            $query->whereDate('checkin_date', $today);
+        })
+            ->where('validator_role', 'guru')
+            ->count();
+
+        $todayTotalValidations = $todayParentValidations + $todayTeacherValidations;
+
+        // Setelah revisi validasi, 1 item yang is_done=true bisa divalidasi oleh 2 role:
+        // orang_tua dan guru.
+        $pendingValidationItems = max(($todayDoneItems * 2) - $todayTotalValidations, 0);
+
+        $recentCheckins = DailyCheckin::with(['student.classRoom'])
+            ->latest('checkin_date')
+            ->limit(5)
+            ->get()
+            ->map(fn ($checkin) => [
+                'id'           => $checkin->id,
+                'student_id'   => $checkin->student_id,
+                'student_name' => $checkin->student?->full_name,
+                'class'        => $checkin->student?->classRoom ? [
+                    'id'   => $checkin->student->classRoom->id,
+                    'name' => $checkin->student->classRoom->name,
+                ] : null,
+                'checkin_date' => $checkin->checkin_date,
+                'created_at'   => $checkin->created_at ?? null,
+            ])
+            ->values();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Ringkasan dashboard admin berhasil diambil.',
+            'data'    => [
+                'users' => [
+                    'total_students'  => $totalStudents,
+                    'total_teachers'  => $totalTeachers,
+                    'total_parents'   => $totalParents,
+                    'total_admins'    => $totalAdmins,
+                    'active_students' => $activeStudents,
+                ],
+                'classes' => [
+                    'total_classes'  => $totalClasses,
+                    'active_classes' => $activeClasses,
+                ],
+                'today_activity' => [
+                    'date'                          => $today,
+                    'today_checkins'                => $todayCheckins,
+                    'students_checked_in_today'     => $studentsCheckedInToday,
+                    'students_not_checked_in_today' => $studentsNotCheckedInToday,
+                    'today_total_items'             => $todayTotalItems,
+                    'today_done_items'              => $todayDoneItems,
+                    'today_parent_validations'      => $todayParentValidations,
+                    'today_teacher_validations'     => $todayTeacherValidations,
+                    'today_total_validations'       => $todayTotalValidations,
+                    'pending_validation_items'      => $pendingValidationItems,
+                ],
+                'recent_checkins' => $recentCheckins,
             ],
         ]);
     }
@@ -506,12 +621,12 @@ class UserController extends Controller
     private function formatUser(User $user): array
     {
         return [
-            'id'         => $user->id,
-            'full_name'  => $user->full_name,
-            'username'   => $user->username,
-            'email'      => $user->email,
-            'phone'      => $user->phone,
-            'is_active'  => $user->is_active,
+            'id'        => $user->id,
+            'full_name' => $user->full_name,
+            'username'  => $user->username,
+            'email'     => $user->email,
+            'phone'     => $user->phone,
+            'is_active' => $user->is_active,
 
             'role' => $user->role ? [
                 'id'   => $user->role->id,
@@ -542,7 +657,7 @@ class UserController extends Controller
                     'id'   => $relation->student->role->id,
                     'name' => $relation->student->role->name,
                 ] : null,
-                'class'     => $relation->student->classRoom ? [
+                'class' => $relation->student->classRoom ? [
                     'id'          => $relation->student->classRoom->id,
                     'name'        => $relation->student->classRoom->name,
                     'grade_level' => $relation->student->classRoom->grade_level,
