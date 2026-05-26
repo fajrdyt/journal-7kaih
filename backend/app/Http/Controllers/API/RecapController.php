@@ -51,4 +51,13 @@ class RecapController extends Controller
     {
         return $this->recapService->classMonthlyRecap($request, $classId);
     }
+    public function studentHabitStatistics(Request $request)
+    {
+    return $this->recapService->studentHabitStatistics($request);
+    }
+
+    public function teacherClassHabitStatistics(Request $request, int $classId)
+    {
+    return $this->recapService->teacherClassHabitStatistics($request, $classId);
+    }
 }

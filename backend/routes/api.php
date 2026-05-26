@@ -110,6 +110,7 @@ Route::prefix('v1')->group(function () {
 
             // Report / Recap
             Route::get('/recap',          [RecapController::class, 'personal']);
+            Route::get('/habit-statistics',   [RecapController::class, 'studentHabitStatistics']);
         });
 
         // ── Parent ────────────────────────────────────────────
@@ -127,18 +128,18 @@ Route::prefix('v1')->group(function () {
 
         // ── Teacher ───────────────────────────────────────────
         Route::middleware('role:guru')->prefix('teacher')->group(function () {
-            Route::get('/classes',                         [ClassController::class,      'teacherClasses']);
-            Route::get('/classes/{classId}/students',      [ClassController::class,      'classStudents']);
-            Route::get('/classes/{classId}/checkins',      [ClassController::class,      'classCheckins']);
+        Route::get('/classes',                    [ClassController::class, 'teacherClasses']);
+        Route::get('/classes/{classId}/students', [ClassController::class, 'classStudents']);
+        Route::get('/classes/{classId}/checkins', [ClassController::class, 'classCheckins']);
 
-            // Report / Recap
-            Route::get('/classes/{classId}/weekly-recap',  [RecapController::class,      'classWeeklyRecap']);
-            Route::get('/classes/{classId}/monthly-recap', [RecapController::class,      'classMonthlyRecap']);
-            Route::get('/students/{studentId}/recap',      [RecapController::class,      'studentRecap']);
+        Route::get('/classes/{classId}/weekly-recap',      [RecapController::class, 'classWeeklyRecap']);
+        Route::get('/classes/{classId}/monthly-recap',     [RecapController::class, 'classMonthlyRecap']);
+        Route::get('/classes/{classId}/habit-statistics',  [RecapController::class, 'teacherClassHabitStatistics']);
+        Route::get('/students/{studentId}/recap',          [RecapController::class, 'studentRecap']);
 
-            Route::get('/checkins/{id}',                   [ValidationController::class, 'teacherCheckinDetail']);
-            Route::post('/checkins/{id}/validate-school',  [ValidationController::class, 'validateSchool']);
-            Route::post('/checkin-items/{id}/validate',    [ValidationController::class, 'validateSchoolItem']);
+        Route::get('/checkins/{id}',                  [ValidationController::class, 'teacherCheckinDetail']);
+        Route::post('/checkins/{id}/validate-school', [ValidationController::class, 'validateSchool']);
+        Route::post('/checkin-items/{id}/validate',   [ValidationController::class, 'validateSchoolItem']);
         });
     });
 });

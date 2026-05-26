@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ClassRoom;
 use App\Models\DailyCheckin;
 use App\Models\User;
+use App\Models\Habit;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -380,6 +381,216 @@ class RecapService
         ];
     }
 
+public function studentHabitStatistics(Request $request)
+{
+    $student = $request->user();
+
+    $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+    $endDate   = $request->query('end_date', now()->toDateString());
+
+    $checkins = DailyCheckin::query()
+        ->with(['items.habit'])
+        ->where('student_id', $student->id)
+        ->whereBetween('checkin_date', [$startDate, $endDate])
+        ->orderBy('checkin_date')
+        ->get();
+
+    $habits = Habit::active()->get();
+
+    $habitStatistics = $habits->map(function ($habit) use ($checkins) {
+        $items = $checkins
+            ->flatMap(fn ($checkin) => $checkin->items)
+            ->where('habit_id', $habit->id);
+
+        $totalItems = $items->count();
+        $doneCount = $items->where('is_done', true)->count();
+        $notDoneCount = max($totalItems - $doneCount, 0);
+
+        return [
+            'habit_id'       => $habit->id,
+            'habit_code'     => $habit->code,
+            'habit_name'     => $habit->name,
+            'sort_order'     => $habit->sort_order,
+            'total_items'    => $totalItems,
+            'done_count'     => $doneCount,
+            'not_done_count' => $notDoneCount,
+            'percentage'     => $totalItems > 0
+                ? round(($doneCount / $totalItems) * 100, 2)
+                : 0,
+        ];
+    })->values();
+
+    $dailyProgress = $checkins->map(function ($checkin) {
+        $totalItems = $checkin->items->count();
+        $doneItems = $checkin->items->where('is_done', true)->count();
+
+        return [
+            'date'                  => Carbon::parse($checkin->checkin_date)->format('Y-m-d'),
+            'total_items'           => $totalItems,
+            'done_items'            => $doneItems,
+            'completion_percentage' => $totalItems > 0
+                ? round(($doneItems / $totalItems) * 100, 2)
+                : 0,
+        ];
+    })->values();
+
+    $totalCheckins = $checkins->count();
+    $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
+    $totalDoneItems = $checkins->sum(
+        fn ($checkin) => $checkin->items->where('is_done', true)->count()
+    );
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Statistik kebiasaan siswa berhasil diambil.',
+        'data'    => [
+            'student' => [
+                'id'        => $student->id,
+                'full_name' => $student->full_name,
+                'username'  => $student->username,
+            ],
+            'period' => [
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
+            ],
+            'summary' => [
+                'total_checkins'        => $totalCheckins,
+                'total_items'           => $totalItems,
+                'total_done_items'      => $totalDoneItems,
+                'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
+                'completion_percentage' => $totalItems > 0
+                    ? round(($totalDoneItems / $totalItems) * 100, 2)
+                    : 0,
+            ],
+            'habits'         => $habitStatistics,
+            'daily_progress' => $dailyProgress,
+        ],
+    ]);
+}
+
+public function teacherClassHabitStatistics(Request $request, int $classId)
+{
+    $teacher = $request->user();
+
+    $class = ClassRoom::query()
+        ->where('id', $classId)
+        ->where('teacher_id', $teacher->id)
+        ->first();
+
+    if (!$class) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Kelas tidak ditemukan atau bukan kelas Anda.',
+            'data'    => null,
+        ], 404);
+    }
+
+    $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+    $endDate   = $request->query('end_date', now()->toDateString());
+
+    $studentIds = User::query()
+        ->where('class_id', $classId)
+        ->whereHas('role', fn ($query) => $query->where('name', 'siswa'))
+        ->pluck('id');
+
+    $checkins = DailyCheckin::query()
+        ->with(['items.habit'])
+        ->whereIn('student_id', $studentIds)
+        ->whereBetween('checkin_date', [$startDate, $endDate])
+        ->orderBy('checkin_date')
+        ->get();
+
+    $habits = Habit::active()->get();
+
+    $habitStatistics = $habits->map(function ($habit) use ($checkins) {
+        $items = $checkins
+            ->flatMap(fn ($checkin) => $checkin->items)
+            ->where('habit_id', $habit->id);
+
+        $totalItems = $items->count();
+        $doneCount = $items->where('is_done', true)->count();
+        $notDoneCount = max($totalItems - $doneCount, 0);
+
+        return [
+            'habit_id'       => $habit->id,
+            'habit_code'     => $habit->code,
+            'habit_name'     => $habit->name,
+            'sort_order'     => $habit->sort_order,
+            'total_items'    => $totalItems,
+            'done_count'     => $doneCount,
+            'not_done_count' => $notDoneCount,
+            'percentage'     => $totalItems > 0
+                ? round(($doneCount / $totalItems) * 100, 2)
+                : 0,
+        ];
+    })->values();
+
+    $dailyProgress = $checkins
+        ->groupBy(fn ($checkin) => Carbon::parse($checkin->checkin_date)->format('Y-m-d'))
+        ->map(function ($group, $date) {
+            $totalItems = $group->sum(fn ($checkin) => $checkin->items->count());
+
+            $doneItems = $group->sum(
+                fn ($checkin) => $checkin->items->where('is_done', true)->count()
+            );
+
+            return [
+                'date'                  => $date,
+                'total_checkins'        => $group->count(),
+                'total_items'           => $totalItems,
+                'done_items'            => $doneItems,
+                'completion_percentage' => $totalItems > 0
+                    ? round(($doneItems / $totalItems) * 100, 2)
+                    : 0,
+            ];
+        })
+        ->values();
+
+    $totalCheckins = $checkins->count();
+    $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
+    $totalDoneItems = $checkins->sum(
+        fn ($checkin) => $checkin->items->where('is_done', true)->count()
+    );
+
+    $bestHabit = $habitStatistics
+        ->sortByDesc('percentage')
+        ->first();
+
+    $lowestHabit = $habitStatistics
+        ->sortBy('percentage')
+        ->first();
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Statistik kebiasaan kelas berhasil diambil.',
+        'data'    => [
+            'class' => [
+                'id'          => $class->id,
+                'name'        => $class->name,
+                'grade_level' => $class->grade_level,
+            ],
+            'period' => [
+                'start_date' => $startDate,
+                'end_date'   => $endDate,
+            ],
+            'summary' => [
+                'total_students'        => $studentIds->count(),
+                'total_checkins'        => $totalCheckins,
+                'total_items'           => $totalItems,
+                'total_done_items'      => $totalDoneItems,
+                'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
+                'completion_percentage' => $totalItems > 0
+                    ? round(($totalDoneItems / $totalItems) * 100, 2)
+                    : 0,
+                'best_habit'            => $bestHabit,
+                'lowest_habit'          => $lowestHabit,
+            ],
+            'habits'         => $habitStatistics,
+            'daily_progress' => $dailyProgress,
+        ],
+    ]);
+}
+    
     private function teacherCanAccessStudent(int $teacherId, int $studentId): bool
     {
         return User::query()

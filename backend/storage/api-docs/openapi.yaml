@@ -307,6 +307,28 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /student/habit-statistics:
+    get:
+      tags: [Student]
+      summary: Ambil statistik kebiasaan siswa login
+      description: |
+        Hanya role siswa. Mengambil data statistik kebiasaan untuk grafik/progress laporan siswa.
+        Jika start_date dan end_date tidak dikirim, backend menggunakan periode bulan berjalan.
+      parameters:
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+      responses:
+        '200':
+          description: Statistik kebiasaan siswa berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentHabitStatisticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /parent/children:
     get:
       tags: [Parent]
@@ -672,6 +694,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TeacherPeriodRecapResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /teacher/classes/{classId}/habit-statistics:
+    get:
+      tags: [Teacher]
+      summary: Ambil statistik kebiasaan per kelas
+      description: |
+        Hanya role guru. Mengambil data statistik kebiasaan untuk grafik/progress laporan kelas.
+        Guru hanya boleh mengakses kelas yang dia ampu.
+        Jika start_date dan end_date tidak dikirim, backend menggunakan periode bulan berjalan.
+      parameters:
+        - $ref: '#/components/parameters/ClassIdPath'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+      responses:
+        '200':
+          description: Statistik kebiasaan kelas berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherClassHabitStatisticsResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2246,6 +2294,158 @@ components:
           enum: [sudah_terbiasa, belum_terbiasa]
           nullable: true
           description: Diisi terutama untuk rekap bulanan menggunakan rule 2/3 hari periode.
+
+    HabitStatisticItem:
+      type: object
+      properties:
+        habit_id:
+          type: integer
+          format: int64
+          example: 1
+        habit_code:
+          type: string
+          example: BANGUN_PAGI
+        habit_name:
+          type: string
+          example: Bangun Pagi
+        sort_order:
+          type: integer
+          example: 1
+        total_items:
+          type: integer
+          example: 20
+        done_count:
+          type: integer
+          example: 18
+        not_done_count:
+          type: integer
+          example: 2
+        percentage:
+          type: number
+          format: float
+          example: 90.0
+
+    DailyProgressItem:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: '2026-05-25'
+        total_checkins:
+          type: integer
+          nullable: true
+          example: 3
+        total_items:
+          type: integer
+          example: 21
+        done_items:
+          type: integer
+          example: 18
+        completion_percentage:
+          type: number
+          format: float
+          example: 85.71
+
+    HabitStatisticsSummary:
+      type: object
+      properties:
+        total_checkins:
+          type: integer
+          example: 20
+        total_items:
+          type: integer
+          example: 140
+        total_done_items:
+          type: integer
+          example: 100
+        total_not_done_items:
+          type: integer
+          example: 40
+        completion_percentage:
+          type: number
+          format: float
+          example: 71.43
+
+    StudentHabitStatisticsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Statistik kebiasaan siswa berhasil diambil.
+        data:
+          type: object
+          properties:
+            student:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  format: int64
+                  example: 10
+                full_name:
+                  type: string
+                  example: Budi Santoso
+                username:
+                  type: string
+                  example: budi123
+            period:
+              $ref: '#/components/schemas/Period'
+            summary:
+              $ref: '#/components/schemas/HabitStatisticsSummary'
+            habits:
+              type: array
+              items:
+                $ref: '#/components/schemas/HabitStatisticItem'
+            daily_progress:
+              type: array
+              items:
+                $ref: '#/components/schemas/DailyProgressItem'
+
+    TeacherClassHabitStatisticsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Statistik kebiasaan kelas berhasil diambil.
+        data:
+          type: object
+          properties:
+            class:
+              $ref: '#/components/schemas/ClassRef'
+            period:
+              $ref: '#/components/schemas/Period'
+            summary:
+              allOf:
+                - $ref: '#/components/schemas/HabitStatisticsSummary'
+                - type: object
+                  properties:
+                    total_students:
+                      type: integer
+                      example: 30
+                    best_habit:
+                      nullable: true
+                      allOf:
+                        - $ref: '#/components/schemas/HabitStatisticItem'
+                    lowest_habit:
+                      nullable: true
+                      allOf:
+                        - $ref: '#/components/schemas/HabitStatisticItem'
+            habits:
+              type: array
+              items:
+                $ref: '#/components/schemas/HabitStatisticItem'
+            daily_progress:
+              type: array
+              items:
+                $ref: '#/components/schemas/DailyProgressItem'
+
 
     AdminUsersListResponse:
       type: object
