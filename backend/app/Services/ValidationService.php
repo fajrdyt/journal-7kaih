@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class ValidationService
 {
-    /**
-     * GET /api/v1/parent/children
-     */
     public function children(Request $request)
     {
         $parent = $request->user();
@@ -48,11 +45,14 @@ class ValidationService
         ]);
     }
 
-    /**
-     * GET /api/v1/parent/children/{studentId}/checkins
-     */
     public function childCheckins(Request $request, int $studentId)
     {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $parent = $request->user();
 
         if (!$this->parentCanAccessStudent($parent->id, $studentId)) {
@@ -73,15 +73,15 @@ class ValidationService
             ->where('student_id', $studentId)
             ->orderByDesc('checkin_date');
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('checkin_date', '>=', $request->start_date);
+        if (!empty($validated['start_date'])) {
+            $query->whereDate('checkin_date', '>=', $validated['start_date']);
         }
 
-        if ($request->filled('end_date')) {
-            $query->whereDate('checkin_date', '<=', $request->end_date);
+        if (!empty($validated['end_date'])) {
+            $query->whereDate('checkin_date', '<=', $validated['end_date']);
         }
 
-        $perPage = $request->integer('per_page', 10);
+        $perPage = $validated['per_page'] ?? 10;
         $checkins = $query->paginate($perPage);
 
         return response()->json([
@@ -101,9 +101,6 @@ class ValidationService
         ]);
     }
 
-    /**
-     * GET /api/v1/parent/checkins/{id}
-     */
     public function parentCheckinDetail(Request $request, int $id)
     {
         $parent = $request->user();
@@ -140,9 +137,6 @@ class ValidationService
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/checkins/{id}
-     */
     public function teacherCheckinDetail(Request $request, int $id)
     {
         $teacher = $request->user();
@@ -179,13 +173,13 @@ class ValidationService
         ]);
     }
 
-    /**
-     * POST /api/v1/parent/checkins/{id}/validate-home
-     *
-     * Validasi semua item yang is_done = true oleh orang tua.
-     */
     public function validateHome(Request $request, int $id)
     {
+        $validated = $request->validate([
+            'item_ids'   => ['nullable', 'array'],
+            'item_ids.*' => ['integer', 'exists:daily_checkin_items,id'],
+        ]);
+
         $parent = $request->user();
 
         $checkin = DailyCheckin::query()
@@ -208,18 +202,34 @@ class ValidationService
             ], 403);
         }
 
-        DB::transaction(function () use ($checkin, $parent) {
-            $checkin->items()
-                ->where('is_done', true)
-                ->get()
-                ->each(function ($item) use ($parent) {
-                    $this->upsertValidation(
-                        itemId: $item->id,
-                        validatorId: $parent->id,
-                        validatorRole: 'orang_tua',
-                        validationSource: 'rumah'
-                    );
-                });
+        $itemIds = $validated['item_ids'] ?? null;
+
+        $processed = DB::transaction(function () use ($checkin, $parent, $itemIds) {
+            $itemsQuery = $checkin->items()
+                ->where('is_done', true);
+
+            if (!empty($itemIds)) {
+                $itemsQuery->whereIn('id', $itemIds);
+            }
+
+            $items = $itemsQuery->get();
+
+            $validations = $items->map(function ($item) use ($parent) {
+                return $this->upsertValidation(
+                    itemId: $item->id,
+                    validatorId: $parent->id,
+                    validatorRole: 'orang_tua',
+                    validationSource: 'rumah'
+                );
+            });
+
+            return [
+                'requested_count'  => is_array($itemIds) ? count($itemIds) : null,
+                'validated_count'  => $validations->count(),
+                'skipped_count'    => is_array($itemIds)
+                    ? max(count($itemIds) - $validations->count(), 0)
+                    : 0,
+            ];
         });
 
         $checkin = $checkin->fresh([
@@ -232,17 +242,20 @@ class ValidationService
         return response()->json([
             'status'  => 'success',
             'message' => 'Check-in berhasil divalidasi oleh orang tua.',
-            'data'    => $this->formatCheckin($checkin),
+            'data'    => [
+                'summary' => $processed,
+                'checkin' => $this->formatCheckin($checkin),
+            ],
         ]);
     }
 
-    /**
-     * POST /api/v1/teacher/checkins/{id}/validate-school
-     *
-     * Validasi semua item yang is_done = true oleh guru.
-     */
     public function validateSchool(Request $request, int $id)
     {
+        $validated = $request->validate([
+            'item_ids'   => ['nullable', 'array'],
+            'item_ids.*' => ['integer', 'exists:daily_checkin_items,id'],
+        ]);
+
         $teacher = $request->user();
 
         $checkin = DailyCheckin::query()
@@ -265,18 +278,34 @@ class ValidationService
             ], 403);
         }
 
-        DB::transaction(function () use ($checkin, $teacher) {
-            $checkin->items()
-                ->where('is_done', true)
-                ->get()
-                ->each(function ($item) use ($teacher) {
-                    $this->upsertValidation(
-                        itemId: $item->id,
-                        validatorId: $teacher->id,
-                        validatorRole: 'guru',
-                        validationSource: 'sekolah'
-                    );
-                });
+        $itemIds = $validated['item_ids'] ?? null;
+
+        $processed = DB::transaction(function () use ($checkin, $teacher, $itemIds) {
+            $itemsQuery = $checkin->items()
+                ->where('is_done', true);
+
+            if (!empty($itemIds)) {
+                $itemsQuery->whereIn('id', $itemIds);
+            }
+
+            $items = $itemsQuery->get();
+
+            $validations = $items->map(function ($item) use ($teacher) {
+                return $this->upsertValidation(
+                    itemId: $item->id,
+                    validatorId: $teacher->id,
+                    validatorRole: 'guru',
+                    validationSource: 'sekolah'
+                );
+            });
+
+            return [
+                'requested_count'  => is_array($itemIds) ? count($itemIds) : null,
+                'validated_count'  => $validations->count(),
+                'skipped_count'    => is_array($itemIds)
+                    ? max(count($itemIds) - $validations->count(), 0)
+                    : 0,
+            ];
         });
 
         $checkin = $checkin->fresh([
@@ -289,13 +318,14 @@ class ValidationService
         return response()->json([
             'status'  => 'success',
             'message' => 'Check-in berhasil divalidasi oleh guru.',
-            'data'    => $this->formatCheckin($checkin),
+            'data'    => [
+                'summary' => $processed,
+                'checkin' => $this->formatCheckin($checkin),
+            ],
         ]);
     }
 
-    /**
-     * POST /api/v1/parent/checkin-items/{id}/validate
-     */
+
     public function validateHomeItem(Request $request, int $id)
     {
         $parent = $request->user();
@@ -399,8 +429,6 @@ class ValidationService
         ]);
     }
 
-    // ── Helper akses ──────────────────────────────────────────
-
     private function parentCanAccessStudent(int $parentId, int $studentId): bool
     {
         return StudentParentRelation::query()
@@ -414,7 +442,7 @@ class ValidationService
     {
         return User::query()
             ->where('id', $studentId)
-            ->where('class_id', '!=', null)
+            ->whereNotNull('class_id')
             ->whereHas('classRoom', function ($query) use ($teacherId) {
                 $query->where('teacher_id', $teacherId);
             })
@@ -440,8 +468,6 @@ class ValidationService
         );
     }
 
-    // ── Helper format response ────────────────────────────────
-
     private function formatCheckin(DailyCheckin $checkin): array
     {
         return [
@@ -460,13 +486,13 @@ class ValidationService
                 ] : null,
             ] : null,
             'summary' => [
-                'total_items'          => $checkin->items->count(),
-                'total_done_items'     => $checkin->items->where('is_done', true)->count(),
-                'total_validations'    => $checkin->items->sum(fn ($item) => $item->validations->count()),
-                'parent_validations'   => $checkin->items->sum(
+                'total_items'         => $checkin->items->count(),
+                'total_done_items'    => $checkin->items->where('is_done', true)->count(),
+                'total_validations'   => $checkin->items->sum(fn ($item) => $item->validations->count()),
+                'parent_validations'  => $checkin->items->sum(
                     fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
                 ),
-                'teacher_validations'  => $checkin->items->sum(
+                'teacher_validations' => $checkin->items->sum(
                     fn ($item) => $item->validations->where('validator_role', 'guru')->count()
                 ),
             ],
@@ -504,13 +530,13 @@ class ValidationService
     private function formatValidation(CheckinItemValidation $validation): array
     {
         return [
-            'id'                   => $validation->id,
+            'id'                    => $validation->id,
             'daily_checkin_item_id' => $validation->daily_checkin_item_id,
-            'validator_id'         => $validation->validator_id,
-            'validator_role'       => $validation->validator_role,
-            'validation_source'    => $validation->validation_source,
-            'validated_at'         => $validation->validated_at,
-            'validator'            => $validation->validator ? [
+            'validator_id'          => $validation->validator_id,
+            'validator_role'        => $validation->validator_role,
+            'validation_source'     => $validation->validation_source,
+            'validated_at'          => $validation->validated_at,
+            'validator'             => $validation->validator ? [
                 'id'        => $validation->validator->id,
                 'full_name' => $validation->validator->full_name,
                 'username'  => $validation->validator->username,
