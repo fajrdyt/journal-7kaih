@@ -4,15 +4,12 @@ namespace App\Services;
 
 use App\Models\DailyCheckin;
 use App\Models\DailyCheckinItem;
-use App\Models\Habit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CheckinService
 {
-    /**
-     * Ambil check-in hari ini milik siswa login.
-     */
     public function today(Request $request)
     {
         $student = $request->user();
@@ -41,11 +38,14 @@ class CheckinService
         ]);
     }
 
-    /**
-     * Riwayat check-in siswa login.
-     */
     public function index(Request $request)
     {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $student = $request->user();
 
         $query = DailyCheckin::with([
@@ -55,15 +55,15 @@ class CheckinService
             ->where('student_id', $student->id)
             ->orderByDesc('checkin_date');
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('checkin_date', '>=', $request->start_date);
+        if (!empty($validated['start_date'])) {
+            $query->whereDate('checkin_date', '>=', $validated['start_date']);
         }
 
-        if ($request->filled('end_date')) {
-            $query->whereDate('checkin_date', '<=', $request->end_date);
+        if (!empty($validated['end_date'])) {
+            $query->whereDate('checkin_date', '<=', $validated['end_date']);
         }
 
-        $perPage = $request->integer('per_page', 10);
+        $perPage = $validated['per_page'] ?? 10;
         $checkins = $query->paginate($perPage);
 
         return response()->json([
@@ -83,24 +83,26 @@ class CheckinService
         ]);
     }
 
-    /**
-     * Buat/update check-in hari ini.
-     *
-     * Revisi context:
-     * - activity_context sudah tidak diterima dari siswa
-     * - siswa cukup mengirim habit_id dan is_done
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'notes'             => ['nullable', 'string', 'max:1000'],
-            'items'             => ['required', 'array', 'min:1'],
-            'items.*.habit_id'  => ['required', 'integer', 'exists:habits,id'],
-            'items.*.is_done'   => ['required', 'boolean'],
+            'checkin_date'       => ['nullable', 'date'],
+            'notes'              => ['nullable', 'string', 'max:1000'],
+            'items'              => ['required', 'array', 'min:1'],
+            'items.*.habit_id'   => ['required', 'integer', 'exists:habits,id'],
+            'items.*.is_done'    => ['required', 'boolean'],
         ]);
 
         $student = $request->user();
         $today = now()->toDateString();
+
+        $checkinDate = $validated['checkin_date'] ?? $today;
+
+        if ($checkinDate !== $today) {
+            throw ValidationException::withMessages([
+                'checkin_date' => ['Untuk MVP, check-in hanya boleh dilakukan untuk tanggal hari ini.'],
+            ]);
+        }
 
         $checkin = DB::transaction(function () use ($student, $today, $validated) {
             $checkin = DailyCheckin::query()->updateOrCreate(
@@ -109,12 +111,20 @@ class CheckinService
                     'checkin_date' => $today,
                 ],
                 [
-                    'notes' => $validated['notes'] ?? null,
+                    'notes'        => $validated['notes'] ?? null,
+                    'submitted_at' => now(),
                 ]
             );
 
             foreach ($validated['items'] as $item) {
-                DailyCheckinItem::query()->updateOrCreate(
+                $existingItem = DailyCheckinItem::query()
+                    ->where('daily_checkin_id', $checkin->id)
+                    ->where('habit_id', $item['habit_id'])
+                    ->first();
+
+                $oldIsDone = $existingItem?->is_done;
+
+                $checkinItem = DailyCheckinItem::query()->updateOrCreate(
                     [
                         'daily_checkin_id' => $checkin->id,
                         'habit_id'         => $item['habit_id'],
@@ -123,6 +133,12 @@ class CheckinService
                         'is_done' => $item['is_done'],
                     ]
                 );
+
+                $isChanged = $oldIsDone !== null && (bool) $oldIsDone !== (bool) $item['is_done'];
+
+                if ($isChanged || !$item['is_done']) {
+                    $checkinItem->validations()->delete();
+                }
             }
 
             return $checkin->fresh([
@@ -138,9 +154,6 @@ class CheckinService
         ]);
     }
 
-    /**
-     * Detail check-in siswa login.
-     */
     public function show(Request $request, int $id)
     {
         $student = $request->user();
@@ -167,9 +180,6 @@ class CheckinService
         ]);
     }
 
-    /**
-     * Format response check-in.
-     */
     private function formatCheckin(DailyCheckin $checkin): array
     {
         return [
@@ -177,15 +187,16 @@ class CheckinService
             'student_id'   => $checkin->student_id,
             'checkin_date' => $checkin->checkin_date,
             'notes'        => $checkin->notes,
+            'submitted_at' => $checkin->submitted_at,
             'created_at'   => $checkin->created_at,
             'updated_at'   => $checkin->updated_at,
 
             'summary' => [
-                'total_habits'       => $checkin->items->count(),
-                'total_done'         => $checkin->items->where('is_done', true)->count(),
-                'total_not_done'     => $checkin->items->where('is_done', false)->count(),
-                'total_validations'  => $checkin->items->sum(fn ($item) => $item->validations->count()),
-                'parent_validations' => $checkin->items->sum(
+                'total_habits'        => $checkin->items->count(),
+                'total_done'          => $checkin->items->where('is_done', true)->count(),
+                'total_not_done'      => $checkin->items->where('is_done', false)->count(),
+                'total_validations'   => $checkin->items->sum(fn ($item) => $item->validations->count()),
+                'parent_validations'  => $checkin->items->sum(
                     fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
                 ),
                 'teacher_validations' => $checkin->items->sum(
@@ -205,7 +216,6 @@ class CheckinService
                         'sort_order' => $item->habit->sort_order,
                     ] : null,
                     'is_done' => $item->is_done,
-
                     'validations' => $item->validations
                         ->map(fn ($validation) => [
                             'id'                => $validation->id,

@@ -4,22 +4,24 @@ namespace App\Services;
 
 use App\Models\ClassRoom;
 use App\Models\DailyCheckin;
-use App\Models\User;
 use App\Models\Habit;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class RecapService
 {
-    /**
-     * GET /api/v1/student/recap
-     */
     public function personal(Request $request)
     {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
         $student = $request->user();
 
-        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-        $endDate   = $request->query('end_date', now()->toDateString());
+        $startDate = $validated['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate   = $validated['end_date'] ?? now()->toDateString();
 
         $data = $this->buildStudentRecap(
             studentId: $student->id,
@@ -34,11 +36,13 @@ class RecapService
         ]);
     }
 
-    /**
-     * GET /api/v1/parent/children/{studentId}/recap
-     */
     public function childRecap(Request $request, int $studentId)
     {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
         $parent = $request->user();
 
         $hasAccess = $parent->parentRelations()
@@ -54,8 +58,8 @@ class RecapService
             ], 403);
         }
 
-        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-        $endDate   = $request->query('end_date', now()->toDateString());
+        $startDate = $validated['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate   = $validated['end_date'] ?? now()->toDateString();
 
         $data = $this->buildStudentRecap(
             studentId: $studentId,
@@ -70,11 +74,13 @@ class RecapService
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/students/{studentId}/recap
-     */
     public function studentRecap(Request $request, int $studentId)
     {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
         $teacher = $request->user();
 
         if (!$this->teacherCanAccessStudent($teacher->id, $studentId)) {
@@ -85,8 +91,8 @@ class RecapService
             ], 403);
         }
 
-        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-        $endDate   = $request->query('end_date', now()->toDateString());
+        $startDate = $validated['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate   = $validated['end_date'] ?? now()->toDateString();
 
         $data = $this->buildStudentRecap(
             studentId: $studentId,
@@ -101,11 +107,12 @@ class RecapService
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/weekly-recap
-     */
     public function classWeeklyRecap(Request $request, int $classId)
     {
+        $validated = $request->validate([
+            'week' => ['nullable', 'date'],
+        ]);
+
         $teacher = $request->user();
 
         $class = ClassRoom::query()
@@ -121,11 +128,9 @@ class RecapService
             ], 404);
         }
 
-        $week = $request->query('week');
-
-        if ($week) {
-            $startDate = Carbon::parse($week)->startOfWeek()->toDateString();
-            $endDate   = Carbon::parse($week)->endOfWeek()->toDateString();
+        if (!empty($validated['week'])) {
+            $startDate = Carbon::parse($validated['week'])->startOfWeek()->toDateString();
+            $endDate   = Carbon::parse($validated['week'])->endOfWeek()->toDateString();
         } else {
             $startDate = now()->startOfWeek()->toDateString();
             $endDate   = now()->endOfWeek()->toDateString();
@@ -144,11 +149,12 @@ class RecapService
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/monthly-recap
-     */
     public function classMonthlyRecap(Request $request, int $classId)
     {
+        $validated = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+        ]);
+
         $teacher = $request->user();
 
         $class = ClassRoom::query()
@@ -164,7 +170,7 @@ class RecapService
             ], 404);
         }
 
-        $month = $request->query('month', now()->format('Y-m'));
+        $month = $validated['month'] ?? now()->format('Y-m');
 
         $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
         $endDate   = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
@@ -182,9 +188,185 @@ class RecapService
         ]);
     }
 
-    /**
-     * Build rekap personal siswa.
-     */
+    public function studentHabitStatistics(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $student = $request->user();
+
+        $startDate = $validated['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate   = $validated['end_date'] ?? now()->toDateString();
+
+        $checkins = DailyCheckin::query()
+            ->with(['items.habit'])
+            ->where('student_id', $student->id)
+            ->whereBetween('checkin_date', [$startDate, $endDate])
+            ->orderBy('checkin_date')
+            ->get();
+
+        $habits = Habit::active()->get();
+
+        $habitStatistics = $this->buildHabitStatistics($habits, $checkins);
+
+        $dailyProgress = $checkins->map(function ($checkin) {
+            $totalItems = $checkin->items->count();
+            $doneItems = $checkin->items->where('is_done', true)->count();
+
+            return [
+                'date'                  => Carbon::parse($checkin->checkin_date)->format('Y-m-d'),
+                'total_items'           => $totalItems,
+                'done_items'            => $doneItems,
+                'completion_percentage' => $totalItems > 0
+                    ? round(($doneItems / $totalItems) * 100, 2)
+                    : 0,
+            ];
+        })->values();
+
+        $totalCheckins = $checkins->count();
+        $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
+        $totalDoneItems = $checkins->sum(
+            fn ($checkin) => $checkin->items->where('is_done', true)->count()
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Statistik kebiasaan siswa berhasil diambil.',
+            'data'    => [
+                'student' => [
+                    'id'        => $student->id,
+                    'full_name' => $student->full_name,
+                    'username'  => $student->username,
+                ],
+                'period' => [
+                    'start_date' => $startDate,
+                    'end_date'   => $endDate,
+                ],
+                'summary' => [
+                    'total_checkins'        => $totalCheckins,
+                    'total_items'           => $totalItems,
+                    'total_done_items'      => $totalDoneItems,
+                    'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
+                    'completion_percentage' => $totalItems > 0
+                        ? round(($totalDoneItems / $totalItems) * 100, 2)
+                        : 0,
+                ],
+                'habits'         => $habitStatistics,
+                'daily_progress' => $dailyProgress,
+            ],
+        ]);
+    }
+
+    public function teacherClassHabitStatistics(Request $request, int $classId)
+    {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $teacher = $request->user();
+
+        $class = ClassRoom::query()
+            ->where('id', $classId)
+            ->where('teacher_id', $teacher->id)
+            ->first();
+
+        if (!$class) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kelas tidak ditemukan atau bukan kelas Anda.',
+                'data'    => null,
+            ], 404);
+        }
+
+        $startDate = $validated['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate   = $validated['end_date'] ?? now()->toDateString();
+
+        $studentIds = User::query()
+            ->where('class_id', $classId)
+            ->whereHas('role', fn ($query) => $query->where('name', 'siswa'))
+            ->pluck('id');
+
+        $checkins = DailyCheckin::query()
+            ->with(['items.habit'])
+            ->whereIn('student_id', $studentIds)
+            ->whereBetween('checkin_date', [$startDate, $endDate])
+            ->orderBy('checkin_date')
+            ->get();
+
+        $habits = Habit::active()->get();
+
+        $habitStatistics = $this->buildHabitStatistics($habits, $checkins);
+
+        $dailyProgress = $checkins
+            ->groupBy(fn ($checkin) => Carbon::parse($checkin->checkin_date)->format('Y-m-d'))
+            ->map(function ($group, $date) {
+                $totalItems = $group->sum(fn ($checkin) => $checkin->items->count());
+                $doneItems = $group->sum(
+                    fn ($checkin) => $checkin->items->where('is_done', true)->count()
+                );
+
+                return [
+                    'date'                  => $date,
+                    'total_checkins'        => $group->count(),
+                    'total_items'           => $totalItems,
+                    'done_items'            => $doneItems,
+                    'completion_percentage' => $totalItems > 0
+                        ? round(($doneItems / $totalItems) * 100, 2)
+                        : 0,
+                ];
+            })
+            ->values();
+
+        $totalCheckins = $checkins->count();
+        $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
+        $totalDoneItems = $checkins->sum(
+            fn ($checkin) => $checkin->items->where('is_done', true)->count()
+        );
+
+        $bestHabit = $habitStatistics
+            ->filter(fn ($habit) => $habit['total_items'] > 0)
+            ->sortByDesc('percentage')
+            ->first();
+
+        $lowestHabit = $habitStatistics
+            ->filter(fn ($habit) => $habit['total_items'] > 0)
+            ->sortBy('percentage')
+            ->first();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Statistik kebiasaan kelas berhasil diambil.',
+            'data'    => [
+                'class' => [
+                    'id'          => $class->id,
+                    'name'        => $class->name,
+                    'grade_level' => $class->grade_level,
+                ],
+                'period' => [
+                    'start_date' => $startDate,
+                    'end_date'   => $endDate,
+                ],
+                'summary' => [
+                    'total_students'        => $studentIds->count(),
+                    'total_checkins'        => $totalCheckins,
+                    'total_items'           => $totalItems,
+                    'total_done_items'      => $totalDoneItems,
+                    'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
+                    'completion_percentage' => $totalItems > 0
+                        ? round(($totalDoneItems / $totalItems) * 100, 2)
+                        : 0,
+                    'best_habit'            => $bestHabit,
+                    'lowest_habit'          => $lowestHabit,
+                ],
+                'habits'         => $habitStatistics,
+                'daily_progress' => $dailyProgress,
+            ],
+        ]);
+    }
+
     private function buildStudentRecap(int $studentId, string $startDate, string $endDate): array
     {
         $student = User::query()
@@ -240,18 +422,18 @@ class RecapService
 
                 if (!isset($habitSummary[$habitId])) {
                     $habitSummary[$habitId] = [
-                        'habit_id'                  => $habitId,
-                        'habit'                     => $item->habit ? [
+                        'habit_id'                => $habitId,
+                        'habit'                   => $item->habit ? [
                             'id'         => $item->habit->id,
                             'code'       => $item->habit->code,
                             'name'       => $item->habit->name,
                             'sort_order' => $item->habit->sort_order,
                         ] : null,
-                        'done_count'                => 0,
-                        'not_done_count'            => 0,
-                        'parent_validated_count'    => 0,
-                        'teacher_validated_count'   => 0,
-                        'total_validation_count'    => 0,
+                        'done_count'              => 0,
+                        'not_done_count'          => 0,
+                        'parent_validated_count'  => 0,
+                        'teacher_validated_count' => 0,
+                        'total_validation_count'  => 0,
                     ];
                 }
 
@@ -325,9 +507,6 @@ class RecapService
         ];
     }
 
-    /**
-     * Build rekap kelas.
-     */
     private function buildClassRecap(int $classId, string $startDate, string $endDate): array
     {
         $class = ClassRoom::query()
@@ -381,216 +560,32 @@ class RecapService
         ];
     }
 
-public function studentHabitStatistics(Request $request)
-{
-    $student = $request->user();
+    private function buildHabitStatistics($habits, $checkins)
+    {
+        return $habits->map(function ($habit) use ($checkins) {
+            $items = $checkins
+                ->flatMap(fn ($checkin) => $checkin->items)
+                ->where('habit_id', $habit->id);
 
-    $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-    $endDate   = $request->query('end_date', now()->toDateString());
-
-    $checkins = DailyCheckin::query()
-        ->with(['items.habit'])
-        ->where('student_id', $student->id)
-        ->whereBetween('checkin_date', [$startDate, $endDate])
-        ->orderBy('checkin_date')
-        ->get();
-
-    $habits = Habit::active()->get();
-
-    $habitStatistics = $habits->map(function ($habit) use ($checkins) {
-        $items = $checkins
-            ->flatMap(fn ($checkin) => $checkin->items)
-            ->where('habit_id', $habit->id);
-
-        $totalItems = $items->count();
-        $doneCount = $items->where('is_done', true)->count();
-        $notDoneCount = max($totalItems - $doneCount, 0);
-
-        return [
-            'habit_id'       => $habit->id,
-            'habit_code'     => $habit->code,
-            'habit_name'     => $habit->name,
-            'sort_order'     => $habit->sort_order,
-            'total_items'    => $totalItems,
-            'done_count'     => $doneCount,
-            'not_done_count' => $notDoneCount,
-            'percentage'     => $totalItems > 0
-                ? round(($doneCount / $totalItems) * 100, 2)
-                : 0,
-        ];
-    })->values();
-
-    $dailyProgress = $checkins->map(function ($checkin) {
-        $totalItems = $checkin->items->count();
-        $doneItems = $checkin->items->where('is_done', true)->count();
-
-        return [
-            'date'                  => Carbon::parse($checkin->checkin_date)->format('Y-m-d'),
-            'total_items'           => $totalItems,
-            'done_items'            => $doneItems,
-            'completion_percentage' => $totalItems > 0
-                ? round(($doneItems / $totalItems) * 100, 2)
-                : 0,
-        ];
-    })->values();
-
-    $totalCheckins = $checkins->count();
-    $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
-    $totalDoneItems = $checkins->sum(
-        fn ($checkin) => $checkin->items->where('is_done', true)->count()
-    );
-
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Statistik kebiasaan siswa berhasil diambil.',
-        'data'    => [
-            'student' => [
-                'id'        => $student->id,
-                'full_name' => $student->full_name,
-                'username'  => $student->username,
-            ],
-            'period' => [
-                'start_date' => $startDate,
-                'end_date'   => $endDate,
-            ],
-            'summary' => [
-                'total_checkins'        => $totalCheckins,
-                'total_items'           => $totalItems,
-                'total_done_items'      => $totalDoneItems,
-                'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
-                'completion_percentage' => $totalItems > 0
-                    ? round(($totalDoneItems / $totalItems) * 100, 2)
-                    : 0,
-            ],
-            'habits'         => $habitStatistics,
-            'daily_progress' => $dailyProgress,
-        ],
-    ]);
-}
-
-public function teacherClassHabitStatistics(Request $request, int $classId)
-{
-    $teacher = $request->user();
-
-    $class = ClassRoom::query()
-        ->where('id', $classId)
-        ->where('teacher_id', $teacher->id)
-        ->first();
-
-    if (!$class) {
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'Kelas tidak ditemukan atau bukan kelas Anda.',
-            'data'    => null,
-        ], 404);
-    }
-
-    $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-    $endDate   = $request->query('end_date', now()->toDateString());
-
-    $studentIds = User::query()
-        ->where('class_id', $classId)
-        ->whereHas('role', fn ($query) => $query->where('name', 'siswa'))
-        ->pluck('id');
-
-    $checkins = DailyCheckin::query()
-        ->with(['items.habit'])
-        ->whereIn('student_id', $studentIds)
-        ->whereBetween('checkin_date', [$startDate, $endDate])
-        ->orderBy('checkin_date')
-        ->get();
-
-    $habits = Habit::active()->get();
-
-    $habitStatistics = $habits->map(function ($habit) use ($checkins) {
-        $items = $checkins
-            ->flatMap(fn ($checkin) => $checkin->items)
-            ->where('habit_id', $habit->id);
-
-        $totalItems = $items->count();
-        $doneCount = $items->where('is_done', true)->count();
-        $notDoneCount = max($totalItems - $doneCount, 0);
-
-        return [
-            'habit_id'       => $habit->id,
-            'habit_code'     => $habit->code,
-            'habit_name'     => $habit->name,
-            'sort_order'     => $habit->sort_order,
-            'total_items'    => $totalItems,
-            'done_count'     => $doneCount,
-            'not_done_count' => $notDoneCount,
-            'percentage'     => $totalItems > 0
-                ? round(($doneCount / $totalItems) * 100, 2)
-                : 0,
-        ];
-    })->values();
-
-    $dailyProgress = $checkins
-        ->groupBy(fn ($checkin) => Carbon::parse($checkin->checkin_date)->format('Y-m-d'))
-        ->map(function ($group, $date) {
-            $totalItems = $group->sum(fn ($checkin) => $checkin->items->count());
-
-            $doneItems = $group->sum(
-                fn ($checkin) => $checkin->items->where('is_done', true)->count()
-            );
+            $totalItems = $items->count();
+            $doneCount = $items->where('is_done', true)->count();
+            $notDoneCount = max($totalItems - $doneCount, 0);
 
             return [
-                'date'                  => $date,
-                'total_checkins'        => $group->count(),
-                'total_items'           => $totalItems,
-                'done_items'            => $doneItems,
-                'completion_percentage' => $totalItems > 0
-                    ? round(($doneItems / $totalItems) * 100, 2)
+                'habit_id'       => $habit->id,
+                'habit_code'     => $habit->code,
+                'habit_name'     => $habit->name,
+                'sort_order'     => $habit->sort_order,
+                'total_items'    => $totalItems,
+                'done_count'     => $doneCount,
+                'not_done_count' => $notDoneCount,
+                'percentage'     => $totalItems > 0
+                    ? round(($doneCount / $totalItems) * 100, 2)
                     : 0,
             ];
-        })
-        ->values();
+        })->values();
+    }
 
-    $totalCheckins = $checkins->count();
-    $totalItems = $checkins->sum(fn ($checkin) => $checkin->items->count());
-    $totalDoneItems = $checkins->sum(
-        fn ($checkin) => $checkin->items->where('is_done', true)->count()
-    );
-
-    $bestHabit = $habitStatistics
-        ->sortByDesc('percentage')
-        ->first();
-
-    $lowestHabit = $habitStatistics
-        ->sortBy('percentage')
-        ->first();
-
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Statistik kebiasaan kelas berhasil diambil.',
-        'data'    => [
-            'class' => [
-                'id'          => $class->id,
-                'name'        => $class->name,
-                'grade_level' => $class->grade_level,
-            ],
-            'period' => [
-                'start_date' => $startDate,
-                'end_date'   => $endDate,
-            ],
-            'summary' => [
-                'total_students'        => $studentIds->count(),
-                'total_checkins'        => $totalCheckins,
-                'total_items'           => $totalItems,
-                'total_done_items'      => $totalDoneItems,
-                'total_not_done_items'  => max($totalItems - $totalDoneItems, 0),
-                'completion_percentage' => $totalItems > 0
-                    ? round(($totalDoneItems / $totalItems) * 100, 2)
-                    : 0,
-                'best_habit'            => $bestHabit,
-                'lowest_habit'          => $lowestHabit,
-            ],
-            'habits'         => $habitStatistics,
-            'daily_progress' => $dailyProgress,
-        ],
-    ]);
-}
-    
     private function teacherCanAccessStudent(int $teacherId, int $studentId): bool
     {
         return User::query()
