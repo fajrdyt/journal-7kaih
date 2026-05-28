@@ -1236,9 +1236,9 @@ components:
     BasicSuccessResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1249,9 +1249,9 @@ components:
     BasicNullResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1263,9 +1263,9 @@ components:
     ErrorResponseSimple:
       type: object
       properties:
-        success:
-          type: boolean
-          example: false
+        status:
+          type: string
+          example: error
         message:
           type: string
           example: Unauthorized
@@ -1273,9 +1273,9 @@ components:
     ErrorResponseValidation:
       type: object
       properties:
-        success:
-          type: boolean
-          example: false
+        status:
+          type: string
+          example: error
         message:
           type: string
           example: Validation error
@@ -1652,9 +1652,9 @@ components:
     LoginSuccessResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Login successful
@@ -1676,9 +1676,9 @@ components:
     CurrentUserResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1688,9 +1688,9 @@ components:
     RolesResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1702,9 +1702,9 @@ components:
     HabitsResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1733,9 +1733,9 @@ components:
     ClassListResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1752,9 +1752,9 @@ components:
     StudentTodayCheckinResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Success
@@ -1826,9 +1826,9 @@ components:
     StudentCheckinDetailSaveResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Check-in saved successfully
@@ -1838,8 +1838,9 @@ components:
     StudentCheckinDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -1870,8 +1871,9 @@ components:
     StudentCheckinHistoryResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -1887,8 +1889,9 @@ components:
     ParentChildrenResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -1937,8 +1940,9 @@ components:
     ParentChildCheckinListResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -1954,8 +1958,9 @@ components:
     ParentCheckinDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -1969,8 +1974,9 @@ components:
     TeacherCheckinDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2008,9 +2014,9 @@ components:
     ValidateBatchResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Validation processed
@@ -2037,9 +2043,9 @@ components:
     ValidateItemResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
+        status:
+          type: string
+          example: success
         message:
           type: string
           example: Item validated
@@ -2055,8 +2061,9 @@ components:
     TeacherClassesResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2067,8 +2074,9 @@ components:
     TeacherClassStudentsResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2096,8 +2104,9 @@ components:
     TeacherClassCheckinsResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2157,8 +2166,9 @@ components:
     TeacherPeriodRecapResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2215,8 +2225,9 @@ components:
     StudentRecapResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2450,8 +2461,9 @@ components:
     AdminUsersListResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2533,8 +2545,9 @@ components:
     AdminUserDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2581,8 +2594,9 @@ components:
     AdminClassDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2623,8 +2637,9 @@ components:
     AdminStudentParentRelationsResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2640,8 +2655,9 @@ components:
     AdminStudentParentRelationDetailResponse:
       type: object
       properties:
-        success:
-          type: boolean
+        status:
+          type: string
+          example: success
         message:
           type: string
         data:
@@ -2663,3 +2679,4 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+
