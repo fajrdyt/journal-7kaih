@@ -135,8 +135,6 @@ class UserController extends Controller
 
         $todayTotalValidations = $todayParentValidations + $todayTeacherValidations;
 
-        // Setelah revisi validasi, 1 item yang is_done=true bisa divalidasi oleh 2 role:
-        // orang_tua dan guru.
         $pendingValidationItems = max(($todayDoneItems * 2) - $todayTotalValidations, 0);
 
         $recentCheckins = DailyCheckin::with(['student.classRoom'])
@@ -205,6 +203,22 @@ class UserController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $roleName = $this->getRoleName((int) $validated['role_id']);
+
+        $roleClassValidation = $this->validateAndNormalizeClassIdByRole(
+            roleName: $roleName,
+            classId: $validated['class_id'] ?? null
+        );
+
+        if ($roleClassValidation['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $roleClassValidation['message'],
+                'data'    => null,
+            ], 422);
+        }
+
+        $validated['class_id'] = $roleClassValidation['class_id'];
         $validated['name'] = $validated['name'] ?? $validated['full_name'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_active'] = $validated['is_active'] ?? true;
@@ -280,6 +294,28 @@ class UserController extends Controller
             'phone'     => ['nullable', 'string', 'max:20'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $roleId = $validated['role_id'] ?? $user->role_id;
+        $roleName = $this->getRoleName((int) $roleId);
+
+        $classId = array_key_exists('class_id', $validated)
+            ? $validated['class_id']
+            : $user->class_id;
+
+        $roleClassValidation = $this->validateAndNormalizeClassIdByRole(
+            roleName: $roleName,
+            classId: $classId
+        );
+
+        if ($roleClassValidation['error']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $roleClassValidation['message'],
+                'data'    => null,
+            ], 422);
+        }
+
+        $validated['class_id'] = $roleClassValidation['class_id'];
 
         if (isset($validated['full_name']) && !isset($validated['name'])) {
             $validated['name'] = $validated['full_name'];
@@ -685,5 +721,58 @@ class UserController extends Controller
                 $query->where('name', $roleName);
             })
             ->exists();
+    }
+
+    private function getRoleName(int $roleId): ?string
+    {
+        return Role::query()
+            ->where('id', $roleId)
+            ->value('name');
+    }
+
+    private function validateAndNormalizeClassIdByRole(?string $roleName, mixed $classId): array
+    {
+        if (!$roleName) {
+            return [
+                'error'    => true,
+                'message'  => 'Role tidak ditemukan.',
+                'class_id' => null,
+            ];
+        }
+
+        if ($roleName === 'siswa') {
+            if (empty($classId)) {
+                return [
+                    'error'    => true,
+                    'message'  => 'class_id wajib diisi untuk user dengan role siswa.',
+                    'class_id' => null,
+                ];
+            }
+
+            $classExists = ClassRoom::query()
+                ->where('id', $classId)
+                ->where('is_active', true)
+                ->exists();
+
+            if (!$classExists) {
+                return [
+                    'error'    => true,
+                    'message'  => 'class_id harus merupakan kelas yang aktif.',
+                    'class_id' => null,
+                ];
+            }
+
+            return [
+                'error'    => false,
+                'message'  => null,
+                'class_id' => (int) $classId,
+            ];
+        }
+
+        return [
+            'error'    => false,
+            'message'  => null,
+            'class_id' => null,
+        ];
     }
 }
