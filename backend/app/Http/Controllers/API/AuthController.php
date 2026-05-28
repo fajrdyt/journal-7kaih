@@ -16,33 +16,21 @@ class AuthController extends Controller
         protected AuthService $authService
     ) {}
 
-    /**
-     * POST /api/v1/auth/login
-     */
     public function login(LoginRequest $request)
     {
         return $this->authService->login($request);
     }
 
-    /**
-     * GET /api/v1/auth/me
-     */
     public function me(Request $request)
     {
         return $this->authService->me($request);
     }
 
-    /**
-     * POST /api/v1/auth/logout
-     */
     public function logout(Request $request)
     {
         return $this->authService->logout($request);
     }
 
-    /**
-     * GET /api/v1/profile
-     */
     public function profile(Request $request)
     {
         $user = $request->user()->load(['role', 'classRoom']);
@@ -54,9 +42,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/v1/profile
-     */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
@@ -93,9 +78,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/v1/profile/password
-     */
     public function updatePassword(Request $request)
     {
         $user = $request->user();
