@@ -42,6 +42,9 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    return next('/dashboard')
+  }
   next()
 })
 export default router
