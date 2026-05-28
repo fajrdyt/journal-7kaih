@@ -13,7 +13,7 @@ class AnalyticsService
             'user_id'    => $userId,
             'event_name' => $eventName,
             'properties' => $properties,
-            'created_at' => Carbon::now(),
+            'created_at' => now(),
         ]);
     }
 }
