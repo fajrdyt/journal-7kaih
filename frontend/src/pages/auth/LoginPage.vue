@@ -1,245 +1,163 @@
-<template>
-  <div class="login-page">
-    <div class="login-container">
-      <!-- LEFT SIDE -->
-      <div class="left-section">
-        <h2>Selamat Datang,</h2>
-
-        <div class="image-placeholder"></div>
-
-        <p>
-          Awali Pagimu <br />
-          Dengan Semangat!!!
-        </p>
-      </div>
-
-      <!-- RIGHT SIDE -->
-      <div class="right-section">
-        <!-- Logo -->
-        <div class="logo-wrapper">
-          <div class="diamond"></div>
-
-          <h1>
-            SMA N 1 MIRIT <br />
-            KEBUMEN
-          </h1>
-        </div>
-
-        <!-- Form -->
-        <div class="form-card">
-          <input type="text" placeholder="NISN" />
-
-          <input type="password" placeholder="Password" />
-
-          <button>Masuk</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
-// Vue 3 Composition API
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Eye, EyeOff } from 'lucide-vue-next'
+
+import { useAuthStore } from '../../stores/authStore'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const form = ref({
+  email: '',
+  password: '',
+})
+
+const errorMessage = ref('')
+const loading = ref(false)
+const showPassword = ref(false)
+
+async function handleLogin() {
+  errorMessage.value = ''
+  loading.value = true
+
+  try {
+    await authStore.login(form.value)
+
+    router.push('/dashboard')
+  } catch (error) {
+    errorMessage.value = 'Email atau password salah'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
-<style scoped>
-.login-page {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #ececec;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
+<template>
+  <div class="min-h-screen bg-[#EDEDED] flex items-center justify-center px-6 py-10">
+    
+    <!-- Container -->
+    <div
+      class="w-full max-w-6xl bg-white overflow-hidden shadow-lg grid grid-cols-1 md:grid-cols-2"
+    >
 
-.login-container {
-  width: 100%;
-  max-width: 1200px;
-  min-height: 650px;
-  background: #f5f5f5;
-  display: flex;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
+      <!-- LEFT -->
+      <div class="flex items-center justify-center px-12 py-16">
 
-/* =========================
-   LEFT
-========================= */
-.left-section {
-  width: 45%;
-  background: #d9d9d9;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 35px;
-  color: white;
-  padding: 30px;
-  box-sizing: border-box;
-}
+        <div class="w-full max-w-sm">
 
-.left-section h2 {
-  font-size: 32px;
-  font-weight: 600;
-  margin: 0;
-}
+          <h1 class="text-[42px] font-bold text-black leading-none">
+            Masuk
+          </h1>
 
-.image-placeholder {
-  width: 240px;
-  height: 320px;
-  border: 2px solid #a7a7a7;
-  position: relative;
-  background: #efefef;
-}
+          <p class="text-[#8A8A8A] text-sm mt-2 mb-12">
+            Masukkan detail akun kamu!
+          </p>
 
-.image-placeholder::before,
-.image-placeholder::after {
-  content: "";
-  position: absolute;
-  width: 2px;
-  height: 100%;
-  background: #a7a7a7;
-  top: 0;
-  left: 50%;
-  transform-origin: center;
-}
+          <form
+            class="space-y-8"
+            @submit.prevent="handleLogin"
+          >
 
-.image-placeholder::before {
-  transform: rotate(36deg);
-}
+            <!-- Username -->
+            <div>
+              <label class="block text-[18px] text-black mb-2">
+                Username
+              </label>
 
-.image-placeholder::after {
-  transform: rotate(-36deg);
-}
+              <input
+                v-model="form.email"
+                type="email"
+                class="w-full border-0 border-b border-[#A0A0A0] bg-transparent focus:ring-0 focus:border-black px-0 py-2 text-[16px]"
+              >
+            </div>
 
-.left-section p {
-  text-align: center;
-  font-size: 30px;
-  font-weight: 500;
-  line-height: 1.4;
-  margin: 0;
-}
+            <!-- Password -->
+            <div>
+              <label class="block text-[18px] text-black mb-2">
+                Password
+              </label>
 
-/* =========================
-   RIGHT
-========================= */
-.right-section {
-  width: 55%;
-  background: #f7f7f7;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 60px 40px 40px;
-  box-sizing: border-box;
-}
+              <div class="relative">
 
-.logo-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 25px;
-}
+                <input
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="w-full border-0 border-b border-[#A0A0A0] bg-transparent focus:ring-0 focus:border-black px-0 py-2 pr-10 text-[16px]"
+                >
 
-.diamond {
-  width: 110px;
-  height: 110px;
-  border: 2px solid #b0b0b0;
-  transform: rotate(45deg);
-}
+                <button
+                  type="button"
+                  class="absolute right-0 top-2 text-black"
+                  @click="showPassword = !showPassword"
+                >
+                  <EyeOff
+                    v-if="!showPassword"
+                    class="w-5 h-5"
+                  />
 
-.logo-wrapper h1 {
-  text-align: center;
-  color: #9a9a9a;
-  font-size: 30px;
-  line-height: 1.2;
-  letter-spacing: 2px;
-  font-weight: 600;
-  margin: 0;
-}
+                  <Eye
+                    v-else
+                    class="w-5 h-5"
+                  />
+                </button>
 
-/* =========================
-   FORM
-========================= */
-.form-card {
-  width: 100%;
-  max-width: 520px;
-  background: #d9d9d9;
-  border-radius: 18px;
-  padding: 35px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  box-sizing: border-box;
-}
+              </div>
+            </div>
 
-.form-card input {
-  width: 100%;
-  height: 52px;
-  border-radius: 10px;
-  border: 1px solid #bdbdbd;
-  padding: 0 18px;
-  font-size: 18px;
-  outline: none;
-  box-sizing: border-box;
-}
+            <!-- Error -->
+            <p
+              v-if="errorMessage"
+              class="text-red-500 text-sm"
+            >
+              {{ errorMessage }}
+            </p>
 
-.form-card input::placeholder {
-  color: #9a9a9a;
-}
+            <!-- Button -->
+            <button
+              type="submit"
+              :disabled="loading"
+              class="w-full h-[44px] bg-[#2196F3] hover:bg-[#1E88E5] rounded-md text-white text-[16px] font-medium transition-all"
+            >
+              {{ loading ? 'Loading...' : 'Masuk' }}
+            </button>
 
-.form-card button {
-  width: 150px;
-  height: 50px;
-  margin: 20px auto 0;
-  border: 1px solid #bdbdbd;
-  border-radius: 10px;
-  background: #f3f3f3;
-  color: #8d8d8d;
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-}
+          </form>
 
-.form-card button:hover {
-  background: #e5e5e5;
-}
+        </div>
 
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 900px) {
-  .login-container {
-    flex-direction: column;
-  }
+      </div>
 
-  .left-section,
-  .right-section {
-    width: 100%;
-  }
+      <!-- RIGHT -->
+      <div class="bg-[#2196F3] relative flex items-center justify-center overflow-hidden">
 
-  .left-section {
-    padding: 50px 20px;
-  }
+        <!-- Content -->
+        <div class="w-full max-w-md px-10 py-12 text-white">
 
-  .right-section {
-    gap: 50px;
-  }
+          <h2 class="text-[52px] font-bold leading-[1.05]">
+            Journal 7 <br>
+            Kebiasaan Anak <br>
+            Indonesia Hebat
+          </h2>
 
-  .left-section h2 {
-    font-size: 26px;
-  }
+          <p class="mt-4 text-[14px] text-blue-100">
+            Bangun Kebiasaan Baik, Ciptakan Generasi Hebat
+          </p>
 
-  .left-section p {
-    font-size: 24px;
-  }
+          <!-- Illustration -->
+          <div class="mt-10 flex justify-center">
+            <img
+              src="/images/login-illustration.png"
+              alt="Login Illustration"
+              class="w-full max-w-[360px] object-contain"
+            >
+          </div>
 
-  .logo-wrapper h1 {
-    font-size: 24px;
-  }
-}
-</style>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</template>
