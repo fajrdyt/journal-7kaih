@@ -11,6 +11,7 @@ use App\Http\Controllers\API\UserController;
 use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
 use App\Models\Role;
+use Illuminate\Validation\Rule;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API works!']);
@@ -48,26 +49,39 @@ Route::prefix('v1')->group(function () {
 
         // ── Analytics ─────────────────────────────────────────
         Route::post('/events/track', function (Request $request, AnalyticsService $analyticsService) {
-            $validated = $request->validate([
-                'event_name' => ['required', 'string', 'max:255'],
-                'properties' => ['nullable', 'array'],
-            ]);
+        $validated = $request->validate([
+            'event_name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::in([
+                    'dashboard_open',
+                    'profile_open',
+                    'report_open',
+                    'checkin_form_open',
+                    'recap_open',
+                    'habit_statistics_open',
+                ]),
+            ],
+            'properties' => ['nullable', 'array', 'max:20'],
+            'properties.*' => ['nullable'],
+        ]);
 
-            $event = $analyticsService->trackEvent(
-                userId: $request->user()->id,
-                eventName: $validated['event_name'],
-                properties: $validated['properties'] ?? null
-            );
+        $event = $analyticsService->trackEvent(
+            userId: $request->user()->id,
+            eventName: $validated['event_name'],
+            properties: $validated['properties'] ?? null
+        );
 
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Event berhasil dicatat.',
-                'data'    => [
-                    'id'         => $event->id,
-                    'user_id'    => $event->user_id,
-                    'event_name' => $event->event_name,
-                    'properties' => $event->properties,
-                    'created_at' => $event->created_at,
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Event berhasil dicatat.',
+            'data'    => [
+                'id'         => $event->id,
+                'user_id'    => $event->user_id,
+                'event_name' => $event->event_name,
+                'properties' => $event->properties,
+                'created_at' => $event->created_at,
                 ],
             ], 201);
         });
