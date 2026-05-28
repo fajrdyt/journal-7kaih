@@ -11,29 +11,32 @@ use Illuminate\Validation\Rule;
 
 class ClassController extends Controller
 {
-    /**
-     * GET /api/v1/classes
-     * GET /api/v1/admin/classes
-     */
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'search'      => ['nullable', 'string', 'max:255'],
+            'grade_level' => ['nullable', 'string', 'max:20'],
+            'is_active'   => ['nullable', 'boolean'],
+            'per_page'    => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = ClassRoom::with('teacher')
             ->orderBy('grade_level')
             ->orderBy('name');
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if (!empty($validated['search'])) {
+            $query->where('name', 'like', '%' . $validated['search'] . '%');
         }
 
-        if ($request->filled('grade_level')) {
-            $query->where('grade_level', $request->grade_level);
+        if (!empty($validated['grade_level'])) {
+            $query->where('grade_level', $validated['grade_level']);
         }
 
-        if ($request->has('is_active') && $request->is_active !== '') {
-            $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
+        if (array_key_exists('is_active', $validated)) {
+            $query->where('is_active', $validated['is_active']);
         }
 
-        $perPage = $request->integer('per_page', 10);
+        $perPage = $validated['per_page'] ?? 10;
         $classes = $query->paginate($perPage);
 
         return response()->json([
@@ -53,9 +56,6 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/v1/admin/classes
-     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -96,9 +96,6 @@ class ClassController extends Controller
         ], 201);
     }
 
-    /**
-     * GET /api/v1/admin/classes/{id}
-     */
     public function show(int $id): JsonResponse
     {
         $class = ClassRoom::with('teacher')->find($id);
@@ -118,9 +115,6 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/v1/admin/classes/{id}
-     */
     public function update(Request $request, int $id): JsonResponse
     {
         $class = ClassRoom::with('teacher')->find($id);
@@ -174,9 +168,6 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/v1/admin/classes/{id}
-     */
     public function destroy(int $id): JsonResponse
     {
         $class = ClassRoom::find($id);
@@ -189,7 +180,9 @@ class ClassController extends Controller
             ], 404);
         }
 
-        $hasStudents = User::where('class_id', $id)->exists();
+        $hasStudents = User::where('class_id', $id)
+            ->whereHas('role', fn ($query) => $query->where('name', 'siswa'))
+            ->exists();
 
         if ($hasStudents) {
             return response()->json([
@@ -208,9 +201,6 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/classes
-     */
     public function teacherClasses(Request $request): JsonResponse
     {
         $classes = ClassRoom::where('teacher_id', $request->user()->id)
@@ -230,11 +220,13 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/students
-     */
     public function classStudents(Request $request, int $classId): JsonResponse
     {
+        $validated = $request->validate([
+            'search'   => ['nullable', 'string', 'max:255'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $class = ClassRoom::where('id', $classId)
             ->where('teacher_id', $request->user()->id)
             ->firstOrFail();
@@ -243,11 +235,11 @@ class ClassController extends Controller
             ->whereHas('role', fn ($q) => $q->where('name', 'siswa'))
             ->orderBy('full_name');
 
-        if ($request->filled('search')) {
-            $query->where('full_name', 'like', '%' . $request->search . '%');
+        if (!empty($validated['search'])) {
+            $query->where('full_name', 'like', '%' . $validated['search'] . '%');
         }
 
-        $perPage = $request->integer('per_page', 10);
+        $perPage = $validated['per_page'] ?? 10;
         $students = $query->paginate($perPage);
 
         return response()->json([
@@ -279,101 +271,102 @@ class ClassController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/checkins
-     */
     public function classCheckins(Request $request, int $classId): JsonResponse
-{
-    $class = ClassRoom::where('id', $classId)
-        ->where('teacher_id', $request->user()->id)
-        ->firstOrFail();
+    {
+        $validated = $request->validate([
+            'date'     => ['nullable', 'date'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
 
-    $date = $request->date ?? today()->format('Y-m-d');
+        $class = ClassRoom::where('id', $classId)
+            ->where('teacher_id', $request->user()->id)
+            ->firstOrFail();
 
-    $students = User::where('class_id', $classId)
-        ->whereHas('role', fn ($q) => $q->where('name', 'siswa'))
-        ->with([
-            'checkins' => fn ($q) => $q->whereDate('checkin_date', $date)
-                ->with([
-                    'items.habit',
-                    'items.validations.validator',
-                ]),
-        ])
-        ->orderBy('full_name')
-        ->paginate($request->integer('per_page', 10));
+        $date = $validated['date'] ?? today()->format('Y-m-d');
+        $perPage = $validated['per_page'] ?? 10;
 
-    $items = $students->getCollection()->map(function ($student) {
-        $checkin = $student->checkins->first();
+        $students = User::where('class_id', $classId)
+            ->whereHas('role', fn ($q) => $q->where('name', 'siswa'))
+            ->with([
+                'checkins' => fn ($q) => $q->whereDate('checkin_date', $date)
+                    ->with([
+                        'items.habit',
+                        'items.validations.validator',
+                    ]),
+            ])
+            ->orderBy('full_name')
+            ->paginate($perPage);
 
-        $doneItems = $checkin
-            ? $checkin->items->where('is_done', true)
-            : collect();
+        $items = $students->getCollection()->map(function ($student) {
+            $checkin = $student->checkins->first();
 
-        $parentValidatedCount = $doneItems->sum(
-            fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
-        );
+            $doneItems = $checkin
+                ? $checkin->items->where('is_done', true)
+                : collect();
 
-        $teacherValidatedCount = $doneItems->sum(
-            fn ($item) => $item->validations->where('validator_role', 'guru')->count()
-        );
+            $parentValidatedCount = $doneItems->sum(
+                fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
+            );
 
-        $pendingTeacherValidationCount = $doneItems->filter(
-            fn ($item) => $item->validations->where('validator_role', 'guru')->count() === 0
-        )->count();
+            $teacherValidatedCount = $doneItems->sum(
+                fn ($item) => $item->validations->where('validator_role', 'guru')->count()
+            );
 
-        $pendingParentValidationCount = $doneItems->filter(
-            fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count() === 0
-        )->count();
+            $pendingTeacherValidationCount = $doneItems->filter(
+                fn ($item) => $item->validations->where('validator_role', 'guru')->count() === 0
+            )->count();
 
-        return [
-            'student_id'                       => $student->id,
-            'student_name'                     => $student->full_name,
-            'checked_in'                       => (bool) $checkin,
-            'daily_checkin_id'                 => $checkin?->id,
-            'total_habits_done'                => $doneItems->count(),
-            'total_items_validated'            => $parentValidatedCount + $teacherValidatedCount,
-            'parent_validated_items'           => $parentValidatedCount,
-            'teacher_validated_items'          => $teacherValidatedCount,
-            'parent_pending_validation_count'  => $pendingParentValidationCount,
-            'teacher_pending_validation_count' => $pendingTeacherValidationCount,
-        ];
-    });
+            $pendingParentValidationCount = $doneItems->filter(
+                fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count() === 0
+            )->count();
 
-    $totalStudents = $students->total();
-    $checkedInCount = $items->where('checked_in', true)->count();
+            return [
+                'student_id'                       => $student->id,
+                'student_name'                     => $student->full_name,
+                'checked_in'                       => (bool) $checkin,
+                'daily_checkin_id'                 => $checkin?->id,
+                'total_habits_done'                => $doneItems->count(),
+                'total_items_validated'            => $parentValidatedCount + $teacherValidatedCount,
+                'parent_validated_items'           => $parentValidatedCount,
+                'teacher_validated_items'          => $teacherValidatedCount,
+                'parent_pending_validation_count'  => $pendingParentValidationCount,
+                'teacher_pending_validation_count' => $pendingTeacherValidationCount,
+            ];
+        });
 
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Monitoring check-in berhasil diambil.',
-        'data'    => [
-            'class' => [
-                'id'          => $class->id,
-                'name'        => $class->name,
-                'grade_level' => $class->grade_level,
+        $totalStudents = $students->total();
+        $checkedInCount = $items->where('checked_in', true)->count();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Monitoring check-in berhasil diambil.',
+            'data'    => [
+                'class' => [
+                    'id'          => $class->id,
+                    'name'        => $class->name,
+                    'grade_level' => $class->grade_level,
+                ],
+                'date'    => $date,
+                'summary' => [
+                    'total_students'             => $totalStudents,
+                    'checked_in_count'           => $checkedInCount,
+                    'not_checked_in_count'       => $totalStudents - $checkedInCount,
+                    'total_done_items'           => $items->sum('total_habits_done'),
+                    'total_validated_items'      => $items->sum('total_items_validated'),
+                    'parent_validated_items'     => $items->sum('parent_validated_items'),
+                    'teacher_validated_items'    => $items->sum('teacher_validated_items'),
+                    'pending_validation_items'   => $items->sum('teacher_pending_validation_count'),
+                ],
+                'items'      => $items->values(),
+                'pagination' => [
+                    'page'        => $students->currentPage(),
+                    'per_page'    => $students->perPage(),
+                    'total'       => $students->total(),
+                    'total_pages' => $students->lastPage(),
+                ],
             ],
-            'date'    => $date,
-            'summary' => [
-                'total_students'             => $totalStudents,
-                'checked_in_count'           => $checkedInCount,
-                'not_checked_in_count'       => $totalStudents - $checkedInCount,
-                'total_done_items'           => $items->sum('total_habits_done'),
-                'total_validated_items'      => $items->sum('total_items_validated'),
-                'parent_validated_items'     => $items->sum('parent_validated_items'),
-                'teacher_validated_items'    => $items->sum('teacher_validated_items'),
-                'pending_validation_items'   => $items->sum('teacher_pending_validation_count'),
-            ],
-            'items'      => $items->values(),
-            'pagination' => [
-                'page'        => $students->currentPage(),
-                'per_page'    => $students->perPage(),
-                'total'       => $students->total(),
-                'total_pages' => $students->lastPage(),
-            ],
-        ],
-    ]);
-}
-
-    // ── Helper ────────────────────────────────────────────────
+        ]);
+    }
 
     private function formatClass(ClassRoom $class): array
     {
