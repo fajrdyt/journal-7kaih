@@ -13,13 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 
-Route::get('/test', function () {
-    return response()->json(['message' => 'API works!']);
-});
-
 Route::prefix('v1')->group(function () {
 
-    // ── Auth ──────────────────────────────────────────────────
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])
             ->middleware('throttle:10,1');
@@ -30,10 +25,8 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // ── Protected ─────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
-        // ── Master Data ───────────────────────────────────────
         Route::get('/roles', fn () => response()->json([
             'status'  => 'success',
             'message' => 'Daftar role berhasil diambil.',
@@ -43,12 +36,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/habits', [HabitController::class, 'index']);
         Route::get('/classes', [ClassController::class, 'index']);
 
-        // ── Profile ───────────────────────────────────────────
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::put('/profile/password', [AuthController::class, 'updatePassword']);
 
-        // ── Analytics ─────────────────────────────────────────
         Route::post('/events/track', function (Request $request, AnalyticsService $analyticsService) {
             $validated = $request->validate([
                 'event_name' => [
@@ -87,13 +78,10 @@ Route::prefix('v1')->group(function () {
             ], 201);
         })->middleware('throttle:30,1');
 
-        // ── Admin ─────────────────────────────────────────────
         Route::middleware('role:admin')->prefix('admin')->group(function () {
 
-            // Dashboard Summary
             Route::get('/dashboard-summary', [UserController::class, 'dashboardSummary']);
 
-            // User Management
             Route::get('/users', [UserController::class, 'index']);
             Route::post('/users', [UserController::class, 'store']);
             Route::get('/users/{id}', [UserController::class, 'show']);
@@ -101,14 +89,12 @@ Route::prefix('v1')->group(function () {
             Route::delete('/users/{id}', [UserController::class, 'destroy']);
             Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
 
-            // Class Management
             Route::get('/classes', [ClassController::class, 'index']);
             Route::post('/classes', [ClassController::class, 'store']);
             Route::get('/classes/{id}', [ClassController::class, 'show']);
             Route::put('/classes/{id}', [ClassController::class, 'update']);
             Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
 
-            // Student Parent Relation Management
             Route::get('/student-parent-relations', [UserController::class, 'studentParentRelations']);
             Route::post('/student-parent-relations', [UserController::class, 'storeStudentParentRelation']);
             Route::get('/student-parent-relations/{id}', [UserController::class, 'showStudentParentRelation']);
@@ -116,24 +102,20 @@ Route::prefix('v1')->group(function () {
             Route::delete('/student-parent-relations/{id}', [UserController::class, 'deleteStudentParentRelation']);
         });
 
-        // ── Student ───────────────────────────────────────────
         Route::middleware('role:siswa')->prefix('student')->group(function () {
             Route::get('/checkins/today', [CheckinController::class, 'today']);
             Route::get('/checkins', [CheckinController::class, 'index']);
             Route::post('/checkins', [CheckinController::class, 'store']);
             Route::get('/checkins/{id}', [CheckinController::class, 'show']);
 
-            // Report / Recap
             Route::get('/recap', [RecapController::class, 'personal']);
             Route::get('/habit-statistics', [RecapController::class, 'studentHabitStatistics']);
         });
 
-        // ── Parent ────────────────────────────────────────────
         Route::middleware('role:orang_tua')->prefix('parent')->group(function () {
             Route::get('/children', [ValidationController::class, 'children']);
             Route::get('/children/{studentId}/checkins', [ValidationController::class, 'childCheckins']);
 
-            // Report / Recap
             Route::get('/children/{studentId}/recap', [RecapController::class, 'childRecap']);
 
             Route::get('/checkins/{id}', [ValidationController::class, 'parentCheckinDetail']);
@@ -141,7 +123,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/checkin-items/{id}/validate', [ValidationController::class, 'validateHomeItem']);
         });
 
-        // ── Teacher ───────────────────────────────────────────
         Route::middleware('role:guru')->prefix('teacher')->group(function () {
             Route::get('/classes', [ClassController::class, 'teacherClasses']);
             Route::get('/classes/{classId}/students', [ClassController::class, 'classStudents']);
