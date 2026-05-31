@@ -7,6 +7,7 @@ use App\Models\DailyCheckinItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class CheckinService
@@ -97,6 +98,14 @@ class CheckinService
         $student = $request->user();
         $today = now()->toDateString();
 
+        if (Gate::forUser($student)->denies('create', DailyCheckin::class)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses untuk membuat check-in.',
+                'data'    => null,
+            ], 403);
+        }
+
         $checkinDate = isset($validated['checkin_date'])
             ? Carbon::parse($validated['checkin_date'])->toDateString()
             : $today;
@@ -114,6 +123,8 @@ class CheckinService
                 ->first();
 
             if ($checkin) {
+                Gate::forUser($student)->authorize('update', $checkin);
+
                 $checkin->update([
                     'notes'        => $validated['notes'] ?? null,
                     'submitted_at' => now(),
@@ -183,6 +194,14 @@ class CheckinService
                 'message' => 'Check-in tidak ditemukan.',
                 'data'    => null,
             ], 404);
+        }
+
+        if (Gate::forUser($student)->denies('view', $checkin)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses ke check-in ini.',
+                'data'    => null,
+            ], 403);
         }
 
         return response()->json([

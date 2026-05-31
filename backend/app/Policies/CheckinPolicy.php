@@ -11,7 +11,8 @@ class CheckinPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $this->hasAnyRole($user, ['siswa', 'orang_tua', 'guru', 'admin']);
+        return (bool) $user->is_active
+            && $this->hasAnyRole($user, ['siswa', 'orang_tua', 'guru', 'admin']);
     }
 
     public function view(User $user, DailyCheckin $checkin): bool
@@ -41,7 +42,8 @@ class CheckinPolicy
 
     public function create(User $user): bool
     {
-        return $user->is_active && $this->hasRole($user, 'siswa');
+        return (bool) $user->is_active
+            && $this->hasRole($user, 'siswa');
     }
 
     public function update(User $user, DailyCheckin $checkin): bool
@@ -64,12 +66,16 @@ class CheckinPolicy
 
     private function hasRole(User $user, string $role): bool
     {
-        return $user->role?->name === $role;
+        return $user->role()
+            ->where('name', $role)
+            ->exists();
     }
 
     private function hasAnyRole(User $user, array $roles): bool
     {
-        return in_array($user->role?->name, $roles, true);
+        return $user->role()
+            ->whereIn('name', $roles)
+            ->exists();
     }
 
     private function parentCanAccessStudent(int $parentId, int $studentId): bool
@@ -85,6 +91,7 @@ class CheckinPolicy
     {
         return User::query()
             ->where('id', $studentId)
+            ->whereNotNull('class_id')
             ->whereHas('classRoom', function ($query) use ($teacherId) {
                 $query->where('teacher_id', $teacherId);
             })

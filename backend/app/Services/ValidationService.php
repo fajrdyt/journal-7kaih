@@ -9,6 +9,7 @@ use App\Models\StudentParentRelation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ValidationService
 {
@@ -122,7 +123,7 @@ class ValidationService
             ], 404);
         }
 
-        if (!$this->parentCanAccessStudent($parent->id, $checkin->student_id)) {
+        if (Gate::forUser($parent)->denies('view-parent-checkin', $checkin)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses ke check-in ini.',
@@ -158,7 +159,7 @@ class ValidationService
             ], 404);
         }
 
-        if (!$this->teacherCanAccessStudent($teacher->id, $checkin->student_id)) {
+        if (Gate::forUser($teacher)->denies('view-teacher-checkin', $checkin)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses ke check-in siswa ini.',
@@ -194,7 +195,7 @@ class ValidationService
             ], 404);
         }
 
-        if (!$this->parentCanAccessStudent($parent->id, $checkin->student_id)) {
+        if (Gate::forUser($parent)->denies('validate-home', $checkin)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses untuk memvalidasi check-in ini.',
@@ -224,9 +225,9 @@ class ValidationService
             });
 
             return [
-                'requested_count'  => is_array($itemIds) ? count($itemIds) : null,
-                'validated_count'  => $validations->count(),
-                'skipped_count'    => is_array($itemIds)
+                'requested_count' => is_array($itemIds) ? count($itemIds) : null,
+                'validated_count' => $validations->count(),
+                'skipped_count'   => is_array($itemIds)
                     ? max(count($itemIds) - $validations->count(), 0)
                     : 0,
             ];
@@ -270,7 +271,7 @@ class ValidationService
             ], 404);
         }
 
-        if (!$this->teacherCanAccessStudent($teacher->id, $checkin->student_id)) {
+        if (Gate::forUser($teacher)->denies('validate-school', $checkin)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses untuk memvalidasi check-in siswa ini.',
@@ -300,9 +301,9 @@ class ValidationService
             });
 
             return [
-                'requested_count'  => is_array($itemIds) ? count($itemIds) : null,
-                'validated_count'  => $validations->count(),
-                'skipped_count'    => is_array($itemIds)
+                'requested_count' => is_array($itemIds) ? count($itemIds) : null,
+                'validated_count' => $validations->count(),
+                'skipped_count'   => is_array($itemIds)
                     ? max(count($itemIds) - $validations->count(), 0)
                     : 0,
             ];
@@ -324,7 +325,6 @@ class ValidationService
             ],
         ]);
     }
-
 
     public function validateHomeItem(Request $request, int $id)
     {
@@ -350,9 +350,7 @@ class ValidationService
             ], 422);
         }
 
-        $studentId = $item->dailyCheckin?->student_id;
-
-        if (!$studentId || !$this->parentCanAccessStudent($parent->id, $studentId)) {
+        if (Gate::forUser($parent)->denies('validate-home-item', $item)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses untuk memvalidasi item ini.',
@@ -376,9 +374,6 @@ class ValidationService
         ]);
     }
 
-    /**
-     * POST /api/v1/teacher/checkin-items/{id}/validate
-     */
     public function validateSchoolItem(Request $request, int $id)
     {
         $teacher = $request->user();
@@ -403,9 +398,7 @@ class ValidationService
             ], 422);
         }
 
-        $studentId = $item->dailyCheckin?->student_id;
-
-        if (!$studentId || !$this->teacherCanAccessStudent($teacher->id, $studentId)) {
+        if (Gate::forUser($teacher)->denies('validate-school-item', $item)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak memiliki akses untuk memvalidasi item ini.',

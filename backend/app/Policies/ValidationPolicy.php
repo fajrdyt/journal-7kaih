@@ -9,6 +9,16 @@ use App\Models\User;
 
 class ValidationPolicy
 {
+    public function viewParentCheckin(User $user, DailyCheckin $checkin): bool
+    {
+        return $this->validateHome($user, $checkin);
+    }
+
+    public function viewTeacherCheckin(User $user, DailyCheckin $checkin): bool
+    {
+        return $this->validateSchool($user, $checkin);
+    }
+
     public function validateHome(User $user, DailyCheckin $checkin): bool
     {
         if (!$user->is_active || !$this->hasRole($user, 'orang_tua')) {
@@ -24,7 +34,8 @@ class ValidationPolicy
             return false;
         }
 
-        $checkin = DailyCheckin::query()->find($item->daily_checkin_id);
+        $checkin = $item->dailyCheckin
+            ?: DailyCheckin::query()->find($item->daily_checkin_id);
 
         if (!$checkin) {
             return false;
@@ -48,7 +59,8 @@ class ValidationPolicy
             return false;
         }
 
-        $checkin = DailyCheckin::query()->find($item->daily_checkin_id);
+        $checkin = $item->dailyCheckin
+            ?: DailyCheckin::query()->find($item->daily_checkin_id);
 
         if (!$checkin) {
             return false;
@@ -57,19 +69,11 @@ class ValidationPolicy
         return $this->validateSchool($user, $checkin);
     }
 
-    public function viewParentCheckin(User $user, DailyCheckin $checkin): bool
-    {
-        return $this->validateHome($user, $checkin);
-    }
-
-    public function viewTeacherCheckin(User $user, DailyCheckin $checkin): bool
-    {
-        return $this->validateSchool($user, $checkin);
-    }
-
     private function hasRole(User $user, string $role): bool
     {
-        return $user->role?->name === $role;
+        return $user->role()
+            ->where('name', $role)
+            ->exists();
     }
 
     private function parentCanAccessStudent(int $parentId, int $studentId): bool
@@ -85,6 +89,7 @@ class ValidationPolicy
     {
         return User::query()
             ->where('id', $studentId)
+            ->whereNotNull('class_id')
             ->whereHas('classRoom', function ($query) use ($teacherId) {
                 $query->where('teacher_id', $teacherId);
             })
