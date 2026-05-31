@@ -2,38 +2,44 @@ openapi: 3.0.3
 info:
   title: 7KAIH MVP API - Revised Validation Model
   version: 2.0.0
-  description: |
-    API MVP untuk sistem 7 Kebiasaan Anak Indonesia Hebat (7KAIH).
+  description: 'API MVP untuk sistem 7 Kebiasaan Anak Indonesia Hebat (7KAIH).
+
 
     Revisi utama versi 2.0:
+
     - Validasi dilakukan pada level item kebiasaan, bukan hanya daily check-in.
+
     - Siswa tidak perlu mengirim konteks rumah/sekolah saat check-in.
+
     - Orang tua/wali memvalidasi item anak berdasarkan relasi aktif student_parent_relations.
+
     - Guru memvalidasi item siswa berdasarkan kelas yang dia ampu.
+
     - Satu item check-in dapat memiliki validasi terpisah dari orang tua dan guru.
+
     - Orang tua/wali juga dapat memonitor perkembangan anaknya.
+
     - Guru tetap menjadi aktor utama untuk monitoring kelas dan rekap.
 
+    '
 servers:
-  - url: /api/v1
-    description: Base API v1
-
+- url: /api/v1
+  description: Base API v1
 tags:
-  - name: Auth
-  - name: Master Data
-  - name: Student
-  - name: Parent
-  - name: Teacher
-  - name: Admin
-  - name: Analytics
-
+- name: Auth
+- name: Master Data
+- name: Student
+- name: Parent
+- name: Teacher
+- name: Admin
+- name: Analytics
 security:
-  - bearerAuth: []
-
+- bearerAuth: []
 paths:
   /auth/login:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Login user
       description: Digunakan oleh semua role.
       security: []
@@ -52,10 +58,12 @@ paths:
                 $ref: '#/components/schemas/LoginSuccessResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /auth/logout:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Logout user
       responses:
         '200':
@@ -66,10 +74,10 @@ paths:
                 $ref: '#/components/schemas/BasicNullResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /auth/me:
     get:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Ambil data user login
       responses:
         '200':
@@ -80,11 +88,10 @@ paths:
                 $ref: '#/components/schemas/CurrentUserResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-
   /profile:
     get:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Ambil profil user login
       description: Digunakan oleh semua role untuk melihat data profil sendiri.
       responses:
@@ -97,7 +104,8 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
     put:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Update profil user login
       description: Digunakan oleh semua role untuk mengubah data profil sendiri.
       requestBody:
@@ -117,10 +125,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /profile/password:
     put:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Update password user login
       description: Digunakan oleh semua role untuk mengubah password akun sendiri.
       requestBody:
@@ -140,10 +148,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /roles:
     get:
-      tags: [Master Data]
+      tags:
+      - Master Data
       summary: Ambil daftar role
       responses:
         '200':
@@ -154,10 +162,10 @@ paths:
                 $ref: '#/components/schemas/RolesResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /habits:
     get:
-      tags: [Master Data]
+      tags:
+      - Master Data
       summary: Ambil daftar 7 kebiasaan aktif
       responses:
         '200':
@@ -168,23 +176,25 @@ paths:
                 $ref: '#/components/schemas/HabitsResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /classes:
     get:
-      tags: [Master Data]
+      tags:
+      - Master Data
       summary: Ambil daftar kelas
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: is_active
-          schema:
-            type: integer
-            enum: [0, 1]
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
       responses:
         '200':
           description: Daftar kelas
@@ -194,14 +204,16 @@ paths:
                 $ref: '#/components/schemas/ClassListResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /student/checkins/today:
     get:
-      tags: [Student]
+      tags:
+      - Student
       summary: Ambil form check-in hari ini
-      description: |
-        Hanya role siswa. Mengambil daftar habits aktif, default context,
+      description: 'Hanya role siswa. Mengambil daftar habits aktif, default context,
+
         dan check-in hari ini jika sudah ada.
+
+        '
       responses:
         '200':
           description: Data form check-in hari ini
@@ -213,16 +225,16 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /student/checkins:
     get:
-      tags: [Student]
+      tags:
+      - Student
       summary: Ambil riwayat check-in siswa login
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Riwayat check-in siswa
@@ -235,17 +247,25 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
     post:
-      tags: [Student]
+      tags:
+      - Student
       summary: Create atau update daily check-in
-      description: |
-        Hanya role siswa. Bersifat upsert.
+      description: 'Hanya role siswa. Bersifat upsert.
+
         Satu siswa hanya boleh memiliki satu check-in per tanggal.
+
         Untuk MVP, checkin_date kosong berarti tanggal hari ini.
+
         Jika checkin_date dikirim, backend wajib memastikan tanggal tersebut adalah hari ini.
 
+
         Jika siswa mengubah item yang sudah tervalidasi:
+
         - perubahan notes tidak membatalkan validasi;
+
         - perubahan is_done pada item dapat membatalkan atau memerlukan ulang validasi item tersebut.
+
+        '
       requestBody:
         required: true
         content:
@@ -267,13 +287,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /student/checkins/{id}:
     get:
-      tags: [Student]
+      tags:
+      - Student
       summary: Ambil detail check-in siswa login
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Detail check-in siswa
@@ -287,14 +307,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /student/recap:
     get:
-      tags: [Student]
+      tags:
+      - Student
       summary: Ambil rekap personal siswa login
       parameters:
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Rekap personal siswa
@@ -306,17 +326,19 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /student/habit-statistics:
     get:
-      tags: [Student]
+      tags:
+      - Student
       summary: Ambil statistik kebiasaan siswa login
-      description: |
-        Hanya role siswa. Mengambil data statistik kebiasaan untuk grafik/progress laporan siswa.
+      description: 'Hanya role siswa. Mengambil data statistik kebiasaan untuk grafik/progress laporan siswa.
+
         Jika start_date dan end_date tidak dikirim, backend menggunakan periode bulan berjalan.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Statistik kebiasaan siswa berhasil diambil
@@ -328,10 +350,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /parent/children:
     get:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Ambil daftar anak orang tua login
       description: Hanya role orang_tua. Mengambil anak yang punya relasi aktif.
       responses:
@@ -345,23 +367,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /parent/children/{studentId}/checkins:
     get:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Ambil daftar check-in anak
       description: Orang tua hanya boleh melihat anak yang punya relasi aktif.
       parameters:
-        - $ref: '#/components/parameters/StudentIdPath'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
-        - in: query
-          name: validated
-          schema:
-            type: integer
-            enum: [0, 1]
+      - $ref: '#/components/parameters/StudentIdPath'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
+      - in: query
+        name: validated
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
       responses:
         '200':
           description: Daftar check-in anak
@@ -375,14 +399,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /parent/checkins/{id}:
     get:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Ambil detail check-in anak
       description: Orang tua hanya boleh melihat check-in anak yang punya relasi aktif.
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Detail check-in anak
@@ -396,21 +420,27 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /parent/checkins/{id}/validate-home:
     post:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Validasi batch item check-in oleh orang tua
-      description: |
-        Hanya role orang_tua. Endpoint ini memvalidasi item yang:
+      description: 'Hanya role orang_tua. Endpoint ini memvalidasi item yang:
+
         - milik anak dengan relasi aktif;
+
         - is_done = true.
 
+
         Backend menyimpan validasi dengan validator_role = orang_tua dan validation_source = rumah.
+
         Jika item_ids tidak dikirim, backend memvalidasi semua item is_done = true pada check-in tersebut.
+
         Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       requestBody:
         required: false
         content:
@@ -432,18 +462,22 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /parent/checkin-items/{id}/validate:
     post:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Validasi satu item check-in oleh orang tua
-      description: |
-        Hanya role orang_tua. Item harus is_done = true.
+      description: 'Hanya role orang_tua. Item harus is_done = true.
+
         Orang tua harus punya relasi aktif dengan siswa pemilik item.
+
         Backend menyimpan validasi dengan validator_role = orang_tua dan validation_source = rumah.
+
         Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Item berhasil divalidasi atau sudah tervalidasi
@@ -459,15 +493,15 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /parent/children/{studentId}/recap:
     get:
-      tags: [Parent]
+      tags:
+      - Parent
       summary: Ambil rekap anak untuk orang tua
       parameters:
-        - $ref: '#/components/parameters/StudentIdPath'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/StudentIdPath'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Rekap anak
@@ -481,10 +515,10 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/classes:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil daftar kelas guru login
       responses:
         '200':
@@ -497,20 +531,20 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /teacher/classes/{classId}/students:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil daftar siswa berdasarkan kelas
       description: Guru hanya boleh mengakses kelas yang dia ampu.
       parameters:
-        - $ref: '#/components/parameters/ClassIdPath'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - in: query
-          name: search
-          schema:
-            type: string
+      - $ref: '#/components/parameters/ClassIdPath'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - in: query
+        name: search
+        schema:
+          type: string
       responses:
         '200':
           description: Daftar siswa per kelas
@@ -524,35 +558,39 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/classes/{classId}/checkins:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Monitoring check-in per kelas
       description: Guru hanya boleh mengakses kelas yang dia ampu.
       parameters:
-        - $ref: '#/components/parameters/ClassIdPath'
-        - in: query
-          name: date
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: checked_in
-          schema:
-            type: integer
-            enum: [0, 1]
-        - in: query
-          name: validated
-          schema:
-            type: integer
-            enum: [0, 1]
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
+      - $ref: '#/components/parameters/ClassIdPath'
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: checked_in
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
+      - in: query
+        name: validated
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
           description: Monitoring check-in per kelas
@@ -566,14 +604,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/checkins/{id}:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil detail check-in siswa untuk guru
       description: Guru hanya boleh melihat check-in siswa dari kelas yang dia ampu.
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Detail check-in
@@ -587,21 +625,27 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/checkins/{id}/validate-school:
     post:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Validasi batch item check-in oleh guru
-      description: |
-        Hanya role guru. Endpoint ini memvalidasi item yang:
+      description: 'Hanya role guru. Endpoint ini memvalidasi item yang:
+
         - milik siswa pada kelas yang dia ampu;
+
         - is_done = true.
 
+
         Backend menyimpan validasi dengan validator_role = guru dan validation_source = sekolah.
+
         Jika item_ids tidak dikirim, backend memvalidasi semua item is_done = true pada check-in tersebut.
+
         Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       requestBody:
         required: false
         content:
@@ -623,18 +667,22 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /teacher/checkin-items/{id}/validate:
     post:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Validasi satu item check-in oleh guru
-      description: |
-        Hanya role guru. Item harus is_done = true.
+      description: 'Hanya role guru. Item harus is_done = true.
+
         Guru harus mengampu kelas siswa pemilik item.
+
         Backend menyimpan validasi dengan validator_role = guru dan validation_source = sekolah.
+
         Endpoint idempotent per kombinasi daily_checkin_item_id + validator_role.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Item berhasil divalidasi atau sudah tervalidasi
@@ -650,15 +698,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /teacher/classes/{classId}/weekly-recap:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil rekap mingguan per kelas
       parameters:
-        - $ref: '#/components/parameters/ClassIdPath'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/ClassIdPath'
+      - in: query
+        name: week
+        required: false
+        description: Tanggal acuan minggu, contoh 2026-05-20. Jika kosong, backend memakai minggu berjalan.
+        schema:
+          type: string
+          format: date
       responses:
         '200':
           description: Rekap mingguan kelas
@@ -672,21 +725,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/classes/{classId}/monthly-recap:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil rekap bulanan per kelas
       description: Mendukung status sudah_terbiasa atau belum_terbiasa dengan rule 2/3 hari periode.
       parameters:
-        - $ref: '#/components/parameters/ClassIdPath'
-        - in: query
-          name: month
-          required: true
-          description: Format YYYY-MM, contoh 2026-04.
-          schema:
-            type: string
-            pattern: '^\d{4}-\d{2}$'
+      - $ref: '#/components/parameters/ClassIdPath'
+      - in: query
+        name: month
+        required: false
+        description: Format YYYY-MM, contoh 2026-04. Jika kosong, backend memakai bulan berjalan.
+        schema:
+          type: string
+          pattern: ^\d{4}-\d{2}$
       responses:
         '200':
           description: Rekap bulanan kelas
@@ -700,19 +753,22 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/classes/{classId}/habit-statistics:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil statistik kebiasaan per kelas
-      description: |
-        Hanya role guru. Mengambil data statistik kebiasaan untuk grafik/progress laporan kelas.
+      description: 'Hanya role guru. Mengambil data statistik kebiasaan untuk grafik/progress laporan kelas.
+
         Guru hanya boleh mengakses kelas yang dia ampu.
+
         Jika start_date dan end_date tidak dikirim, backend menggunakan periode bulan berjalan.
+
+        '
       parameters:
-        - $ref: '#/components/parameters/ClassIdPath'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/ClassIdPath'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Statistik kebiasaan kelas berhasil diambil
@@ -726,16 +782,16 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /teacher/students/{studentId}/recap:
     get:
-      tags: [Teacher]
+      tags:
+      - Teacher
       summary: Ambil rekap detail siswa untuk guru
       description: Guru hanya boleh mengakses siswa dari kelas yang dia ampu.
       parameters:
-        - $ref: '#/components/parameters/StudentIdPath'
-        - $ref: '#/components/parameters/StartDate'
-        - $ref: '#/components/parameters/EndDate'
+      - $ref: '#/components/parameters/StudentIdPath'
+      - $ref: '#/components/parameters/StartDate'
+      - $ref: '#/components/parameters/EndDate'
       responses:
         '200':
           description: Rekap siswa
@@ -749,11 +805,10 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
-
   /admin/dashboard-summary:
     get:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Ambil ringkasan dashboard admin
       description: Ringkasan statistik utama untuk halaman Dashboard Admin.
       responses:
@@ -767,33 +822,35 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-
   /admin/users:
     get:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Ambil daftar user
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - in: query
-          name: role
-          schema:
-            type: string
-            enum: [siswa, orang_tua, guru, admin]
-        - in: query
-          name: class_id
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: is_active
-          schema:
-            type: integer
-            enum: [0, 1]
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - in: query
+        name: role_id
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: class_id
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
       responses:
         '200':
           description: Daftar user
@@ -806,7 +863,8 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
     post:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Buat user baru
       requestBody:
         required: true
@@ -829,13 +887,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /admin/users/{id}:
     get:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Ambil detail user
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Detail user
@@ -850,10 +908,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Update user
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       requestBody:
         required: true
         content:
@@ -878,10 +937,11 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
     delete:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Soft delete user
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: User berhasil dihapus
@@ -895,13 +955,13 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /admin/users/{id}/reset-password:
     post:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Reset password user
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       requestBody:
         required: true
         content:
@@ -914,7 +974,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BasicNullResponse'
+                $ref: '#/components/schemas/AdminUserDetailResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -923,23 +983,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /admin/classes:
     get:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Ambil daftar kelas untuk admin
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: is_active
-          schema:
-            type: integer
-            enum: [0, 1]
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
       responses:
         '200':
           description: Daftar kelas
@@ -952,7 +1014,8 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
     post:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Buat kelas baru
       description: Jika teacher_id diisi, backend wajib memastikan user tersebut role guru.
       requestBody:
@@ -974,14 +1037,33 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /admin/classes/{id}:
+    get:
+      tags:
+      - Admin
+      summary: Ambil detail kelas
+      parameters:
+      - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Detail kelas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminClassDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     put:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Update kelas
       description: Jika teacher_id diisi, backend wajib memastikan user tersebut role guru.
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       requestBody:
         required: true
         content:
@@ -1004,10 +1086,11 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
     delete:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Soft delete kelas
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Kelas berhasil dihapus
@@ -1021,29 +1104,31 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /admin/student-parent-relations:
     get:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Ambil daftar relasi siswa-orang tua
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-        - in: query
-          name: student_id
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: parent_id
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: is_active
-          schema:
-            type: integer
-            enum: [0, 1]
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      - in: query
+        name: student_id
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: parent_id
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: is_active
+        schema:
+          type: integer
+          enum:
+          - 0
+          - 1
       responses:
         '200':
           description: Daftar relasi
@@ -1056,13 +1141,18 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
     post:
-      tags: [Admin]
+      tags:
+      - Admin
       summary: Buat relasi siswa-orang tua
-      description: |
-        Backend wajib memastikan:
+      description: 'Backend wajib memastikan:
+
         - student_id adalah role siswa;
+
         - parent_id adalah role orang_tua;
+
         - kombinasi student_id dan parent_id belum ada.
+
+        '
       requestBody:
         required: true
         content:
@@ -1084,13 +1174,68 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /admin/student-parent-relations/{id}:
-    delete:
-      tags: [Admin]
-      summary: Soft delete relasi siswa-orang tua
+    get:
+      tags:
+      - Admin
+      summary: Ambil detail relasi siswa-orang tua
       parameters:
-        - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Detail relasi siswa-orang tua
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStudentParentRelationDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Admin
+      summary: Update relasi siswa-orang tua
+      description: 'Backend wajib memastikan:
+
+        - student_id adalah role siswa;
+
+        - parent_id adalah role orang_tua;
+
+        - kombinasi student_id dan parent_id tidak duplikat dengan relasi lain.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateStudentParentRelationRequest'
+      responses:
+        '200':
+          description: Relasi berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStudentParentRelationDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - Admin
+      summary: Hapus relasi siswa-orang tua
+      parameters:
+      - $ref: '#/components/parameters/IdPath'
       responses:
         '200':
           description: Relasi berhasil dihapus
@@ -1104,10 +1249,10 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /events/track:
     post:
-      tags: [Analytics]
+      tags:
+      - Analytics
       summary: Track analytics event
       description: Opsional. Pada MVP event utama sebaiknya juga dicatat otomatis dari backend.
       requestBody:
@@ -1117,24 +1262,24 @@ paths:
             schema:
               $ref: '#/components/schemas/TrackEventRequest'
       responses:
-        '200':
+        '201':
           description: Event berhasil dicatat
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BasicSuccessResponse'
+                $ref: '#/components/schemas/TrackEventResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '422':
           $ref: '#/components/responses/ValidationError'
-
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   parameters:
     IdPath:
       in: path
@@ -1184,7 +1329,6 @@ components:
       schema:
         type: string
         format: date
-
   responses:
     Unauthorized:
       description: Unauthorized
@@ -1216,23 +1360,33 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponseValidation'
-
+    TooManyRequests:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponseSimple'
   schemas:
     ValidationSource:
       type: string
-      enum: [rumah, sekolah]
+      enum:
+      - rumah
+      - sekolah
       example: rumah
-
     ValidatorRole:
       type: string
-      enum: [orang_tua, guru]
+      enum:
+      - orang_tua
+      - guru
       example: guru
-
     RoleName:
       type: string
-      enum: [siswa, orang_tua, guru, admin]
+      enum:
+      - siswa
+      - orang_tua
+      - guru
+      - admin
       example: siswa
-
     BasicSuccessResponse:
       type: object
       properties:
@@ -1245,7 +1399,6 @@ components:
         data:
           type: object
           nullable: true
-
     BasicNullResponse:
       type: object
       properties:
@@ -1259,7 +1412,6 @@ components:
           type: object
           nullable: true
           example: null
-
     ErrorResponseSimple:
       type: object
       properties:
@@ -1269,7 +1421,6 @@ components:
         message:
           type: string
           example: Unauthorized
-
     ErrorResponseValidation:
       type: object
       properties:
@@ -1285,7 +1436,6 @@ components:
             type: array
             items:
               type: string
-
     PaginationMeta:
       type: object
       properties:
@@ -1301,7 +1451,6 @@ components:
         total_pages:
           type: integer
           example: 10
-
     Role:
       type: object
       properties:
@@ -1311,7 +1460,6 @@ components:
           example: 1
         name:
           $ref: '#/components/schemas/RoleName'
-
     ClassRef:
       type: object
       nullable: true
@@ -1326,7 +1474,6 @@ components:
         grade_level:
           type: string
           example: '7'
-
     UserRef:
       type: object
       properties:
@@ -1337,7 +1484,6 @@ components:
         full_name:
           type: string
           example: Budi Santoso
-
     TeacherRef:
       type: object
       nullable: true
@@ -1349,7 +1495,6 @@ components:
         full_name:
           type: string
           example: Ibu Sari
-
     UserSummary:
       type: object
       properties:
@@ -1371,9 +1516,7 @@ components:
         class:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/ClassRef'
-
-
+          - $ref: '#/components/schemas/ClassRef'
     ProfileData:
       type: object
       properties:
@@ -1394,19 +1537,18 @@ components:
         phone:
           type: string
           nullable: true
-          example: '081234567890'
+          example: 081234567890
         is_active:
           type: boolean
           example: true
         role:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/Role'
+          - $ref: '#/components/schemas/Role'
         class:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/ClassRef'
-
+          - $ref: '#/components/schemas/ClassRef'
     ProfileResponse:
       type: object
       properties:
@@ -1418,7 +1560,6 @@ components:
           example: Profil berhasil diambil.
         data:
           $ref: '#/components/schemas/ProfileData'
-
     UpdateProfileRequest:
       type: object
       properties:
@@ -1439,11 +1580,13 @@ components:
           type: string
           nullable: true
           maxLength: 20
-          example: '081234567890'
-
+          example: 081234567890
     UpdatePasswordRequest:
       type: object
-      required: [current_password, new_password, new_password_confirmation]
+      required:
+      - current_password
+      - new_password
+      - new_password_confirmation
       properties:
         current_password:
           type: string
@@ -1456,7 +1599,6 @@ components:
           type: string
           minLength: 8
           example: passwordbaru123
-
     AdminDashboardSummaryResponse:
       type: object
       properties:
@@ -1550,7 +1692,7 @@ components:
                   class:
                     nullable: true
                     allOf:
-                      - $ref: '#/components/schemas/ClassRef'
+                    - $ref: '#/components/schemas/ClassRef'
                   checkin_date:
                     type: string
                     format: date
@@ -1559,7 +1701,6 @@ components:
                     type: string
                     format: date-time
                     nullable: true
-
     Habit:
       type: object
       properties:
@@ -1576,7 +1717,6 @@ components:
         sort_order:
           type: integer
           example: 1
-
     ValidationDetail:
       type: object
       properties:
@@ -1588,9 +1728,6 @@ components:
           type: integer
           format: int64
           example: 55
-        validator_name:
-          type: string
-          example: Bapak Ahmad
         validator_role:
           $ref: '#/components/schemas/ValidatorRole'
         validation_source:
@@ -1598,10 +1735,22 @@ components:
         validated_at:
           type: string
           format: date-time
-
+        validator:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              format: int64
+            full_name:
+              type: string
+            username:
+              type: string
     CheckinItemRequest:
       type: object
-      required: [habit_id, is_done]
+      required:
+      - habit_id
+      - is_done
       properties:
         habit_id:
           type: integer
@@ -1610,7 +1759,6 @@ components:
         is_done:
           type: boolean
           example: true
-
     CheckinItemDetail:
       type: object
       properties:
@@ -1623,12 +1771,22 @@ components:
           type: integer
           format: int64
           example: 1
-        habit_code:
-          type: string
-          example: BANGUN_PAGI
-        habit_name:
-          type: string
-          example: Bangun Pagi
+        habit:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              format: int64
+            code:
+              type: string
+              example: BANGUN_PAGI
+            name:
+              type: string
+              example: Bangun Pagi
+            sort_order:
+              type: integer
+              example: 1
         is_done:
           type: boolean
           example: true
@@ -1636,10 +1794,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ValidationDetail'
-
     LoginRequest:
       type: object
-      required: [identifier, password]
+      required:
+      - identifier
+      - password
       properties:
         identifier:
           type: string
@@ -1648,7 +1807,6 @@ components:
           type: string
           format: password
           example: secret123
-
     LoginSuccessResponse:
       type: object
       properties:
@@ -1657,7 +1815,7 @@ components:
           example: success
         message:
           type: string
-          example: Login successful
+          example: Login berhasil.
         data:
           type: object
           properties:
@@ -1667,12 +1825,8 @@ components:
             token_type:
               type: string
               example: Bearer
-            expires_in:
-              type: integer
-              example: 86400
             user:
               $ref: '#/components/schemas/UserSummary'
-
     CurrentUserResponse:
       type: object
       properties:
@@ -1681,10 +1835,9 @@ components:
           example: success
         message:
           type: string
-          example: Success
+          example: Data user berhasil diambil.
         data:
           $ref: '#/components/schemas/UserSummary'
-
     RolesResponse:
       type: object
       properties:
@@ -1698,7 +1851,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
-
     HabitsResponse:
       type: object
       properties:
@@ -1712,7 +1864,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Habit'
-
     ClassListItem:
       type: object
       properties:
@@ -1728,8 +1879,7 @@ components:
         teacher:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/TeacherRef'
-
+          - $ref: '#/components/schemas/TeacherRef'
     ClassListResponse:
       type: object
       properties:
@@ -1748,7 +1898,6 @@ components:
                 $ref: '#/components/schemas/ClassListItem'
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     StudentTodayCheckinResponse:
       type: object
       properties:
@@ -1771,11 +1920,11 @@ components:
             checkin:
               nullable: true
               allOf:
-                - $ref: '#/components/schemas/CheckinDetail'
-
+              - $ref: '#/components/schemas/CheckinDetail'
     StudentCheckinUpsertRequest:
       type: object
-      required: [items]
+      required:
+      - items
       properties:
         checkin_date:
           type: string
@@ -1792,7 +1941,6 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/CheckinItemRequest'
-
     CheckinDetail:
       type: object
       properties:
@@ -1811,18 +1959,21 @@ components:
         submitted_at:
           type: string
           format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
         updated_at:
           type: string
           format: date-time
-        total_habits_done:
-          type: integer
-        total_items_validated:
-          type: integer
+          nullable: true
+        summary:
+          $ref: '#/components/schemas/CheckinSummary'
         items:
           type: array
           items:
             $ref: '#/components/schemas/CheckinItemDetail'
-
     StudentCheckinDetailSaveResponse:
       type: object
       properties:
@@ -1834,7 +1985,6 @@ components:
           example: Check-in saved successfully
         data:
           $ref: '#/components/schemas/CheckinDetail'
-
     StudentCheckinDetailResponse:
       type: object
       properties:
@@ -1845,7 +1995,6 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/CheckinDetail'
-
     StudentCheckinHistoryItem:
       type: object
       properties:
@@ -1867,7 +2016,6 @@ components:
         teacher_validated_items:
           type: integer
           example: 2
-
     StudentCheckinHistoryResponse:
       type: object
       properties:
@@ -1885,7 +2033,6 @@ components:
                 $ref: '#/components/schemas/StudentCheckinHistoryItem'
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     ParentChildrenResponse:
       type: object
       properties:
@@ -1907,7 +2054,7 @@ components:
               class:
                 nullable: true
                 allOf:
-                  - $ref: '#/components/schemas/ClassRef'
+                - $ref: '#/components/schemas/ClassRef'
               relation_type:
                 type: string
                 example: ayah
@@ -1915,7 +2062,6 @@ components:
                 type: string
                 format: date
                 nullable: true
-
     ParentChildCheckinListItem:
       type: object
       properties:
@@ -1936,7 +2082,6 @@ components:
           type: integer
         teacher_validated_items:
           type: integer
-
     ParentChildCheckinListResponse:
       type: object
       properties:
@@ -1954,7 +2099,6 @@ components:
                 $ref: '#/components/schemas/ParentChildCheckinListItem'
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     ParentCheckinDetailResponse:
       type: object
       properties:
@@ -1965,12 +2109,11 @@ components:
           type: string
         data:
           allOf:
-            - $ref: '#/components/schemas/CheckinDetail'
-            - type: object
-              properties:
-                student:
-                  $ref: '#/components/schemas/StudentRefWithClass'
-
+          - $ref: '#/components/schemas/CheckinDetail'
+          - type: object
+            properties:
+              student:
+                $ref: '#/components/schemas/StudentRefWithClass'
     TeacherCheckinDetailResponse:
       type: object
       properties:
@@ -1981,12 +2124,11 @@ components:
           type: string
         data:
           allOf:
-            - $ref: '#/components/schemas/CheckinDetail'
-            - type: object
-              properties:
-                student:
-                  $ref: '#/components/schemas/StudentRefWithClass'
-
+          - $ref: '#/components/schemas/CheckinDetail'
+          - type: object
+            properties:
+              student:
+                $ref: '#/components/schemas/StudentRefWithClass'
     StudentRefWithClass:
       type: object
       properties:
@@ -1998,8 +2140,7 @@ components:
         class:
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/ClassRef'
-
+          - $ref: '#/components/schemas/ClassRef'
     ValidateBatchRequest:
       type: object
       properties:
@@ -2010,7 +2151,6 @@ components:
           items:
             type: integer
             format: int64
-
     ValidateBatchResponse:
       type: object
       properties:
@@ -2019,27 +2159,32 @@ components:
           example: success
         message:
           type: string
-          example: Validation processed
+          example: Validasi berhasil diproses.
         data:
           type: object
           properties:
             daily_checkin_id:
               type: integer
               format: int64
-            validated_count:
-              type: integer
-              example: 3
-            already_validated_count:
-              type: integer
-              example: 1
-            skipped_count:
-              type: integer
-              example: 0
+            summary:
+              type: object
+              properties:
+                requested_count:
+                  type: integer
+                  example: 1
+                validated_count:
+                  type: integer
+                  example: 1
+                already_validated_count:
+                  type: integer
+                  example: 0
+                skipped_count:
+                  type: integer
+                  example: 0
             validations:
               type: array
               items:
                 $ref: '#/components/schemas/ValidationDetail'
-
     ValidateItemResponse:
       type: object
       properties:
@@ -2057,7 +2202,6 @@ components:
             already_validated:
               type: boolean
               example: false
-
     TeacherClassesResponse:
       type: object
       properties:
@@ -2070,7 +2214,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ClassRef'
-
     TeacherClassStudentsResponse:
       type: object
       properties:
@@ -2100,7 +2243,6 @@ components:
                     nullable: true
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     TeacherClassCheckinsResponse:
       type: object
       properties:
@@ -2162,7 +2304,6 @@ components:
                     type: integer
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     TeacherPeriodRecapResponse:
       type: object
       properties:
@@ -2175,7 +2316,20 @@ components:
           type: object
           properties:
             class:
-              $ref: '#/components/schemas/ClassRef'
+              allOf:
+              - $ref: '#/components/schemas/ClassRef'
+              properties:
+                teacher:
+                  type: object
+                  nullable: true
+                  properties:
+                    id:
+                      type: integer
+                      format: int64
+                    full_name:
+                      type: string
+                    username:
+                      type: string
             period:
               $ref: '#/components/schemas/Period'
             summary:
@@ -2189,39 +2343,22 @@ components:
                   type: integer
                 total_validated_items:
                   type: integer
-                average_checkin_rate:
-                  type: number
-                  format: float
-                average_validation_rate:
-                  type: number
-                  format: float
+                parent_validated_items:
+                  type: integer
+                teacher_validated_items:
+                  type: integer
+                pending_validation_items:
+                  type: integer
             students:
               type: array
               items:
                 type: object
                 properties:
-                  student_id:
-                    type: integer
-                    format: int64
-                  student_name:
-                    type: string
-                  total_checkin_days:
-                    type: integer
-                  total_habits_done:
-                    type: integer
-                  total_validated_items:
-                    type: integer
-                  habit_completion_percentage:
-                    type: number
-                    format: float
-                  validation_percentage:
-                    type: number
-                    format: float
-                  habits:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/HabitRecapItem'
-
+                  student:
+                    type: object
+                    nullable: true
+                  summary:
+                    $ref: '#/components/schemas/StudentRecapSummary'
     StudentRecapResponse:
       type: object
       properties:
@@ -2235,38 +2372,31 @@ components:
           properties:
             student:
               type: object
+              nullable: true
               properties:
                 id:
                   type: integer
                   format: int64
                 full_name:
                   type: string
+                username:
+                  type: string
+                class:
+                  nullable: true
+                  allOf:
+                  - $ref: '#/components/schemas/ClassRef'
             period:
               $ref: '#/components/schemas/Period'
             summary:
-              type: object
-              properties:
-                total_checkin_days:
-                  type: integer
-                total_habits_done:
-                  type: integer
-                total_validated_items:
-                  type: integer
-                parent_validated_items:
-                  type: integer
-                teacher_validated_items:
-                  type: integer
-                habit_completion_percentage:
-                  type: number
-                  format: float
-                validation_percentage:
-                  type: number
-                  format: float
-            habits:
+              $ref: '#/components/schemas/StudentRecapSummary'
+            habit_summary:
               type: array
               items:
-                $ref: '#/components/schemas/HabitRecapItem'
-
+                $ref: '#/components/schemas/StudentRecapHabitSummaryItem'
+            daily_checkins:
+              type: array
+              items:
+                $ref: '#/components/schemas/StudentDailyCheckinRecapItem'
     Period:
       type: object
       properties:
@@ -2276,9 +2406,6 @@ components:
         end_date:
           type: string
           format: date
-        total_days:
-          type: integer
-
     HabitRecapItem:
       type: object
       properties:
@@ -2302,10 +2429,11 @@ components:
           format: float
         habitual_status:
           type: string
-          enum: [sudah_terbiasa, belum_terbiasa]
+          enum:
+          - sudah_terbiasa
+          - belum_terbiasa
           nullable: true
           description: Diisi terutama untuk rekap bulanan menggunakan rule 2/3 hari periode.
-
     HabitStatisticItem:
       type: object
       properties:
@@ -2335,7 +2463,6 @@ components:
           type: number
           format: float
           example: 90.0
-
     DailyProgressItem:
       type: object
       properties:
@@ -2357,7 +2484,6 @@ components:
           type: number
           format: float
           example: 85.71
-
     HabitStatisticsSummary:
       type: object
       properties:
@@ -2377,7 +2503,6 @@ components:
           type: number
           format: float
           example: 71.43
-
     StudentHabitStatisticsResponse:
       type: object
       properties:
@@ -2415,7 +2540,6 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/DailyProgressItem'
-
     TeacherClassHabitStatisticsResponse:
       type: object
       properties:
@@ -2434,20 +2558,20 @@ components:
               $ref: '#/components/schemas/Period'
             summary:
               allOf:
-                - $ref: '#/components/schemas/HabitStatisticsSummary'
-                - type: object
-                  properties:
-                    total_students:
-                      type: integer
-                      example: 30
-                    best_habit:
-                      nullable: true
-                      allOf:
-                        - $ref: '#/components/schemas/HabitStatisticItem'
-                    lowest_habit:
-                      nullable: true
-                      allOf:
-                        - $ref: '#/components/schemas/HabitStatisticItem'
+              - $ref: '#/components/schemas/HabitStatisticsSummary'
+              - type: object
+                properties:
+                  total_students:
+                    type: integer
+                    example: 30
+                  best_habit:
+                    nullable: true
+                    allOf:
+                    - $ref: '#/components/schemas/HabitStatisticItem'
+                  lowest_habit:
+                    nullable: true
+                    allOf:
+                    - $ref: '#/components/schemas/HabitStatisticItem'
             habits:
               type: array
               items:
@@ -2456,8 +2580,6 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/DailyProgressItem'
-
-
     AdminUsersListResponse:
       type: object
       properties:
@@ -2473,17 +2595,21 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/UserSummary'
-                  - type: object
-                    properties:
-                      is_active:
-                        type: boolean
+                - $ref: '#/components/schemas/UserSummary'
+                - type: object
+                  properties:
+                    is_active:
+                      type: boolean
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     AdminCreateUserRequest:
       type: object
-      required: [role_id, full_name, username, email, password]
+      required:
+      - role_id
+      - full_name
+      - username
+      - email
+      - password
       properties:
         role_id:
           type: integer
@@ -2508,10 +2634,8 @@ components:
         is_active:
           type: boolean
           default: true
-
     AdminUpdateUserRequest:
       type: object
-      required: [role_id, full_name, username, email]
       properties:
         role_id:
           type: integer
@@ -2532,16 +2656,15 @@ components:
           nullable: true
         is_active:
           type: boolean
-
     AdminResetPasswordRequest:
       type: object
-      required: [password]
+      required:
+      - password
       properties:
         password:
           type: string
           format: password
           minLength: 8
-
     AdminUserDetailResponse:
       type: object
       properties:
@@ -2552,15 +2675,16 @@ components:
           type: string
         data:
           allOf:
-            - $ref: '#/components/schemas/UserSummary'
-            - type: object
-              properties:
-                is_active:
-                  type: boolean
-
+          - $ref: '#/components/schemas/UserSummary'
+          - type: object
+            properties:
+              is_active:
+                type: boolean
     AdminCreateClassRequest:
       type: object
-      required: [name, grade_level]
+      required:
+      - name
+      - grade_level
       properties:
         name:
           type: string
@@ -2575,10 +2699,8 @@ components:
         is_active:
           type: boolean
           default: true
-
     AdminUpdateClassRequest:
       type: object
-      required: [name, grade_level]
       properties:
         name:
           type: string
@@ -2590,7 +2712,6 @@ components:
           nullable: true
         is_active:
           type: boolean
-
     AdminClassDetailResponse:
       type: object
       properties:
@@ -2601,10 +2722,12 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/ClassListItem'
-
     AdminCreateStudentParentRelationRequest:
       type: object
-      required: [student_id, parent_id, relation_type]
+      required:
+      - student_id
+      - parent_id
+      - relation_type
       properties:
         student_id:
           type: integer
@@ -2618,7 +2741,6 @@ components:
         is_active:
           type: boolean
           default: true
-
     StudentParentRelationItem:
       type: object
       properties:
@@ -2633,7 +2755,6 @@ components:
           type: string
         is_active:
           type: boolean
-
     AdminStudentParentRelationsResponse:
       type: object
       properties:
@@ -2651,7 +2772,6 @@ components:
                 $ref: '#/components/schemas/StudentParentRelationItem'
             pagination:
               $ref: '#/components/schemas/PaginationMeta'
-
     AdminStudentParentRelationDetailResponse:
       type: object
       properties:
@@ -2662,21 +2782,157 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/StudentParentRelationItem'
-
     TrackEventRequest:
       type: object
-      required: [event_name]
+      required:
+      - event_name
       properties:
         event_name:
           type: string
+          maxLength: 100
           enum:
-            - login_success
-            - daily_checkin_submit
-            - parent_validation
-            - teacher_validation
-            - dashboard_open
+          - dashboard_open
+          - profile_open
+          - report_open
+          - checkin_form_open
+          - recap_open
+          - habit_statistics_open
+          example: dashboard_open
         properties:
           type: object
-          additionalProperties: true
           nullable: true
-
+          maxProperties: 20
+          additionalProperties: true
+    AdminUpdateStudentParentRelationRequest:
+      type: object
+      properties:
+        student_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+        relation_type:
+          type: string
+          maxLength: 50
+          example: ayah
+        is_active:
+          type: boolean
+    TrackEventResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Event berhasil dicatat.
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              example: 1
+            user_id:
+              type: integer
+              format: int64
+              example: 10
+            event_name:
+              type: string
+              example: dashboard_open
+            properties:
+              type: object
+              nullable: true
+              additionalProperties: true
+            created_at:
+              type: string
+              format: date-time
+    CheckinSummary:
+      type: object
+      properties:
+        total_habits:
+          type: integer
+        total_done:
+          type: integer
+        total_not_done:
+          type: integer
+        total_validations:
+          type: integer
+        parent_validations:
+          type: integer
+        teacher_validations:
+          type: integer
+    StudentRecapSummary:
+      type: object
+      properties:
+        total_checkins:
+          type: integer
+        total_items:
+          type: integer
+        total_done_items:
+          type: integer
+        total_not_done_items:
+          type: integer
+        total_validated_items:
+          type: integer
+        parent_validated_items:
+          type: integer
+        teacher_validated_items:
+          type: integer
+        pending_validation_items:
+          type: integer
+        completion_percentage:
+          type: number
+          format: float
+    StudentRecapHabitSummaryItem:
+      type: object
+      properties:
+        habit_id:
+          type: integer
+          format: int64
+        habit:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              format: int64
+            code:
+              type: string
+            name:
+              type: string
+            sort_order:
+              type: integer
+        done_count:
+          type: integer
+        not_done_count:
+          type: integer
+        parent_validated_count:
+          type: integer
+        teacher_validated_count:
+          type: integer
+        total_validation_count:
+          type: integer
+    StudentDailyCheckinRecapItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        checkin_date:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+        total_items:
+          type: integer
+        done_items:
+          type: integer
+        parent_validated_items:
+          type: integer
+        teacher_validated_items:
+          type: integer
+        total_validated_items:
+          type: integer
