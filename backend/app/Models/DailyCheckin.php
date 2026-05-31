@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyCheckin extends Model
 {
-    const CREATED_AT = null; // tidak ada created_at di tabel
+    const CREATED_AT = null; 
 
     protected $fillable = [
         'student_id',

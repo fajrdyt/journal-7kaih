@@ -21,14 +21,10 @@ class Habit extends Model
         'sort_order' => 'integer',
     ];
 
-    // ─── Relasi ──────────────────────────────────────────────
-
     public function dailyCheckinItems(): HasMany
     {
         return $this->hasMany(DailyCheckinItem::class);
     }
-
-    // ─── Scope ───────────────────────────────────────────────
 
     public function scopeActive($query)
     {

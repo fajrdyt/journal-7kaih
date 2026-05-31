@@ -12,41 +12,26 @@ class RecapController extends Controller
         protected RecapService $recapService
     ) {}
 
-    /**
-     * GET /api/v1/student/recap
-     */
     public function personal(Request $request)
     {
         return $this->recapService->personal($request);
     }
 
-    /**
-     * GET /api/v1/parent/children/{studentId}/recap
-     */
     public function childRecap(Request $request, int $studentId)
     {
         return $this->recapService->childRecap($request, $studentId);
     }
 
-    /**
-     * GET /api/v1/teacher/students/{studentId}/recap
-     */
     public function studentRecap(Request $request, int $studentId)
     {
         return $this->recapService->studentRecap($request, $studentId);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/weekly-recap
-     */
     public function classWeeklyRecap(Request $request, int $classId)
     {
         return $this->recapService->classWeeklyRecap($request, $classId);
     }
 
-    /**
-     * GET /api/v1/teacher/classes/{classId}/monthly-recap
-     */
     public function classMonthlyRecap(Request $request, int $classId)
     {
         return $this->recapService->classMonthlyRecap($request, $classId);

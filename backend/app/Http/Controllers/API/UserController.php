@@ -17,9 +17,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UserController extends Controller
 {
-    /**
-     * GET /api/v1/admin/users
-     */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -78,9 +75,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/v1/admin/dashboard-summary
-     */
     public function dashboardSummary()
     {
         $today = now()->toDateString();
@@ -186,9 +180,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/v1/admin/users
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -233,9 +224,6 @@ class UserController extends Controller
         ], 201);
     }
 
-    /**
-     * GET /api/v1/admin/users/{id}
-     */
     public function show(int $id)
     {
         $user = User::query()
@@ -257,9 +245,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/v1/admin/users/{id}
-     */
     public function update(Request $request, int $id)
     {
         $user = User::query()
@@ -331,9 +316,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/v1/admin/users/{id}
-     */
     public function destroy(Request $request, int $id)
     {
         if ($request->user()->id === $id) {
@@ -360,9 +342,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/v1/admin/users/{id}/reset-password
-     */
     public function resetPassword(Request $request, int $id)
     {
         $user = User::query()
@@ -395,9 +374,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/v1/admin/student-parent-relations
-     */
     public function studentParentRelations(Request $request)
     {
         $validated = $request->validate([
@@ -452,9 +428,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/v1/admin/student-parent-relations
-     */
     public function storeStudentParentRelation(Request $request)
     {
         $validated = $request->validate([
@@ -518,9 +491,6 @@ class UserController extends Controller
         ], 201);
     }
 
-    /**
-     * GET /api/v1/admin/student-parent-relations/{id}
-     */
     public function showStudentParentRelation(int $id)
     {
         $relation = StudentParentRelation::query()
@@ -546,9 +516,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/v1/admin/student-parent-relations/{id}
-     */
     public function updateStudentParentRelation(Request $request, int $id)
     {
         $relation = StudentParentRelation::query()
@@ -630,9 +597,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/v1/admin/student-parent-relations/{id}
-     */
     public function deleteStudentParentRelation(int $id)
     {
         $relation = StudentParentRelation::query()->find($id);

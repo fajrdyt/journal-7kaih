@@ -21,7 +21,6 @@ class CheckinItemValidation extends Model
         'validated_at' => 'datetime',
     ];
 
-    // ─── Relasi ──────────────────────────────────────────────
 
     public function checkinItem(): BelongsTo
     {
@@ -32,8 +31,6 @@ class CheckinItemValidation extends Model
     {
         return $this->belongsTo(User::class, 'validator_id');
     }
-
-    // ─── Scope ───────────────────────────────────────────────
 
     public function scopeParent($query)
     {

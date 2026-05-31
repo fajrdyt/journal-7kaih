@@ -21,8 +21,6 @@ class DailyCheckinItem extends Model
         'is_done' => 'boolean',
     ];
 
-    // ─── Relasi ──────────────────────────────────────────────
-
     public function dailyCheckin(): BelongsTo
     {
         return $this->belongsTo(DailyCheckin::class);
@@ -33,22 +31,11 @@ class DailyCheckinItem extends Model
         return $this->belongsTo(Habit::class);
     }
 
-    /**
-     * Relasi baru:
-     * Satu item bisa punya beberapa validasi:
-     * - orang_tua
-     * - guru
-     */
     public function validations(): HasMany
     {
         return $this->hasMany(CheckinItemValidation::class, 'daily_checkin_item_id');
     }
 
-    /**
-     * Backward compatibility untuk kode lama yang masih memanggil validation.
-     * Ini mengambil salah satu validasi pertama saja.
-     * Nanti service/controller tetap sebaiknya pakai validations().
-     */
     public function validation(): HasOne
     {
         return $this->hasOne(CheckinItemValidation::class, 'daily_checkin_item_id');

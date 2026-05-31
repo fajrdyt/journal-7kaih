@@ -27,8 +27,6 @@ class ClassRoom extends Model
         'is_active' => 'boolean',
     ];
 
-    // ── Relasi ────────────────────────────────────────────────
-
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
@@ -43,8 +41,6 @@ class ClassRoom extends Model
     {
         return $this->hasMany(User::class, 'class_id');
     }
-
-    // ── Scope ─────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
