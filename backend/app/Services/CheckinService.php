@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DailyCheckin;
 use App\Models\DailyCheckinItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -96,7 +97,9 @@ class CheckinService
         $student = $request->user();
         $today = now()->toDateString();
 
-        $checkinDate = $validated['checkin_date'] ?? $today;
+        $checkinDate = isset($validated['checkin_date'])
+            ? Carbon::parse($validated['checkin_date'])->toDateString()
+            : $today;
 
         if ($checkinDate !== $today) {
             throw ValidationException::withMessages([
@@ -105,16 +108,24 @@ class CheckinService
         }
 
         $checkin = DB::transaction(function () use ($student, $today, $validated) {
-            $checkin = DailyCheckin::query()->updateOrCreate(
-                [
-                    'student_id'   => $student->id,
-                    'checkin_date' => $today,
-                ],
-                [
+            $checkin = DailyCheckin::query()
+                ->where('student_id', $student->id)
+                ->whereDate('checkin_date', $today)
+                ->first();
+
+            if ($checkin) {
+                $checkin->update([
                     'notes'        => $validated['notes'] ?? null,
                     'submitted_at' => now(),
-                ]
-            );
+                ]);
+            } else {
+                $checkin = DailyCheckin::query()->create([
+                    'student_id'   => $student->id,
+                    'checkin_date' => $today,
+                    'notes'        => $validated['notes'] ?? null,
+                    'submitted_at' => now(),
+                ]);
+            }
 
             foreach ($validated['items'] as $item) {
                 $existingItem = DailyCheckinItem::query()
@@ -134,7 +145,8 @@ class CheckinService
                     ]
                 );
 
-                $isChanged = $oldIsDone !== null && (bool) $oldIsDone !== (bool) $item['is_done'];
+                $isChanged = $oldIsDone !== null
+                    && (bool) $oldIsDone !== (bool) $item['is_done'];
 
                 if ($isChanged || !$item['is_done']) {
                     $checkinItem->validations()->delete();
