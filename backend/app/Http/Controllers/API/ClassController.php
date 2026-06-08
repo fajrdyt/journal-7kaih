@@ -7,7 +7,6 @@ use App\Models\ClassRoom;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ClassController extends Controller
 {
@@ -62,36 +61,50 @@ class ClassController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'        => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('classes', 'name')->where(function ($query) use ($request) {
-                    return $query
-                        ->where('grade_level', $request->grade_level)
-                        ->where('is_active', true);
-                }),
-            ],
+            'name'        => ['required', 'string', 'max:100'],
             'grade_level' => ['required', 'string', 'max:20'],
             'teacher_id'  => ['required', 'integer', 'exists:users,id'],
             'is_active'   => ['nullable', 'boolean'],
         ], [
             'name.required'        => 'Nama kelas wajib diisi.',
-            'name.unique'          => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
             'grade_level.required' => 'Tingkat kelas wajib diisi.',
             'teacher_id.required'  => 'Wali kelas wajib dipilih.',
             'teacher_id.exists'    => 'Wali kelas tidak ditemukan.',
         ]);
 
-        if (!$this->isTeacherUser((int) $validated['teacher_id'])) {
+        $validated['name'] = trim($validated['name']);
+        $validated['grade_level'] = trim($validated['grade_level']);
+        $validated['is_active'] = $validated['is_active'] ?? true;
+
+        $existingActiveClass = ClassRoom::query()
+            ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($validated['name'])])
+            ->whereRaw('LOWER(TRIM(grade_level)) = ?', [strtolower($validated['grade_level'])])
+            ->where('is_active', true)
+            ->first();
+
+        if ($existingActiveClass) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'teacher_id harus merupakan user dengan role guru.',
-                'data'    => null,
+                'message' => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
+                'data'    => [
+                    'existing_class' => $this->formatClass($existingActiveClass),
+                    'request_payload' => [
+                        'name'        => $validated['name'],
+                        'grade_level' => $validated['grade_level'],
+                        'teacher_id'  => $validated['teacher_id'],
+                        'is_active'   => $validated['is_active'],
+                    ],
+                ],
             ], 422);
         }
 
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        if (!$this->isTeacherUser((int) $validated['teacher_id'])) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Wali kelas harus merupakan user dengan role guru.',
+                'data'    => null,
+            ], 422);
+        }
 
         $class = ClassRoom::create($validated);
         $class->load('teacher');
@@ -135,25 +148,50 @@ class ClassController extends Controller
         }
 
         $validated = $request->validate([
-            'name'        => [
-                'nullable',
-                'string',
-                'max:100',
-                Rule::unique('classes', 'name')
-                    ->ignore($id)
-                    ->where(function ($query) use ($request, $class) {
-                        return $query
-                            ->where('grade_level', $request->grade_level ?? $class->grade_level)
-                            ->where('is_active', true);
-                    }),
-            ],
+            'name'        => ['nullable', 'string', 'max:100'],
             'grade_level' => ['nullable', 'string', 'max:20'],
             'teacher_id'  => ['nullable', 'integer', 'exists:users,id'],
             'is_active'   => ['nullable', 'boolean'],
         ], [
-            'name.unique'       => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
             'teacher_id.exists' => 'Wali kelas tidak ditemukan.',
         ]);
+
+        if (array_key_exists('name', $validated)) {
+            $validated['name'] = trim($validated['name']);
+        }
+
+        if (array_key_exists('grade_level', $validated)) {
+            $validated['grade_level'] = trim($validated['grade_level']);
+        }
+
+        $nextName = $validated['name'] ?? $class->name;
+        $nextGradeLevel = $validated['grade_level'] ?? $class->grade_level;
+        $nextIsActive = $validated['is_active'] ?? $class->is_active;
+
+        if ($nextIsActive) {
+            $existingActiveClass = ClassRoom::query()
+                ->where('id', '!=', $class->id)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($nextName)])
+                ->whereRaw('LOWER(TRIM(grade_level)) = ?', [strtolower($nextGradeLevel)])
+                ->where('is_active', true)
+                ->first();
+
+            if ($existingActiveClass) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
+                    'data'    => [
+                        'existing_class' => $this->formatClass($existingActiveClass),
+                        'request_payload' => [
+                            'name'        => $nextName,
+                            'grade_level' => $nextGradeLevel,
+                            'teacher_id'  => $validated['teacher_id'] ?? $class->teacher_id,
+                            'is_active'   => $nextIsActive,
+                        ],
+                    ],
+                ], 422);
+            }
+        }
 
         if (
             array_key_exists('teacher_id', $validated)
@@ -162,7 +200,7 @@ class ClassController extends Controller
         ) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'teacher_id harus merupakan user dengan role guru.',
+                'message' => 'Wali kelas harus merupakan user dengan role guru.',
                 'data'    => null,
             ], 422);
         }
