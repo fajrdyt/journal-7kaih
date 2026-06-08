@@ -25,7 +25,10 @@ class ClassController extends Controller
             ->orderBy('name');
 
         if (!empty($validated['search'])) {
-            $query->where('name', 'like', '%' . $validated['search'] . '%');
+            $query->where(function ($query) use ($validated) {
+                $query->where('name', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('grade_level', 'like', '%' . $validated['search'] . '%');
+            });
         }
 
         if (!empty($validated['grade_level'])) {
@@ -64,19 +67,23 @@ class ClassController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('classes', 'name')->where(function ($query) use ($request) {
-                    return $query->where('grade_level', $request->grade_level);
+                    return $query
+                        ->where('grade_level', $request->grade_level)
+                        ->where('is_active', true);
                 }),
             ],
             'grade_level' => ['required', 'string', 'max:20'],
-            'teacher_id'  => ['nullable', 'integer', 'exists:users,id'],
+            'teacher_id'  => ['required', 'integer', 'exists:users,id'],
             'is_active'   => ['nullable', 'boolean'],
+        ], [
+            'name.required'        => 'Nama kelas wajib diisi.',
+            'name.unique'          => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
+            'grade_level.required' => 'Tingkat kelas wajib diisi.',
+            'teacher_id.required'  => 'Wali kelas wajib dipilih.',
+            'teacher_id.exists'    => 'Wali kelas tidak ditemukan.',
         ]);
 
-        if (
-            array_key_exists('teacher_id', $validated)
-            && $validated['teacher_id'] !== null
-            && !$this->isTeacherUser((int) $validated['teacher_id'])
-        ) {
+        if (!$this->isTeacherUser((int) $validated['teacher_id'])) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'teacher_id harus merupakan user dengan role guru.',
@@ -135,15 +142,17 @@ class ClassController extends Controller
                 Rule::unique('classes', 'name')
                     ->ignore($id)
                     ->where(function ($query) use ($request, $class) {
-                        return $query->where(
-                            'grade_level',
-                            $request->grade_level ?? $class->grade_level
-                        );
+                        return $query
+                            ->where('grade_level', $request->grade_level ?? $class->grade_level)
+                            ->where('is_active', true);
                     }),
             ],
             'grade_level' => ['nullable', 'string', 'max:20'],
             'teacher_id'  => ['nullable', 'integer', 'exists:users,id'],
             'is_active'   => ['nullable', 'boolean'],
+        ], [
+            'name.unique'       => 'Nama kelas sudah digunakan oleh kelas aktif pada tingkat yang sama.',
+            'teacher_id.exists' => 'Wali kelas tidak ditemukan.',
         ]);
 
         if (
@@ -374,10 +383,12 @@ class ClassController extends Controller
             'id'          => $class->id,
             'name'        => $class->name,
             'grade_level' => $class->grade_level,
+            'teacher_id'  => $class->teacher_id,
             'is_active'   => $class->is_active,
             'teacher'     => $class->teacher ? [
                 'id'        => $class->teacher->id,
                 'full_name' => $class->teacher->full_name,
+                'name'      => $class->teacher->name,
                 'username'  => $class->teacher->username,
                 'email'     => $class->teacher->email,
             ] : null,
