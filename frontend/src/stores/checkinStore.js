@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import {
   getTodayCheckin,
   submitCheckin,
-  getCheckinHistory,
+  getHistory,
 } from '@/api/checkin'
 
 export const useCheckinStore = defineStore('checkin', {
@@ -68,7 +68,7 @@ export const useCheckinStore = defineStore('checkin', {
       this.error = null
 
       try {
-        const response = await getCheckinHistory()
+        const response = await getHistory()
 
         this.history = response.data.data
       } catch (error) {
