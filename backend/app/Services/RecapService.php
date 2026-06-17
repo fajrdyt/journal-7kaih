@@ -389,6 +389,17 @@ class RecapService
             fn ($checkin) => $checkin->items->where('is_done', true)->count()
         );
 
+        $activeHabitCount = Habit::active()->count();
+
+        $completedDays = $checkins->filter(function ($checkin) use ($activeHabitCount) {
+            $totalItems = $checkin->items->count();
+            $doneItems = $checkin->items->where('is_done', true)->count();
+
+            return $activeHabitCount > 0
+                && $totalItems >= $activeHabitCount
+                && $doneItems >= $activeHabitCount;
+        })->count();
+
         $parentValidatedItems = $checkins->sum(function ($checkin) {
             return $checkin->items->sum(function ($item) {
                 return $item->validations
@@ -474,6 +485,7 @@ class RecapService
             ],
             'summary' => [
                 'total_checkins'           => $totalCheckins,
+                'completed_days'           => $completedDays,
                 'total_items'              => $totalItems,
                 'total_done_items'         => $totalDoneItems,
                 'total_not_done_items'     => max($totalItems - $totalDoneItems, 0),
@@ -485,25 +497,34 @@ class RecapService
                     ? round(($totalDoneItems / $totalItems) * 100, 2)
                     : 0,
             ],
+            
             'habit_summary' => collect($habitSummary)
                 ->sortBy(fn ($item) => $item['habit']['sort_order'] ?? 999)
                 ->values(),
-            'daily_checkins' => $checkins->map(fn ($checkin) => [
-                'id'           => $checkin->id,
-                'checkin_date' => $checkin->checkin_date,
-                'notes'        => $checkin->notes,
-                'total_items'  => $checkin->items->count(),
-                'done_items'   => $checkin->items->where('is_done', true)->count(),
-                'parent_validated_items' => $checkin->items->sum(
-                    fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
-                ),
-                'teacher_validated_items' => $checkin->items->sum(
-                    fn ($item) => $item->validations->where('validator_role', 'guru')->count()
-                ),
-                'total_validated_items' => $checkin->items->sum(
-                    fn ($item) => $item->validations->count()
-                ),
-            ])->values(),
+            'daily_checkins' => $checkins->map(function ($checkin) use ($activeHabitCount) {
+                $totalItems = $checkin->items->count();
+                $doneItems = $checkin->items->where('is_done', true)->count();
+
+                return [
+                    'id'           => $checkin->id,
+                    'checkin_date' => $checkin->checkin_date,
+                    'notes'        => $checkin->notes,
+                    'total_items'  => $totalItems,
+                    'done_items'   => $doneItems,
+                    'is_complete'  => $activeHabitCount > 0
+                        && $totalItems >= $activeHabitCount
+                        && $doneItems >= $activeHabitCount,
+                    'parent_validated_items' => $checkin->items->sum(
+                        fn ($item) => $item->validations->where('validator_role', 'orang_tua')->count()
+                    ),
+                    'teacher_validated_items' => $checkin->items->sum(
+                        fn ($item) => $item->validations->where('validator_role', 'guru')->count()
+                    ),
+                    'total_validated_items' => $checkin->items->sum(
+                        fn ($item) => $item->validations->count()
+                    ),
+                ];
+            })->values(),
         ];
     }
 
