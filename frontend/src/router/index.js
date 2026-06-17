@@ -4,26 +4,21 @@ import { useAuthStore } from '../stores/authStore'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 
 const routes = [
-  // 1. Arahkan halaman utama langsung ke halaman login
   {
     path: '/',
     redirect: '/login',
   },
-
-  // 2. Rute Login tunggal dengan nama unik
   {
     path: '/login',
     name: 'login',
     component: LoginPage,
   },
-
-  // 3. Grup Rute Khusus Student dengan Layout dan Pengaman Role
   {
     path: '/student',
     component: DashboardLayout,
     meta: {
       requiresAuth: true,
-      role: 'student', // Menegaskan bahwa halaman ini hanya untuk student
+      role: 'student',
     },
     children: [
       {
@@ -59,26 +54,26 @@ const router = createRouter({
   routes,
 })
 
-// Pengaman Jalur Navigasi (Navigation Guard)
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
-  // Jika halaman butuh autentikasi dan user belum login, lempar ke login
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchUser()
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next('/login')
+    return '/login'
   }
 
-  // Jika halaman butuh role student tetapi user yang login bukan student
-  if (to.meta.role === 'student' && authStore.user?.role !== 'student') {
-    return next('/login')
+  if (to.meta.role === 'student' && !authStore.isStudent) {
+    return '/login'
   }
 
-  // Jika user sudah login dan mencoba membuka halaman login lagi, lempar ke dashboard
   if (to.path === '/login' && authStore.isAuthenticated) {
-    return next('/student/dashboard')
+    return '/student/dashboard'
   }
 
-  next()
+  return true
 })
 
 export default router

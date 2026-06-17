@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-slate-50">
     <Sidebar />
 
-    <div class="lg:ml-64">
+    <div class="lg:ml-[240px]">
       <HeaderBar />
 
       <main class="p-4 lg:p-6">
@@ -13,6 +13,6 @@
 </template>
 
 <script setup>
-import Sidebar from '@/components/navigation/Sidebar.vue'
 import HeaderBar from '@/components/navigation/HeaderBar.vue'
+import Sidebar from '@/components/navigation/Sidebar.vue'
 </script>

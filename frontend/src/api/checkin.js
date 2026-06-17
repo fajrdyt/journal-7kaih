@@ -1,10 +1,21 @@
 import api from './axios'
 
-export const getTodayCheckin = () =>
-  api.get('/checkins/today')
+export function getHabits() {
+  return api.get('/habits')
+}
 
-export const submitCheckin = (payload) =>
-  api.post('/checkins', payload)
+export function getTodayCheckin() {
+  return api.get('/student/checkins/today')
+}
 
-export const getHistory = () =>
-  api.get('/checkins/history')
+export function saveCheckin(payload) {
+  return api.post('/student/checkins', payload)
+}
+
+export function getCheckinHistory(params = {}) {
+  return api.get('/student/checkins', { params })
+}
+
+export function getStudentRecap(params = {}) {
+  return api.get('/student/recap', { params })
+}

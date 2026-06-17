@@ -1,10 +1,22 @@
+<script setup>
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+async function handleLogout() {
+  await authStore.logout()
+
+  router.push('/login')
+}
+</script>
+
 <template>
-  <aside
-    class="fixed left-0 top-0 flex h-screen w-[240px] flex-col border-r bg-white"
-  >
+  <aside class="fixed left-0 top-0 hidden h-screen w-[240px] flex-col border-r bg-white lg:flex">
     <div class="border-b p-5">
       <h1 class="font-bold text-sky-700">
-        Jurnal 7 Kaih
+        Jurnal 7KAIH
       </h1>
 
       <p class="text-xs text-slate-500">
@@ -16,42 +28,51 @@
       <ul class="space-y-2">
         <li>
           <RouterLink
-            to="/student/checkin"
-            class="block rounded-lg bg-teal-300 px-4 py-3 text-sm font-medium"
+            to="/student/dashboard"
+            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            active-class="bg-sky-50 text-sky-700"
           >
-            Beranda
+            Dashboard
           </RouterLink>
         </li>
 
         <li>
-          <a
-            class="block rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-slate-100"
+          <RouterLink
+            to="/student/checkin"
+            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            active-class="bg-sky-50 text-sky-700"
           >
-            Laporan
-          </a>
+            Check-in
+          </RouterLink>
         </li>
 
         <li>
-          <a
-            class="block rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-slate-100"
+          <RouterLink
+            to="/student/history"
+            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            active-class="bg-sky-50 text-sky-700"
           >
-            Habit
-          </a>
+            Riwayat
+          </RouterLink>
         </li>
 
         <li>
-          <a
-            class="block rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-slate-100"
+          <RouterLink
+            to="/student/recap"
+            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            active-class="bg-sky-50 text-sky-700"
           >
-            Pengaturan
-          </a>
+            Rekap
+          </RouterLink>
         </li>
       </ul>
     </nav>
 
     <div class="border-t p-4">
       <button
-        class="w-full text-left text-sm text-slate-600"
+        type="button"
+        class="w-full rounded-lg px-4 py-3 text-left text-sm text-slate-600 hover:bg-red-50 hover:text-red-600"
+        @click="handleLogout"
       >
         Logout
       </button>
