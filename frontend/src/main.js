@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
+import { useSettingsStore } from './stores/settingsStore'
 
 import './assets/main.css'
 
@@ -27,6 +28,9 @@ async function bootstrap() {
 
   app.use(createPinia())
   app.use(router)
+
+  const settingsStore = useSettingsStore()
+  settingsStore.init()
 
   app.mount('#app')
 }

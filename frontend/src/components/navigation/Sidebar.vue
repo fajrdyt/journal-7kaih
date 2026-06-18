@@ -1,9 +1,33 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+
+import { useAuthStore } from '../../stores/authStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const menus = [
+  {
+    label: 'Dashboard',
+    to: '/student/dashboard',
+  },
+  {
+    label: 'Check-in Harian',
+    to: '/student/checkin',
+  },
+  {
+    label: 'Riwayat',
+    to: '/student/history',
+  },
+  {
+    label: 'Rekap',
+    to: '/student/recap',
+  },
+  {
+    label: 'Pengaturan',
+    to: '/student/settings',
+  },
+]
 
 async function handleLogout() {
   await authStore.logout()
@@ -13,65 +37,50 @@ async function handleLogout() {
 </script>
 
 <template>
-  <aside class="fixed left-0 top-0 hidden h-screen w-[240px] flex-col border-r bg-white lg:flex">
-    <div class="border-b p-5">
-      <h1 class="font-bold text-sky-700">
-        Jurnal 7KAIH
-      </h1>
+  <aside class="flex h-full min-h-screen w-72 flex-col border-r border-slate-200 bg-white px-5 py-6">
+    <div class="mb-8">
+      <div class="flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-lg font-bold text-white">
+          7
+        </div>
 
-      <p class="text-xs text-slate-500">
-        Habit Tracking System
-      </p>
+        <div>
+          <p class="text-lg font-bold text-slate-900">
+            7KAIH
+          </p>
+          <p class="text-xs font-medium text-slate-500">
+            Jurnal Siswa
+          </p>
+        </div>
+      </div>
     </div>
 
-    <nav class="flex-1 p-4">
-      <ul class="space-y-2">
-        <li>
-          <RouterLink
-            to="/student/dashboard"
-            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-sky-50 text-sky-700"
-          >
-            Dashboard
-          </RouterLink>
-        </li>
-
-        <li>
-          <RouterLink
-            to="/student/checkin"
-            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-sky-50 text-sky-700"
-          >
-            Check-in
-          </RouterLink>
-        </li>
-
-        <li>
-          <RouterLink
-            to="/student/history"
-            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-sky-50 text-sky-700"
-          >
-            Riwayat
-          </RouterLink>
-        </li>
-
-        <li>
-          <RouterLink
-            to="/student/recap"
-            class="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-sky-50 text-sky-700"
-          >
-            Rekap
-          </RouterLink>
-        </li>
-      </ul>
+    <nav class="flex flex-1 flex-col gap-2">
+      <RouterLink
+        v-for="menu in menus"
+        :key="menu.to"
+        :to="menu.to"
+        class="rounded-2xl px-4 py-3 text-sm font-semibold transition"
+        :class="$route.path === menu.to
+          ? 'bg-blue-600 text-white shadow-sm'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+      >
+        {{ menu.label }}
+      </RouterLink>
     </nav>
 
-    <div class="border-t p-4">
+    <div class="mt-6 rounded-3xl bg-slate-50 p-4">
+      <p class="text-sm font-semibold text-slate-900">
+        {{ authStore.user?.display_name ?? authStore.user?.name ?? 'Siswa' }}
+      </p>
+
+      <p class="mt-1 text-xs text-slate-500">
+        {{ authStore.user?.email ?? authStore.user?.username ?? '-' }}
+      </p>
+
       <button
         type="button"
-        class="w-full rounded-lg px-4 py-3 text-left text-sm text-slate-600 hover:bg-red-50 hover:text-red-600"
+        class="mt-4 w-full rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50"
         @click="handleLogout"
       >
         Logout

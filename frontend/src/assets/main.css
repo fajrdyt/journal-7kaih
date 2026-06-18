@@ -4,3 +4,40 @@
 body {
   font-family: 'Poppins', sans-serif;
 }
+
+:root.theme-light {
+  color-scheme: light;
+}
+
+:root.theme-dark {
+  color-scheme: dark;
+}
+
+:root.theme-dark body {
+  background: #0f172a;
+}
+
+:root.theme-dark .bg-white {
+  background-color: #111827;
+}
+
+:root.theme-dark .bg-slate-50 {
+  background-color: #1f2937;
+}
+
+:root.theme-dark .text-slate-900 {
+  color: #f8fafc;
+}
+
+:root.theme-dark .text-slate-800 {
+  color: #e5e7eb;
+}
+
+:root.theme-dark .text-slate-600,
+:root.theme-dark .text-slate-500 {
+  color: #cbd5e1;
+}
+
+:root.theme-dark .border-slate-200 {
+  border-color: #334155;
+}

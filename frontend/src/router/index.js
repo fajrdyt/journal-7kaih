@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from '../pages/auth/LoginPage.vue'
 import { useAuthStore } from '../stores/authStore'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import StudentSettingsPage from '../pages/student/StudentSettingsPage.vue'
 
 const routes = [
   {
@@ -45,6 +46,12 @@ const routes = [
         name: 'student-recap',
         component: () => import('@/pages/student/PersonalRecapPage.vue'),
       },
+
+      {
+        path: 'settings',
+        name: 'student-settings',
+        component: StudentSettingsPage,
+      }
     ],
   },
 ]
