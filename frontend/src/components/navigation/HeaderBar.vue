@@ -1,37 +1,36 @@
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
+
+import { useAuthStore } from '../../stores/authStore'
 
 const authStore = useAuthStore()
 
-const displayName = computed(() => authStore.user?.display_name ?? 'Siswa')
+const displayName = computed(() => {
+  return authStore.user?.display_name ?? authStore.user?.full_name ?? authStore.user?.name ?? 'Siswa'
+})
+
+const initialName = computed(() => {
+  return displayName.value?.charAt(0)?.toUpperCase() ?? 'S'
+})
 </script>
 
 <template>
-  <header class="mx-4 mt-4 flex min-h-[72px] items-center justify-between rounded-xl border bg-white px-6 shadow-sm lg:mx-8">
-    <div>
-      <h2 class="font-semibold text-slate-900">
-        Selamat Datang
-      </h2>
+  <header class="flex items-center justify-between px-8 py-5">
+    <h1 class="text-xl font-bold text-slate-900">
+      Jurnal Kebiasaan
+    </h1>
 
-      <p class="text-sm text-slate-500">
-        Halo, {{ displayName }}! Mari bangun kebiasaan positif hari ini.
-      </p>
-    </div>
-
-    <div class="flex items-center gap-4">
-      <button type="button">
+    <div class="flex items-center gap-5">
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+        aria-label="Notifikasi"
+      >
         🔔
       </button>
 
-      <div class="flex items-center gap-2">
-        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 font-semibold text-sky-700">
-          {{ displayName.charAt(0).toUpperCase() }}
-        </div>
-
-        <span class="hidden text-sm md:inline">
-          {{ displayName }}
-        </span>
+      <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+        {{ initialName }}
       </div>
     </div>
   </header>

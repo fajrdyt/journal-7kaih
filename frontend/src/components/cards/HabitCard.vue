@@ -1,47 +1,119 @@
-<template>
-  <div
-    class="rounded-xl border bg-white p-4 shadow-sm transition"
-    :class="habit.completed ? 'border-sky-200 bg-sky-50' : 'border-slate-200'"
-  >
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <h4 class="font-semibold text-slate-900">
-          {{ habit.name }}
-        </h4>
-
-        <p class="mt-1 text-xs text-slate-500">
-          {{ habit.completed ? 'Sudah dilakukan' : 'Belum dilakukan' }}
-        </p>
-      </div>
-
-      <label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-        <input
-          type="checkbox"
-          class="h-5 w-5 rounded border-slate-300"
-          :checked="habit.completed"
-          @change="$emit('update', habit.id, { completed: $event.target.checked })"
-        >
-        Selesai
-      </label>
-    </div>
-
-    <textarea
-      class="mt-4 w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-sky-500"
-      rows="3"
-      placeholder="Tulis aktivitas atau catatan singkat..."
-      :value="habit.note"
-      @input="$emit('update', habit.id, { note: $event.target.value })"
-    />
-  </div>
-</template>
-
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   habit: {
     type: Object,
     required: true,
   },
 })
 
-defineEmits(['update'])
+const emit = defineEmits(['toggle', 'update-note'])
+
+const isDone = computed(() => {
+  return Boolean(props.habit.is_done ?? props.habit.completed)
+})
+
+const habitCode = computed(() => {
+  return String(props.habit.code ?? '').toUpperCase()
+})
+
+const habitIcon = computed(() => {
+  const icons = {
+    BANGUN_PAGI: '☼',
+    BERIBADAH: '✦',
+    BEROLAHRAGA: '⚡',
+    MAKAN_SEHAT_BERGIZI: '♨',
+    GEMAR_BELAJAR: '▣',
+    BERMASYARAKAT: '⌘',
+    TIDUR_CEPAT: '☾',
+  }
+
+  return icons[habitCode.value] ?? '✓'
+})
+
+function handleNoteInput(event) {
+  emit('update-note', event.target.value)
+}
 </script>
+
+<template>
+  <article
+    class="group flex min-h-[200px] flex-col rounded-2xl border bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(14,165,233,0.15)] active:-translate-y-1 active:scale-[0.995]"
+    :class="
+      isDone
+        ? 'border-sky-300 hover:border-sky-400'
+        : 'border-slate-200 hover:border-sky-300'
+    "
+  >
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex min-w-0 items-center gap-3">
+        <div
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-bold transition-all duration-300 ease-out group-hover:scale-110 group-active:scale-105"
+          :class="
+            isDone
+              ? 'bg-sky-100 text-sky-700 group-hover:bg-sky-600 group-hover:text-white group-active:bg-sky-600 group-active:text-white'
+              : 'bg-slate-100 text-slate-500 group-hover:bg-sky-500 group-hover:text-white group-active:bg-sky-500 group-active:text-white'
+          "
+        >
+          {{ habitIcon }}
+        </div>
+
+        <h3
+          class="truncate text-sm font-bold text-slate-900 transition-colors duration-300 group-hover:text-sky-700"
+        >
+          {{ habit.name }}
+        </h3>
+      </div>
+
+      <button
+        type="button"
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-all duration-200 hover:scale-110 active:scale-95"
+        :class="
+          isDone
+            ? 'border-sky-600 bg-sky-600 text-white'
+            : 'border-slate-300 bg-white text-transparent hover:border-sky-400'
+        "
+        :aria-label="isDone ? `Batalkan ${habit.name}` : `Selesaikan ${habit.name}`"
+        @click="emit('toggle')"
+      >
+        <svg
+          viewBox="0 0 20 20"
+          fill="none"
+          class="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path
+            d="M4.5 10.5 8 14l7.5-8"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="mt-4 flex items-center gap-2">
+      <span
+        class="h-2 w-2 rounded-full transition-colors duration-300"
+        :class="isDone ? 'bg-sky-500' : 'bg-slate-400'"
+      />
+
+      <p
+        class="text-xs font-semibold transition-colors duration-300"
+        :class="isDone ? 'text-sky-600' : 'text-slate-500'"
+      >
+        {{ isDone ? 'Selesai' : 'Belum dilakukan' }}
+      </p>
+    </div>
+
+    <textarea
+      :value="habit.notes ?? habit.note ?? ''"
+      rows="3"
+      class="mt-4 min-h-[78px] w-full resize-none rounded-xl border border-transparent bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-slate-700 outline-none transition-all duration-300 placeholder:text-slate-400 group-hover:bg-sky-50/70 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+      placeholder="Tulis aktivitas atau catatan singkat..."
+      @input="handleNoteInput"
+    />
+  </article>
+</template>

@@ -1,153 +1,265 @@
+```vue
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import HabitCard from '@/components/cards/HabitCard.vue'
-import ProgressBadge from '@/components/common/ProgressBadge.vue'
-import { useCheckinStore } from '@/stores/checkinStore'
+
+import HabitCard from '../../components/cards/HabitCard.vue'
+import { useCheckinStore } from '../../stores/checkinStore'
 
 const checkinStore = useCheckinStore()
+
+const saving = ref(false)
 const successMessage = ref('')
-const saveError = ref('')
+const actionError = ref('')
 
-const todayLabel = computed(() => {
-  const date = checkinStore.todayCheckin.checkin_date
+const habits = computed(() => checkinStore.habits)
+const completedCount = computed(() => checkinStore.completedCount)
+const totalHabits = computed(() => checkinStore.totalHabits)
+const progressPercent = computed(() => checkinStore.progressPercent)
 
-  if (!date) return 'Hari ini'
+const displayDate = computed(() => {
+  const dateString = checkinStore.todayCheckin?.checkin_date
 
+  if (!dateString) {
+    return formatDate(new Date())
+  }
+
+  const [year, month, day] = String(dateString)
+    .slice(0, 10)
+    .split('-')
+    .map(Number)
+
+  return formatDate(new Date(year, month - 1, day))
+})
+
+function formatDate(date) {
   return new Intl.DateTimeFormat('id-ID', {
     weekday: 'long',
-    day: '2-digit',
+    day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(date))
-})
-
-onMounted(() => {
-  checkinStore.fetchTodayCheckin()
-})
-
-function updateHabit(habitId, updates) {
-  checkinStore.updateHabit(habitId, updates)
+  }).format(date)
 }
 
-async function handleSubmit() {
+function toggleHabit(habitId) {
   successMessage.value = ''
-  saveError.value = ''
+  actionError.value = ''
+
+  checkinStore.toggleHabit(habitId)
+}
+
+function updateHabitNote(habitId, notes) {
+  successMessage.value = ''
+  actionError.value = ''
+
+  checkinStore.updateHabitNote(habitId, notes)
+}
+
+async function handleCancel() {
+  successMessage.value = ''
+  actionError.value = ''
+
+  await checkinStore.fetchToday()
+}
+
+async function handleSave() {
+  saving.value = true
+  successMessage.value = ''
+  actionError.value = ''
 
   try {
     await checkinStore.saveCheckin()
-
-    successMessage.value = 'Check-in berhasil disimpan.'
+    successMessage.value = 'Check-in hari ini berhasil disimpan.'
   } catch (error) {
-    saveError.value = error.response?.data?.message || 'Check-in gagal disimpan.'
+    actionError.value =
+      error.response?.data?.message ??
+      checkinStore.error ??
+      'Gagal menyimpan check-in hari ini.'
+  } finally {
+    saving.value = false
   }
 }
+
+onMounted(async () => {
+  await checkinStore.fetchToday()
+})
 </script>
 
 <template>
-  <div class="space-y-6">
-    <section class="rounded-xl border bg-white p-6 shadow-sm">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p class="text-sm text-slate-500">
-            Check-in harian
-          </p>
+  <section class="px-8 pb-10">
+    <!-- Informasi halaman dan progress -->
+    <div class="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+      <div>
+        <p class="text-xs font-semibold text-sky-600">
+          Check-in Harian
+        </p>
 
-          <h1 class="text-2xl font-bold text-slate-900">
-            {{ todayLabel }}
-          </h1>
-        </div>
-
-        <ProgressBadge
-          :completed="checkinStore.completedHabits"
-          :total="checkinStore.totalHabits"
-          :percentage="checkinStore.progressPercentage"
-        />
-      </div>
-    </section>
-
-    <section class="rounded-xl border bg-white p-6 shadow-sm">
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <h2 class="font-semibold text-slate-900">
-            Kebiasaan Hari Ini
-          </h2>
-
-          <p class="text-sm text-slate-500">
-            Centang kebiasaan yang sudah dilakukan, lalu simpan.
-          </p>
-        </div>
+        <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+          {{ displayDate }}
+        </h1>
       </div>
 
-      <p
-        v-if="checkinStore.loading && !checkinStore.todayCheckin.habits.length"
-        class="rounded-lg bg-slate-50 p-4 text-sm text-slate-500"
+      <div
+        class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:w-72"
       >
-        Mengambil data check-in...
+        <div class="flex items-center justify-between gap-5">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs font-bold text-slate-700">
+                Progress Hari Ini
+              </p>
+
+              <p class="text-xs font-bold text-sky-600">
+                {{ completedCount }}/{{ totalHabits }}
+              </p>
+            </div>
+
+            <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                class="h-full rounded-full bg-sky-500 transition-all duration-300"
+                :style="{ width: `${progressPercent}%` }"
+              />
+            </div>
+
+            <p class="mt-2 text-xs font-medium text-slate-500">
+              {{ progressPercent }}% selesai
+            </p>
+          </div>
+
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-xl text-sky-600"
+          >
+            ⚡
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div
+      v-if="checkinStore.loading && !habits.length"
+      class="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm"
+    >
+      <p class="text-sm font-medium text-slate-500">
+        Memuat data kebiasaan...
       </p>
+    </div>
 
-      <p
-        v-else-if="checkinStore.error"
-        class="rounded-lg bg-red-50 p-4 text-sm text-red-600"
-      >
+    <!-- Error fetch -->
+    <div
+      v-else-if="checkinStore.error && !habits.length"
+      class="rounded-2xl border border-red-200 bg-red-50 px-6 py-5"
+    >
+      <p class="text-sm font-semibold text-red-700">
         {{ checkinStore.error }}
       </p>
 
-      <p
-        v-else-if="!checkinStore.todayCheckin.habits.length"
-        class="rounded-lg bg-yellow-50 p-4 text-sm text-yellow-700"
+      <button
+        type="button"
+        class="mt-4 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+        @click="checkinStore.fetchToday()"
       >
-        Data kebiasaan belum tersedia dari API.
-      </p>
+        Coba Lagi
+      </button>
+    </div>
 
-      <div
-        v-else
-        class="space-y-4"
-      >
+    <template v-else>
+      <!-- Grid kebiasaan -->
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <HabitCard
-          v-for="habit in checkinStore.todayCheckin.habits"
+          v-for="habit in habits"
           :key="habit.id"
           :habit="habit"
-          @update="updateHabit"
+          @toggle="toggleHabit(habit.id)"
+          @update-note="updateHabitNote(habit.id, $event)"
         />
 
-        <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">
-            Catatan umum
-          </label>
+        <!-- Catatan umum otomatis mengambil dua kolom pada desktop -->
+        <article
+          class="flex min-h-[200px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] xl:col-span-2"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-lg font-bold text-sky-600"
+            >
+              ≡
+            </div>
+
+            <h3 class="text-sm font-bold text-slate-900">
+              Catatan Umum
+            </h3>
+          </div>
 
           <textarea
             v-model="checkinStore.todayCheckin.notes"
-            class="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-sky-500"
-            rows="3"
-            placeholder="Tambahkan catatan untuk check-in hari ini..."
+            rows="5"
+            class="mt-4 min-h-[125px] w-full flex-1 resize-none rounded-xl border border-transparent bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+            placeholder="Apa yang kamu rasakan hari ini? Adakah hal menarik atau tantangan yang dihadapi?"
+            @input="
+              successMessage = '';
+              actionError = ''
+            "
           />
-        </div>
-
-        <p
-          v-if="successMessage"
-          class="rounded-lg bg-green-50 p-3 text-sm text-green-700"
-        >
-          {{ successMessage }}
-        </p>
-
-        <p
-          v-if="saveError"
-          class="rounded-lg bg-red-50 p-3 text-sm text-red-600"
-        >
-          {{ saveError }}
-        </p>
-
-        <div class="flex justify-end">
-          <button
-            type="button"
-            :disabled="checkinStore.loading"
-            class="rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-            @click="handleSubmit"
-          >
-            {{ checkinStore.loading ? 'Menyimpan...' : 'Simpan Check-in' }}
-          </button>
-        </div>
+        </article>
       </div>
-    </section>
-  </div>
+
+      <!-- Feedback -->
+      <div
+        v-if="successMessage"
+        class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700"
+      >
+        {{ successMessage }}
+      </div>
+
+      <div
+        v-if="actionError"
+        class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+      >
+        {{ actionError }}
+      </div>
+
+      <!-- Tombol aksi -->
+      <div
+        class="mt-7 flex flex-col-reverse items-stretch justify-end gap-3 sm:flex-row sm:items-center"
+      >
+        <button
+          type="button"
+          class="rounded-xl bg-indigo-50 px-7 py-3 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="saving || checkinStore.loading"
+          @click="handleCancel"
+        >
+          Batal
+        </button>
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-7 py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(14,165,233,0.25)] transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="saving || checkinStore.loading || !totalHabits"
+          @click="handleSave"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            class="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 3.5h10.5L17 6v10.5H4v-13Z"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M7 3.5v4h6v-4M7 13h6"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+
+          {{ saving ? 'Menyimpan...' : 'Simpan Check-in' }}
+        </button>
+      </div>
+    </template>
+  </section>
 </template>
+```
