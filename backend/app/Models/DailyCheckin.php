@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyCheckin extends Model
 {
-    const CREATED_AT = null; 
+    const CREATED_AT = null;
 
     protected $fillable = [
         'student_id',
@@ -18,7 +18,7 @@ class DailyCheckin extends Model
     ];
 
     protected $casts = [
-        'checkin_date' => 'date',
+        'checkin_date' => 'date:Y-m-d',
         'submitted_at' => 'datetime',
         'updated_at'   => 'datetime',
     ];
