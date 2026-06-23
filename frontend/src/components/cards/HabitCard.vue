@@ -6,6 +6,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  editable: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['toggle', 'update-note'])
@@ -32,7 +36,15 @@ const habitIcon = computed(() => {
   return icons[habitCode.value] ?? '✓'
 })
 
+function handleToggle() {
+  if (!props.editable) return
+
+  emit('toggle')
+}
+
 function handleNoteInput(event) {
+  if (!props.editable) return
+
   emit('update-note', event.target.value)
 }
 </script>
@@ -68,14 +80,19 @@ function handleNoteInput(event) {
 
       <button
         type="button"
-        class="flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-all duration-200 hover:scale-110 active:scale-95"
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-all duration-200 hover:scale-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
         :class="
           isDone
             ? 'border-sky-600 bg-sky-600 text-white'
             : 'border-slate-300 bg-white text-transparent hover:border-sky-400'
         "
-        :aria-label="isDone ? `Batalkan ${habit.name}` : `Selesaikan ${habit.name}`"
-        @click="emit('toggle')"
+        :disabled="!props.editable"
+        :aria-label="
+          isDone
+            ? `Batalkan ${habit.name}`
+            : `Selesaikan ${habit.name}`
+        "
+        @click="handleToggle"
       >
         <svg
           viewBox="0 0 20 20"
@@ -110,8 +127,9 @@ function handleNoteInput(event) {
 
     <textarea
       :value="habit.notes ?? habit.note ?? ''"
+      :readonly="!props.editable"
       rows="3"
-      class="mt-4 min-h-[78px] w-full resize-none rounded-xl border border-transparent bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-slate-700 outline-none transition-all duration-300 placeholder:text-slate-400 group-hover:bg-sky-50/70 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+      class="mt-4 min-h-[78px] w-full resize-none rounded-xl border border-transparent bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-slate-700 outline-none transition-all duration-300 placeholder:text-slate-400 group-hover:bg-sky-50/70 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100 read-only:cursor-default read-only:bg-slate-100 read-only:text-slate-500 read-only:focus:border-transparent read-only:focus:ring-0"
       placeholder="Tulis aktivitas atau catatan singkat..."
       @input="handleNoteInput"
     />

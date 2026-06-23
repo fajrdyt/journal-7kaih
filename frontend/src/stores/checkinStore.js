@@ -22,6 +22,40 @@ function formatDateParam(date) {
   return `${year}-${month}-${day}`
 }
 
+function normalizeDateOnly(value) {
+  if (!value) return null
+
+  const rawValue = String(value)
+
+  // API sudah mengirim format date-only.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    return rawValue
+  }
+
+  const date = new Date(rawValue)
+
+  if (Number.isNaN(date.getTime())) {
+    return rawValue.slice(0, 10)
+  }
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+
+  if (!year || !month || !day) {
+    return rawValue.slice(0, 10)
+  }
+
+  return `${year}-${month}-${day}`
+}
+
 function currentMonthParams() {
   const now = new Date()
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -186,7 +220,9 @@ function normalizeHistoryItem(item) {
 
   return {
     ...item,
-    checkin_date: item.checkin_date ?? item.date ?? item.created_at,
+    checkin_date: normalizeDateOnly(
+      item.checkin_date ?? item.date ?? item.created_at,
+    ),
     notes: item.notes ?? '',
     items,
     completed_count: item.completed_count ?? item.done_count ?? completedCount,
@@ -282,13 +318,18 @@ export const useCheckinStore = defineStore('checkin', {
           habits: [],
           notes: '',
           checkin_date: todayDate(),
+          
         }
 
         try {
-          const todayResponse = await getTodayCheckin()
+         const todayResponse = await getTodayCheckin()
+          const responseData = extractObject(todayResponse)
+
           todayCheckin = {
             ...todayCheckin,
-            ...extractObject(todayResponse),
+            ...responseData,
+            checkin_date:
+              normalizeDateOnly(responseData?.checkin_date) ?? todayDate(),
           }
         } catch (error) {
           if (error.response?.status !== 404) {
@@ -405,21 +446,33 @@ export const useCheckinStore = defineStore('checkin', {
 
       try {
         const payload = {
-          notes,
-          items: this.habits.map((habit) => ({
-            habit_id: habit.id,
-            is_done: Boolean(habit.is_done || habit.completed),
-            activity_context: habit.activity_context ?? 'rumah',
-            notes: habit.notes ?? habit.note ?? null,
-          })),
+          notes: typeof notes === 'string' ? notes.trim() || null : null,
+
+          items: this.habits.map((habit) => {
+            const habitNotes = habit.notes ?? habit.note
+
+            return {
+              habit_id: habit.id,
+              is_done: Boolean(habit.is_done || habit.completed),
+              activity_context: habit.activity_context ?? 'rumah',
+              notes:
+                typeof habitNotes === 'string'
+                  ? habitNotes.trim() || null
+                  : null,
+            }
+          }),
         }
 
         const response = await saveCheckin(payload)
+
         await this.fetchToday()
 
         return unwrap(response)
       } catch (error) {
-        this.error = error.response?.data?.message ?? 'Gagal menyimpan check-in.'
+        this.error =
+          error.response?.data?.message ??
+          'Gagal menyimpan check-in.'
+
         throw error
       } finally {
         this.loading = false
