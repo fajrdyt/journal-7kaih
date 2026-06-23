@@ -101,7 +101,7 @@ class ClassController extends Controller
         if (!$this->isTeacherUser((int) $validated['teacher_id'])) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Wali kelas harus merupakan user dengan role guru.',
+                'message' => 'teacher_id harus merupakan user dengan role guru.',
                 'data'    => null,
             ], 422);
         }
@@ -200,7 +200,7 @@ class ClassController extends Controller
         ) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Wali kelas harus merupakan user dengan role guru.',
+                'message' => 'teacher_id harus merupakan user dengan role guru.',
                 'data'    => null,
             ], 422);
         }
