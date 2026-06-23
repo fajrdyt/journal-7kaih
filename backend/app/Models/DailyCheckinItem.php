@@ -15,6 +15,7 @@ class DailyCheckinItem extends Model
         'daily_checkin_id',
         'habit_id',
         'is_done',
+        'notes',
     ];
 
     protected $casts = [
@@ -33,23 +34,33 @@ class DailyCheckinItem extends Model
 
     public function validations(): HasMany
     {
-        return $this->hasMany(CheckinItemValidation::class, 'daily_checkin_item_id');
+        return $this->hasMany(
+            CheckinItemValidation::class,
+            'daily_checkin_item_id'
+        );
     }
 
     public function validation(): HasOne
     {
-        return $this->hasOne(CheckinItemValidation::class, 'daily_checkin_item_id');
+        return $this->hasOne(
+            CheckinItemValidation::class,
+            'daily_checkin_item_id'
+        );
     }
 
     public function parentValidation(): HasOne
     {
-        return $this->hasOne(CheckinItemValidation::class, 'daily_checkin_item_id')
-            ->where('validator_role', 'orang_tua');
+        return $this->hasOne(
+            CheckinItemValidation::class,
+            'daily_checkin_item_id'
+        )->where('validator_role', 'orang_tua');
     }
 
     public function teacherValidation(): HasOne
     {
-        return $this->hasOne(CheckinItemValidation::class, 'daily_checkin_item_id')
-            ->where('validator_role', 'guru');
+        return $this->hasOne(
+            CheckinItemValidation::class,
+            'daily_checkin_item_id'
+        )->where('validator_role', 'guru');
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -20,6 +20,7 @@ class User extends Authenticatable
         'name',
         'full_name',
         'username',
+        'nisn',
         'email',
         'phone',
         'password',
@@ -57,11 +58,17 @@ class User extends Authenticatable
 
     public function parentRelations(): HasMany
     {
-        return $this->hasMany(StudentParentRelation::class, 'parent_id');
+        return $this->hasMany(
+            StudentParentRelation::class,
+            'parent_id'
+        );
     }
 
     public function childRelations(): HasMany
     {
-        return $this->hasMany(StudentParentRelation::class, 'student_id');
+        return $this->hasMany(
+            StudentParentRelation::class,
+            'student_id'
+        );
     }
 }
