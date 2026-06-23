@@ -149,7 +149,7 @@ onMounted(async () => {
       <div class="rounded-2xl border-l-4 border-sky-500 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.06)]">
         <div class="flex items-center justify-between">
           <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-            Progress Keseluruhan
+            Progress Hari Ini
           </p>
 
           <p class="text-sm font-bold text-sky-600">
