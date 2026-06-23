@@ -1,3 +1,4 @@
+```vue
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -17,6 +18,14 @@ const completedDays = computed(() => {
   return Number(recap.value?.completed_days ?? 0)
 })
 
+const totalItems = computed(() => {
+  return Number(recap.value?.total_items ?? 0)
+})
+
+const completedItems = computed(() => {
+  return Number(recap.value?.completed_items ?? 0)
+})
+
 const completionPercentage = computed(() => {
   const value = Number(recap.value?.completion_percentage ?? 0)
 
@@ -24,14 +33,18 @@ const completionPercentage = computed(() => {
 })
 
 const habits = computed(() => {
-  return Array.isArray(recap.value?.habits) ? recap.value.habits : []
+  return Array.isArray(recap.value?.habits)
+    ? recap.value.habits
+    : []
 })
 
 const periodLabel = computed(() => {
   const period = recap.value?.raw?.period
 
   if (period?.start_date && period?.end_date) {
-    return `${formatShortDate(period.start_date)} – ${formatShortDate(period.end_date)}`
+    return `${formatShortDate(period.start_date)} – ${formatShortDate(
+      period.end_date,
+    )}`
   }
 
   return new Intl.DateTimeFormat('id-ID', {
@@ -40,41 +53,65 @@ const periodLabel = computed(() => {
   }).format(new Date())
 })
 
+const RING_R = 54
+const RING_CIRC = 2 * Math.PI * RING_R
+
+const ringDashoffset = computed(() => {
+  return (
+    RING_CIRC -
+    (completionPercentage.value / 100) * RING_CIRC
+  )
+})
+
 const overallStatus = computed(() => {
   const percentage = completionPercentage.value
 
   if (percentage >= 100) {
     return {
-      label: 'Sangat Baik',
-      description: 'Semua kebiasaan pada periode ini berhasil diselesaikan.',
+      label: 'Sempurna',
+      description:
+        'Semua kebiasaan pada periode ini berhasil diselesaikan. Luar biasa!',
       badgeClass: 'bg-emerald-100 text-emerald-700',
-      progressClass: 'bg-emerald-500',
+      ringColor: '#10b981',
     }
   }
 
   if (percentage >= 75) {
     return {
       label: 'Baik',
-      description: 'Konsistensi kebiasaanmu sudah sangat bagus. Pertahankan.',
-      badgeClass: 'bg-sky-100 text-sky-700',
-      progressClass: 'bg-sky-500',
+      description:
+        'Konsistensi kebiasaanmu sudah sangat baik. Pertahankan ritme ini.',
+      badgeClass: 'bg-white/25 text-white',
+      ringColor: '#ffffff',
     }
   }
 
   if (percentage >= 50) {
     return {
       label: 'Cukup Baik',
-      description: 'Kamu sudah berada di jalur yang tepat. Tetap lanjutkan.',
+      description:
+        'Kamu sudah berada di jalur yang tepat. Tetap lanjutkan dan tingkatkan konsistensimu.',
       badgeClass: 'bg-amber-100 text-amber-700',
-      progressClass: 'bg-amber-400',
+      ringColor: '#fbbf24',
+    }
+  }
+
+  if (percentage > 0) {
+    return {
+      label: 'Perlu Ditingkatkan',
+      description:
+        'Mulai dari langkah kecil dan tingkatkan konsistensi secara bertahap.',
+      badgeClass: 'bg-orange-100 text-orange-700',
+      ringColor: '#fb923c',
     }
   }
 
   return {
-    label: 'Perlu Ditingkatkan',
-    description: 'Mulai kembali secara bertahap dan bangun konsistensi harian.',
-    badgeClass: 'bg-slate-100 text-slate-600',
-    progressClass: 'bg-slate-400',
+    label: 'Belum Dimulai',
+    description:
+      'Mulai isi check-in hari ini untuk membangun kebiasaan positifmu.',
+    badgeClass: 'bg-white/20 text-white',
+    ringColor: 'rgba(255,255,255,0.35)',
   }
 })
 
@@ -104,7 +141,11 @@ function habitCompletedCount(habit) {
 }
 
 function habitTotalCount(habit) {
-  return Number(habit.total_count ?? totalCheckins.value ?? 0)
+  return Number(
+    habit.total_count ??
+      totalCheckins.value ??
+      0,
+  )
 }
 
 function habitTheme(habit) {
@@ -120,9 +161,9 @@ function habitTheme(habit) {
     }
   }
 
-  if (percentage >= 50) {
+  if (percentage >= 75) {
     return {
-      status: 'Dalam progres',
+      status: 'Konsisten',
       barClass: 'bg-sky-500',
       iconClass: 'bg-sky-50 text-sky-600',
       textClass: 'text-sky-700',
@@ -130,9 +171,9 @@ function habitTheme(habit) {
     }
   }
 
-  if (percentage > 0) {
+  if (percentage >= 50) {
     return {
-      status: 'Perlu ditingkatkan',
+      status: 'Cukup konsisten',
       barClass: 'bg-amber-400',
       iconClass: 'bg-amber-50 text-amber-600',
       textClass: 'text-amber-700',
@@ -140,12 +181,22 @@ function habitTheme(habit) {
     }
   }
 
+  if (percentage > 0) {
+    return {
+      status: 'Perlu ditingkatkan',
+      barClass: 'bg-orange-400',
+      iconClass: 'bg-orange-50 text-orange-600',
+      textClass: 'text-orange-700',
+      badgeClass: 'bg-orange-100 text-orange-700',
+    }
+  }
+
   return {
-    status: 'Belum dimulai',
-    barClass: 'bg-slate-400',
-    iconClass: 'bg-slate-100 text-slate-500',
-    textClass: 'text-slate-500',
-    badgeClass: 'bg-slate-100 text-slate-600',
+    status: 'Belum dilakukan',
+    barClass: 'bg-slate-300',
+    iconClass: 'bg-slate-100 text-slate-400',
+    textClass: 'text-slate-400',
+    badgeClass: 'bg-slate-100 text-slate-500',
   }
 }
 
@@ -223,6 +274,7 @@ onMounted(async () => {
             stroke="currentColor"
             stroke-width="1.8"
           />
+
           <path
             d="M8 3v6M16 3v6M4 11h16"
             stroke="currentColor"
@@ -270,24 +322,32 @@ onMounted(async () => {
     <template v-else>
       <!-- Main recap banner -->
       <section
-        class="relative overflow-hidden rounded-3xl px-7 py-7 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8"
-        style="background: linear-gradient(135deg, #0369a1 0%, #0284c7 48%, #06b6d4 100%);"
+        class="relative overflow-hidden rounded-3xl px-7 py-8 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8"
+        style="
+          background:
+            linear-gradient(
+              135deg,
+              #0369a1 0%,
+              #0284c7 48%,
+              #06b6d4 100%
+            );
+        "
       >
-        <!-- Decorative shapes -->
         <div
           class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10"
         />
+
         <div
           class="pointer-events-none absolute -bottom-28 right-40 h-56 w-56 rounded-full bg-white/10"
         />
 
         <div
-          class="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center"
+          class="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_164px] lg:items-center"
         >
           <div>
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
               <span
-                class="rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white"
+                class="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white"
               >
                 Ringkasan Bulan Ini
               </span>
@@ -307,41 +367,88 @@ onMounted(async () => {
               {{ Math.round(completionPercentage) }}%
             </h2>
 
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-white/85">
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-white">
               {{ overallStatus.description }}
             </p>
 
             <div class="mt-7 max-w-3xl">
-              <div class="mb-2 flex justify-between text-xs font-semibold">
-                <span class="text-white/75">
-                  Progress keseluruhan
+              <div
+                class="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold"
+              >
+                <span class="text-white">
+                  {{ completedItems }} dari
+                  {{ totalItems }} aktivitas selesai
                 </span>
 
-                <span>
+                <span class="text-white">
                   {{ Math.round(completionPercentage) }}%
                 </span>
               </div>
 
-              <div class="h-2.5 overflow-hidden rounded-full bg-white/20">
+              <div
+                class="h-3.5 overflow-hidden rounded-full bg-white/25"
+              >
                 <div
-                  class="h-full rounded-full bg-white transition-all duration-500"
-                  :style="{ width: `${completionPercentage}%` }"
+                  class="h-full rounded-full bg-white transition-all duration-700"
+                  :style="{
+                    width: `${completionPercentage}%`,
+                  }"
                 />
               </div>
             </div>
           </div>
 
+          <!-- Circular progress -->
           <div class="flex justify-start lg:justify-end">
-            <div
-              class="flex h-36 w-36 flex-col items-center justify-center rounded-full border-[10px] border-white/20 bg-white/10 shadow-inner backdrop-blur-sm"
-            >
-              <p class="text-4xl font-extrabold">
-                {{ Math.round(completionPercentage) }}%
-              </p>
+            <div class="relative flex items-center justify-center">
+              <svg
+                width="144"
+                height="144"
+                viewBox="0 0 144 144"
+                class="-rotate-90"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="72"
+                  cy="72"
+                  :r="RING_R"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.2)"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                />
 
-              <p class="mt-1 text-xs font-semibold text-white/75">
-                keseluruhan
-              </p>
+                <circle
+                  cx="72"
+                  cy="72"
+                  :r="RING_R"
+                  fill="none"
+                  :stroke="overallStatus.ringColor"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                  :stroke-dasharray="RING_CIRC"
+                  :stroke-dashoffset="ringDashoffset"
+                  style="
+                    transition:
+                      stroke-dashoffset 0.7s ease,
+                      stroke 0.3s ease;
+                  "
+                />
+              </svg>
+
+              <div
+                class="absolute flex flex-col items-center justify-center text-center"
+              >
+                <p class="text-3xl font-extrabold leading-none text-white">
+                  {{ Math.round(completionPercentage) }}%
+                </p>
+
+                <p
+                  class="mt-1 text-[11px] font-semibold text-white/80"
+                >
+                  bulan ini
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -349,6 +456,7 @@ onMounted(async () => {
 
       <!-- Summary cards -->
       <div class="mt-6 grid gap-5 md:grid-cols-3">
+        <!-- Total check-in -->
         <article
           class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_18px_38px_rgba(14,165,233,0.12)]"
         >
@@ -365,7 +473,9 @@ onMounted(async () => {
                   {{ totalCheckins }}
                 </p>
 
-                <span class="pb-1 text-sm font-semibold text-slate-400">
+                <span
+                  class="pb-1 text-sm font-semibold text-slate-400"
+                >
                   hari
                 </span>
               </div>
@@ -389,6 +499,7 @@ onMounted(async () => {
                   stroke="currentColor"
                   stroke-width="1.8"
                 />
+
                 <path
                   d="M9 9h6M9 13h4"
                   stroke="currentColor"
@@ -400,6 +511,7 @@ onMounted(async () => {
           </div>
         </article>
 
+        <!-- Completed days -->
         <article
           class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(16,185,129,0.12)]"
         >
@@ -416,8 +528,10 @@ onMounted(async () => {
                   {{ completedDays }}
                 </p>
 
-                <span class="pb-1 text-sm font-semibold text-slate-400">
-                  hari
+                <span
+                  class="pb-1 text-sm font-semibold text-slate-400"
+                >
+                  dari {{ totalCheckins }} hari
                 </span>
               </div>
             </div>
@@ -438,6 +552,7 @@ onMounted(async () => {
                   stroke="currentColor"
                   stroke-width="1.8"
                 />
+
                 <path
                   d="m8.5 12 2.3 2.4 4.8-5"
                   stroke="currentColor"
@@ -450,6 +565,7 @@ onMounted(async () => {
           </div>
         </article>
 
+        <!-- Monthly progress -->
         <article
           class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_18px_38px_rgba(245,158,11,0.12)]"
         >
@@ -458,7 +574,7 @@ onMounted(async () => {
               <p
                 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
               >
-                Rata-rata Progres
+                Progres Bulan Ini
               </p>
 
               <div class="mt-2 flex items-end gap-1">
@@ -466,7 +582,9 @@ onMounted(async () => {
                   {{ Math.round(completionPercentage) }}
                 </p>
 
-                <span class="pb-1 text-base font-extrabold text-slate-500">
+                <span
+                  class="pb-1 text-base font-extrabold text-slate-500"
+                >
                   %
                 </span>
               </div>
@@ -538,15 +656,22 @@ onMounted(async () => {
           </p>
         </div>
 
-        <div v-else class="mt-5 space-y-3">
+        <div
+          v-else
+          class="mt-5 space-y-3"
+        >
           <article
             v-for="habit in habits"
             :key="habit.id ?? habit.name"
             class="group rounded-2xl border border-slate-100 bg-slate-50/60 px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-[0_12px_28px_rgba(14,165,233,0.08)]"
           >
-            <div class="grid gap-4 md:grid-cols-12 md:items-center">
+            <div
+              class="grid gap-4 md:grid-cols-12 md:items-center"
+            >
               <!-- Habit identity -->
-              <div class="flex min-w-0 items-center gap-3 md:col-span-4">
+              <div
+                class="flex min-w-0 items-center gap-3 md:col-span-4"
+              >
                 <div
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-bold"
                   :class="habitTheme(habit).iconClass"
@@ -555,7 +680,9 @@ onMounted(async () => {
                 </div>
 
                 <div class="min-w-0">
-                  <h3 class="truncate text-sm font-bold text-slate-900">
+                  <h3
+                    class="truncate text-sm font-bold text-slate-900"
+                  >
                     {{ habit.name }}
                   </h3>
 
@@ -582,22 +709,30 @@ onMounted(async () => {
                   </span>
                 </div>
 
-                <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  class="h-3 overflow-hidden rounded-full bg-slate-200"
+                >
                   <div
                     class="h-full rounded-full transition-all duration-500"
                     :class="habitTheme(habit).barClass"
-                    :style="{ width: `${habitPercentage(habit)}%` }"
+                    :style="{
+                      width: `${habitPercentage(habit)}%`,
+                    }"
                   />
                 </div>
               </div>
 
               <!-- Habit result -->
-              <div class="flex justify-start md:col-span-2 md:justify-end">
+              <div
+                class="flex justify-start md:col-span-2 md:justify-end"
+              >
                 <span
                   class="whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold"
                   :class="habitTheme(habit).badgeClass"
                 >
-                  {{ habitCompletedCount(habit) }}/{{ habitTotalCount(habit) }}
+                  {{ habitCompletedCount(habit) }}/{{
+                    habitTotalCount(habit)
+                  }}
                   hari
                 </span>
               </div>
@@ -608,3 +743,4 @@ onMounted(async () => {
     </template>
   </section>
 </template>
+```
