@@ -361,7 +361,6 @@ export const useCheckinStore = defineStore('checkin', {
             completed: isDone,
             notes,
             note: notes,
-            activity_context: item?.activity_context ?? 'rumah',
           }
         })
 
@@ -454,7 +453,6 @@ export const useCheckinStore = defineStore('checkin', {
             return {
               habit_id: habit.id,
               is_done: Boolean(habit.is_done || habit.completed),
-              activity_context: habit.activity_context ?? 'rumah',
               notes:
                 typeof habitNotes === 'string'
                   ? habitNotes.trim() || null
