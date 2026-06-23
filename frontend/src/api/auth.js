@@ -17,3 +17,17 @@ export async function getMe() {
 
   return response.data
 }
+
+
+export function getProfile() {
+  return api.get('/profile')
+}
+
+export function updateProfile(payload) {
+  return api.put('/profile', payload)
+}
+
+export function updatePassword(payload) {
+  return api.put('/profile/password', payload)
+}
+
