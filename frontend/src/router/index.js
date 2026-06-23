@@ -1,32 +1,59 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import LoginPage from '../pages/auth/LoginPage.vue'
-import DashboardPage from '../pages/student/StudentDashboard.vue'
-
 import { useAuthStore } from '../stores/authStore'
+import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import StudentSettingsPage from '../pages/student/StudentSettingsPage.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'login',
-    component: LoginPage,
+    redirect: '/login',
   },
-
   {
     path: '/login',
     name: 'login',
     component: LoginPage,
   },
-
   {
-    path:'/dashboard',
-    name:'dashboard',
-    component: DashboardPage,
+    path: '/student',
+    component: DashboardLayout,
     meta: {
       requiresAuth: true,
+      role: 'student',
     },
+    children: [
+      {
+        path: '',
+        redirect: '/student/dashboard',
+      },
+      {
+        path: 'dashboard',
+        name: 'student-dashboard',
+        component: () => import('@/pages/student/StudentDashboardPage.vue'),
+      },
+      {
+        path: 'checkin',
+        name: 'student-checkin',
+        component: () => import('@/pages/student/DailyCheckinPage.vue'),
+      },
+      {
+        path: 'history',
+        name: 'student-history',
+        component: () => import('@/pages/student/CheckinHistoryPage.vue'),
+      },
+      {
+        path: 'recap',
+        name: 'student-recap',
+        component: () => import('@/pages/student/PersonalRecapPage.vue'),
+      },
+
+      {
+        path: 'settings',
+        name: 'student-settings',
+        component: StudentSettingsPage,
+      }
+    ],
   },
-  
 ]
 
 const router = createRouter({
@@ -34,17 +61,26 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
-
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchUser()
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next('/login')
+    return '/login'
+  }
+
+  if (to.meta.role === 'student' && !authStore.isStudent) {
+    return '/login'
   }
 
   if (to.path === '/login' && authStore.isAuthenticated) {
-    return next('/dashboard')
+    return '/student/dashboard'
   }
-  next()
+
+  return true
 })
+
 export default router

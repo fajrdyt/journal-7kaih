@@ -9,7 +9,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const form = ref({
-  email: '',
+  identifier: '',
   password: '',
 })
 
@@ -22,11 +22,14 @@ async function handleLogin() {
   loading.value = true
 
   try {
-    await authStore.login(form.value)
+    await authStore.login({
+      identifier: form.value.identifier,
+      password: form.value.password,
+    })
 
-    router.push('/dashboard')
+    router.push('/student/dashboard')
   } catch (error) {
-    errorMessage.value = 'Email atau password salah'
+    errorMessage.value = error.response?.data?.message || 'Username/email atau password salah'
   } finally {
     loading.value = false
   }
@@ -51,7 +54,7 @@ async function handleLogin() {
           </h1>
 
           <p class="text-[#8A8A8A] text-sm mt-2 mb-12">
-            Masukkan detail akun kamu!
+            Masukkan username/email dan password akun kamu.
           </p>
 
           <form
@@ -66,8 +69,8 @@ async function handleLogin() {
               </label>
 
               <input
-                v-model="form.email"
-                type="email"
+                v-model="form.identifier"
+                type="text"
                 class="w-full border-0 border-b border-[#A0A0A0] bg-transparent focus:ring-0 focus:border-black px-0 py-2 text-[16px]"
               >
             </div>
