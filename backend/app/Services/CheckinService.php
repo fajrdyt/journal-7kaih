@@ -44,8 +44,11 @@ class CheckinService
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'start_date' => ['nullable', 'date_format:Y-m-d'],
-            'end_date'   => [
+            'start_date' => [
+                'nullable',
+                'date_format:Y-m-d',
+            ],
+            'end_date' => [
                 'nullable',
                 'date_format:Y-m-d',
                 'after_or_equal:start_date',
@@ -93,7 +96,7 @@ class CheckinService
                 'items' => $checkins->getCollection()
                     ->map(
                         fn (DailyCheckin $checkin) =>
-                        $this->formatCheckin($checkin)
+                            $this->formatCheckin($checkin)
                     )
                     ->values(),
 
@@ -189,15 +192,25 @@ class CheckinService
                 Gate::forUser($student)
                     ->authorize('update', $checkin);
 
-                $checkin->update([
-                    'notes'        => $validated['notes'] ?? null,
+                $checkinUpdateData = [
                     'submitted_at' => now(),
-                ]);
+                ];
+
+                if (array_key_exists('notes', $validated)) {
+                    $checkinUpdateData['notes'] =
+                        filled($validated['notes'])
+                            ? trim($validated['notes'])
+                            : null;
+                }
+
+                $checkin->update($checkinUpdateData);
             } else {
                 $checkin = DailyCheckin::query()->create([
                     'student_id'   => $student->id,
                     'checkin_date' => $today,
-                    'notes'        => $validated['notes'] ?? null,
+                    'notes'        => filled($validated['notes'] ?? null)
+                        ? trim($validated['notes'])
+                        : null,
                     'submitted_at' => now(),
                 ]);
             }
@@ -210,18 +223,24 @@ class CheckinService
 
                 $oldIsDone = $existingItem?->is_done;
 
+                $itemUpdateData = [
+                    'is_done' => (bool) $item['is_done'],
+                ];
+
+                if (array_key_exists('notes', $item)) {
+                    $itemUpdateData['notes'] =
+                        filled($item['notes'])
+                            ? trim($item['notes'])
+                            : null;
+                }
+
                 $checkinItem = DailyCheckinItem::query()
                     ->updateOrCreate(
                         [
                             'daily_checkin_id' => $checkin->id,
                             'habit_id'         => $item['habit_id'],
                         ],
-                        [
-                            'is_done' => (bool) $item['is_done'],
-                            'notes'   => isset($item['notes'])
-                                ? trim($item['notes'])
-                                : null,
-                        ]
+                        $itemUpdateData
                     );
 
                 $isChanged = $oldIsDone !== null
@@ -295,7 +314,6 @@ class CheckinService
                 ? $checkin->checkin_date->format('Y-m-d')
                 : null,
 
-
             'notes' => $checkin->notes,
 
             'submitted_at' => $checkin->submitted_at,
@@ -316,36 +334,36 @@ class CheckinService
                 'total_validations' => $checkin->items
                     ->sum(
                         fn (DailyCheckinItem $item) =>
-                        $item->validations->count()
+                            $item->validations->count()
                     ),
 
                 'parent_validations' => $checkin->items
                     ->sum(
                         fn (DailyCheckinItem $item) =>
-                        $item->validations
-                            ->where(
-                                'validator_role',
-                                'orang_tua'
-                            )
-                            ->count()
+                            $item->validations
+                                ->where(
+                                    'validator_role',
+                                    'orang_tua'
+                                )
+                                ->count()
                     ),
 
                 'teacher_validations' => $checkin->items
                     ->sum(
                         fn (DailyCheckinItem $item) =>
-                        $item->validations
-                            ->where(
-                                'validator_role',
-                                'guru'
-                            )
-                            ->count()
+                            $item->validations
+                                ->where(
+                                    'validator_role',
+                                    'guru'
+                                )
+                                ->count()
                     ),
             ],
 
             'items' => $checkin->items
                 ->sortBy(
                     fn (DailyCheckinItem $item) =>
-                    $item->habit?->sort_order ?? 999
+                        $item->habit?->sort_order ?? 999
                 )
                 ->map(function (DailyCheckinItem $item) {
                     return [
