@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 
 import {
+  deleteAvatar as deleteAvatarApi,
   getMe,
   getProfile as getProfileApi,
   login as loginApi,
   logout as logoutApi,
   updatePassword as updatePasswordApi,
   updateProfile as updateProfileApi,
+  uploadAvatar as uploadAvatarApi,
 } from '@/api/auth'
 
 const TOKEN_KEY = 'token'
@@ -70,6 +72,7 @@ function normalizeUser(user) {
       user.name ??
       user.username ??
       'Pengguna',
+    avatar_url: user.avatar_url ?? null,
     role: normalizeRole(user.role),
   }
 }
@@ -90,6 +93,7 @@ export const useAuthStore = defineStore('auth', {
     user: normalizeUser(getStoredUser()),
     token: localStorage.getItem(TOKEN_KEY) || null,
     loading: false,
+    avatarLoading: false,
     error: null,
   }),
 
@@ -312,6 +316,75 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async uploadAvatar(file) {
+      if (!file) {
+        throw new Error('Foto profil belum dipilih.')
+      }
+
+      this.avatarLoading = true
+      this.error = null
+
+      try {
+        const response = await uploadAvatarApi(file)
+        const data = unwrap(response)
+        const avatarUrl = data?.avatar_url ?? null
+
+        this.setUser({
+          ...this.user,
+          avatar_url: avatarUrl,
+        })
+
+        return {
+          avatar_url: avatarUrl,
+          message:
+            response?.message ??
+            data?.message ??
+            'Foto profil berhasil diperbarui.',
+        }
+      } catch (error) {
+        this.error =
+          error.response?.data?.message ??
+          error.message ??
+          'Gagal memperbarui foto profil.'
+
+        throw error
+      } finally {
+        this.avatarLoading = false
+      }
+    },
+
+    async deleteAvatar() {
+      this.avatarLoading = true
+      this.error = null
+
+      try {
+        const response = await deleteAvatarApi()
+        const data = unwrap(response)
+        const avatarUrl = data?.avatar_url ?? null
+
+        this.setUser({
+          ...this.user,
+          avatar_url: avatarUrl,
+        })
+
+        return {
+          avatar_url: avatarUrl,
+          message:
+            response?.message ??
+            data?.message ??
+            'Foto profil berhasil dihapus.',
+        }
+      } catch (error) {
+        this.error =
+          error.response?.data?.message ??
+          'Gagal menghapus foto profil.'
+
+        throw error
+      } finally {
+        this.avatarLoading = false
+      }
+    },
+
     async logout() {
       try {
         if (this.token) {
@@ -326,6 +399,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.token = null
       this.loading = false
+      this.avatarLoading = false
       this.error = null
 
       localStorage.removeItem(TOKEN_KEY)

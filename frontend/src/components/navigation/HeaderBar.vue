@@ -1,5 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import {
+  computed,
+  ref,
+  watch,
+} from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '../../stores/authStore'
@@ -8,6 +12,8 @@ const emit = defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const avatarLoadError = ref(false)
 
 const displayName = computed(() => {
   return (
@@ -20,21 +26,32 @@ const displayName = computed(() => {
 })
 
 const initialName = computed(() => {
-  return displayName.value
-    ?.charAt(0)
-    ?.toUpperCase() || 'P'
+  return (
+    displayName.value
+      .trim()
+      .charAt(0)
+      .toUpperCase() || 'P'
+  )
+})
+
+const avatarUrl = computed(() => {
+  return String(
+    authStore.user?.avatar_url ?? '',
+  ).trim()
 })
 
 const normalizedRole = computed(() => {
   const role = String(authStore.userRole ?? '')
     .trim()
     .toLowerCase()
+    .replace(/[\s-]+/g, '_')
 
   const aliases = {
     student: 'siswa',
     siswa: 'siswa',
     parent: 'orang_tua',
     orang_tua: 'orang_tua',
+    orangtua: 'orang_tua',
     teacher: 'guru',
     guru: 'guru',
     admin: 'admin',
@@ -54,6 +71,24 @@ const settingsPath = computed(() => {
 function openSettings() {
   router.push(settingsPath.value)
 }
+
+function handleAvatarLoad() {
+  avatarLoadError.value = false
+}
+
+function handleAvatarError() {
+  avatarLoadError.value = true
+}
+
+watch(
+  avatarUrl,
+  () => {
+    avatarLoadError.value = false
+  },
+  {
+    immediate: true,
+  },
+)
 </script>
 
 <template>
@@ -115,9 +150,21 @@ function openSettings() {
       </div>
 
       <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700"
+        class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-100 text-sm font-bold text-blue-700 shadow-sm"
       >
-        {{ initialName }}
+        <img
+          v-if="avatarUrl && !avatarLoadError"
+          :key="avatarUrl"
+          :src="avatarUrl"
+          :alt="`Foto profil ${displayName}`"
+          class="h-full w-full object-cover"
+          @load="handleAvatarLoad"
+          @error="handleAvatarError"
+        />
+
+        <span v-else>
+          {{ initialName }}
+        </span>
       </div>
     </button>
   </header>

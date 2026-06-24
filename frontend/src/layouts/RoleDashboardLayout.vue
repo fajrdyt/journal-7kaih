@@ -47,7 +47,18 @@
           </div>
 
           <div class="avatar">
-            {{ initials }}
+            <img
+              v-if="avatarUrl && !avatarLoadError"
+              :key="avatarUrl"
+              :src="avatarUrl"
+              :alt="`Foto profil ${displayName}`"
+              @load="handleAvatarLoad"
+              @error="handleAvatarError"
+            />
+
+            <span v-else>
+              {{ initials }}
+            </span>
           </div>
         </button>
       </header>
@@ -63,6 +74,7 @@
 import {
   computed,
   onBeforeUnmount,
+  onMounted,
   ref,
   watch,
 } from 'vue'
@@ -76,6 +88,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const sidebarOpen = ref(false)
+const avatarLoadError = ref(false)
 
 const normalizedRole = computed(() => {
   const sourceRole =
@@ -131,6 +144,12 @@ const initials = computed(() => {
   return `${words[0][0]}${words.at(-1)[0]}`.toUpperCase()
 })
 
+const avatarUrl = computed(() => {
+  return String(
+    authStore.user?.avatar_url ?? '',
+  ).trim()
+})
+
 const roleLabel = computed(() => {
   const labels = {
     siswa: 'Siswa',
@@ -169,6 +188,14 @@ function openSettings() {
   router.push(settingsPath.value)
 }
 
+function handleAvatarLoad() {
+  avatarLoadError.value = false
+}
+
+function handleAvatarError() {
+  avatarLoadError.value = true
+}
+
 watch(
   () => route.fullPath,
   () => {
@@ -177,7 +204,30 @@ watch(
 )
 
 watch(sidebarOpen, (isOpen) => {
-  document.body.style.overflow = isOpen ? 'hidden' : ''
+  document.body.style.overflow = isOpen
+    ? 'hidden'
+    : ''
+})
+
+watch(
+  avatarUrl,
+  () => {
+    avatarLoadError.value = false
+  },
+  {
+    immediate: true,
+  },
+)
+
+onMounted(async () => {
+  if (!authStore.token) return
+
+  try {
+    await authStore.fetchProfile()
+    avatarLoadError.value = false
+  } catch {
+    avatarLoadError.value = false
+  }
 })
 
 onBeforeUnmount(() => {
@@ -332,12 +382,29 @@ onBeforeUnmount(() => {
   display: grid;
   flex-shrink: 0;
   place-items: center;
+  overflow: hidden;
+  border: 2px solid #dbeafe;
   border-radius: 50%;
-  background: linear-gradient(135deg, #209cee, #75caff);
-  color: #ffffff;
+  background: #dbeafe;
+  color: #2563eb;
   font-size: 11px;
   font-weight: 900;
-  box-shadow: 0 8px 18px rgba(32, 156, 238, 0.22);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.avatar span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
 }
 
 .dashboard-content {
