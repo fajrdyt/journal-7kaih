@@ -16,6 +16,24 @@ export function getCheckinHistory(params = {}) {
   return api.get('/student/checkins', { params })
 }
 
+export function getCheckinDetail(id) {
+  return api.get(`/student/checkins/${id}`)
+}
+
 export function getStudentRecap(params = {}) {
   return api.get('/student/recap', { params })
+}
+
+export function getStudentHabitStatistics() {
+  return api.get('/student/habit-statistics')
+}
+
+export const checkinApi = {
+  getHabits,
+  today: getTodayCheckin,
+  history: getCheckinHistory,
+  store: saveCheckin,
+  show: getCheckinDetail,
+  recap: getStudentRecap,
+  habitStatistics: getStudentHabitStatistics,
 }

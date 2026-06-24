@@ -1,38 +1,70 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import { useAuthStore } from '../../stores/authStore'
+import { useAuthStore } from '@/stores/authStore'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const form = ref({
+const loading = ref(false)
+const error = ref('')
+
+const form = reactive({
   identifier: '',
   password: '',
 })
 
-const errorMessage = ref('')
-const loading = ref(false)
-const showPassword = ref(false)
-
 async function handleLogin() {
-  errorMessage.value = ''
-  loading.value = true
+  if (loading.value) {
+    return
+  }
 
   try {
+    loading.value = true
+    error.value = ''
+
     await authStore.login({
-      identifier: form.value.identifier,
-      password: form.value.password,
+      identifier: form.identifier.trim(),
+      password: form.password,
     })
 
-    router.push('/student/dashboard')
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message || 'Username/email atau password salah'
+    const requestedPath =
+      typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : null
+
+    const destination = isAllowedRedirect(requestedPath)
+      ? requestedPath
+      : authStore.dashboardPath
+
+    await router.replace(destination)
+  } catch (err) {
+    error.value =
+      err.response?.data?.message ||
+      authStore.error ||
+      'Login gagal. Periksa kembali username/email dan password.'
   } finally {
     loading.value = false
   }
+}
+
+function isAllowedRedirect(path) {
+  if (!path || !path.startsWith('/')) {
+    return false
+  }
+
+  const allowedPrefixes = {
+    siswa: '/student',
+    guru: '/teacher',
+    orang_tua: '/parent',
+    admin: '/admin',
+  }
+
+  const prefix = allowedPrefixes[authStore.userRole]
+
+  return Boolean(prefix && path.startsWith(prefix))
 }
 </script>
 

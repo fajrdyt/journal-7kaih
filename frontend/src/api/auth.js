@@ -1,7 +1,24 @@
 import api from './axios'
 
-export async function login(payload) {
-  const response = await api.post('/auth/login', payload)
+function createLoginPayload(payloadOrIdentifier, password = null) {
+  if (
+    typeof payloadOrIdentifier === 'object' &&
+    payloadOrIdentifier !== null
+  ) {
+    return payloadOrIdentifier
+  }
+
+  return {
+    identifier: payloadOrIdentifier,
+    password,
+  }
+}
+
+export async function login(payloadOrIdentifier, password = null) {
+  const response = await api.post(
+    '/auth/login',
+    createLoginPayload(payloadOrIdentifier, password),
+  )
 
   return response.data
 }
@@ -18,16 +35,40 @@ export async function getMe() {
   return response.data
 }
 
+export async function getProfile() {
+  const response = await api.get('/profile')
 
-export function getProfile() {
-  return api.get('/profile')
+  return response.data
 }
 
-export function updateProfile(payload) {
-  return api.put('/profile', payload)
+export async function updateProfile(payload) {
+  const response = await api.put('/profile', payload)
+
+  return response.data
 }
 
-export function updatePassword(payload) {
-  return api.put('/profile/password', payload)
+export async function updatePassword(payload) {
+  const response = await api.put('/profile/password', payload)
+
+  return response.data
 }
 
+export const authApi = {
+  login: (identifier, password) =>
+    api.post(
+      '/auth/login',
+      createLoginPayload(identifier, password),
+    ),
+
+  me: () => api.get('/auth/me'),
+
+  logout: () => api.post('/auth/logout'),
+
+  getProfile: () => api.get('/profile'),
+
+  updateProfile: (payload) =>
+    api.put('/profile', payload),
+
+  updatePassword: (payload) =>
+    api.put('/profile/password', payload),
+}

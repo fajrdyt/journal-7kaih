@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import {
   computed,
@@ -91,7 +90,6 @@ const isProfileDirty = computed(() => {
   if (!currentUser) return false
 
   return (
-    profileForm.nisn !== stringValue(currentUser.nisn) ||
     profileForm.full_name !== stringValue(
       currentUser.full_name ?? currentUser.name,
     ) ||
@@ -124,9 +122,14 @@ function extractValidationErrors(error) {
     return {}
   }
 
+  const fieldAliases = {
+    new_password: 'password',
+    new_password_confirmation: 'password_confirmation',
+  }
+
   return Object.fromEntries(
     Object.entries(errors).map(([field, messages]) => [
-      field,
+      fieldAliases[field] || field,
       Array.isArray(messages)
         ? messages[0]
         : String(messages),
@@ -158,7 +161,6 @@ async function handleUpdateProfile() {
   profileSaving.value = true
 
   const payload = {
-    nisn: profileForm.nisn.trim() || null,
     full_name: profileForm.full_name.trim(),
     username: profileForm.username.trim(),
     email: profileForm.email.trim() || null,
@@ -226,8 +228,8 @@ async function handleUpdatePassword() {
   try {
     const result = await authStore.updatePassword({
       current_password: passwordForm.current_password,
-      password: passwordForm.password,
-      password_confirmation:
+      new_password: passwordForm.password,
+      new_password_confirmation:
         passwordForm.password_confirmation,
     })
 
@@ -390,7 +392,8 @@ onMounted(async () => {
               type="text"
               inputmode="numeric"
               autocomplete="off"
-              class="mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              readonly
+              class="mt-2 w-full cursor-not-allowed rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-500 outline-none transition placeholder:text-slate-400"
               :class="
                 profileErrors.nisn
                   ? 'border-red-300'
@@ -894,4 +897,3 @@ onMounted(async () => {
     </div>
   </section>
 </template>
-```
