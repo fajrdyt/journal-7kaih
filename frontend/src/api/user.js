@@ -1,42 +1,70 @@
 import api from './axios'
 
 export const userApi = {
-  // Profile akun login
   getProfile: () => api.get('/profile'),
 
   updateProfile: (data) => api.put('/profile', data),
 
-  updatePassword: (data) => api.put('/profile/password', data),
+  updatePassword: (data) =>
+    api.put('/profile/password', data),
 
-  // Users
+  getDashboardSummary: () =>
+    api.get('/admin/dashboard-summary'),
+
+  getRoles: () => api.get('/roles'),
+
   getUsers: (params = {}) =>
-    api.get('/admin/users', {
-      params,
-    }),
+    api.get('/admin/users', { params }),
 
-  getUser: (id) => api.get(`/admin/users/${id}`),
+  getUser: (id) =>
+    api.get(`/admin/users/${id}`),
 
-  createUser: (data) => api.post('/admin/users', data),
+  createUser: (data) =>
+    api.post('/admin/users', data),
 
-  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  updateUser: (id, data) =>
+    api.put(`/admin/users/${id}`, data),
 
-  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  deleteUser: (id) =>
+    api.delete(`/admin/users/${id}`),
 
   resetPassword: (id, data) =>
     api.post(`/admin/users/${id}/reset-password`, data),
 
-  // Classes
   getClasses: (params = {}) =>
-    api.get('/admin/classes', {
+    api.get('/admin/classes', { params }),
+
+  getClass: (id) =>
+    api.get(`/admin/classes/${id}`),
+
+  createClass: (data) =>
+    api.post('/admin/classes', data),
+
+  updateClass: (id, data) =>
+    api.put(`/admin/classes/${id}`, data),
+
+  deleteClass: (id) =>
+    api.delete(`/admin/classes/${id}`),
+
+  getRelations: (params = {}) =>
+    api.get('/admin/student-parent-relations', {
       params,
     }),
 
-  getClass: (id) => api.get(`/admin/classes/${id}`),
+  getRelation: (id) =>
+    api.get(`/admin/student-parent-relations/${id}`),
 
-  createClass: (data) => api.post('/admin/classes', data),
+  createRelation: (data) =>
+    api.post('/admin/student-parent-relations', data),
 
-  updateClass: (id, data) => api.put(`/admin/classes/${id}`, data),
+  updateRelation: (id, data) =>
+    api.put(
+      `/admin/student-parent-relations/${id}`,
+      data,
+    ),
 
-  deleteClass: (id) => api.delete(`/admin/classes/${id}`),
+  deleteRelation: (id) =>
+    api.delete(
+      `/admin/student-parent-relations/${id}`,
+    ),
 }
-

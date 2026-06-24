@@ -1,148 +1,369 @@
 <template>
-  <div class="page">
-    <div class="page-header">
+  <div class="habit-page">
+    <section class="page-header">
       <div>
-        <p class="header-kicker">Master Data</p>
-        <h1>Manajemen Kebiasaan</h1>
-        <p>Kelola daftar kebiasaan yang digunakan pada jurnal harian siswa.</p>
+        <p class="page-kicker">Master Kebiasaan</p>
+
+        <h2>Daftar Kebiasaan</h2>
+
+        <p>
+          Tujuh Kebiasaan Anak Indonesia Hebat merupakan data
+          tetap yang digunakan dalam seluruh proses check-in.
+        </p>
       </div>
 
-      <button class="primary-btn" @click="openCreateForm">
-        Tambah Kebiasaan
+      <button
+        type="button"
+        class="refresh-button"
+        :disabled="loading"
+        @click="loadHabits"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          :class="{ rotating: loading }"
+        >
+          <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+          <path d="M20 4v6h-6" />
+        </svg>
+
+        <span>
+          {{ loading ? 'Memuat...' : 'Perbarui' }}
+        </span>
+      </button>
+    </section>
+
+    <section class="information-card">
+      <div class="information-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5" />
+          <path d="M12 8h.01" />
+        </svg>
+      </div>
+
+      <div>
+        <strong>Data kebiasaan bersifat tetap</strong>
+
+        <p>
+          Admin hanya dapat melihat daftar kebiasaan. Penambahan,
+          perubahan, dan penghapusan kebiasaan tidak tersedia
+          karena sistem menggunakan tujuh kebiasaan yang sudah
+          ditetapkan.
+        </p>
+      </div>
+    </section>
+
+    <div
+      v-if="error"
+      class="alert error-alert"
+    >
+      <div>
+        <strong>Gagal memuat kebiasaan</strong>
+        <p>{{ error }}</p>
+      </div>
+
+      <button
+        type="button"
+        aria-label="Tutup pesan"
+        @click="error = ''"
+      >
+        ×
       </button>
     </div>
 
-    <div v-if="message" class="alert success">
-      {{ message }}
-    </div>
-
-    <div v-if="error" class="alert error">
-      {{ error }}
-    </div>
-
-    <section v-if="showForm" class="card form-card">
-      <div class="form-head">
-        <div>
-          <h2>{{ editingHabit ? 'Edit Kebiasaan' : 'Tambah Kebiasaan' }}</h2>
-          <p>Isi kode dan nama kebiasaan.</p>
-        </div>
-
-        <button class="secondary-btn" @click="closeForm">
-          Batal
-        </button>
-      </div>
-
-      <form class="form-grid" @submit.prevent="submitHabit">
-        <div class="form-group">
-          <label>Kode</label>
-          <input v-model="form.code" type="text" placeholder="Contoh: H01" required />
-        </div>
-
-        <div class="form-group">
-          <label>Nama Kebiasaan</label>
-          <input v-model="form.name" type="text" placeholder="Contoh: Bangun Pagi" required />
-        </div>
-
-        <label class="checkbox-row">
-          <input v-model="form.is_active" type="checkbox" />
-          <span>Kebiasaan aktif</span>
-        </label>
-
-        <div class="form-actions">
-          <button class="primary-btn" type="submit" :disabled="saving">
-            {{ saving ? 'Menyimpan...' : editingHabit ? 'Simpan Perubahan' : 'Tambah Kebiasaan' }}
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <section class="card">
+    <section class="data-panel">
       <div class="toolbar">
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+
+          <input
+            v-model="search"
+            type="search"
+            placeholder="Cari nama atau kode kebiasaan..."
+            aria-label="Cari kebiasaan"
+          />
+        </div>
+
+        <select
+          v-model="statusFilter"
+          class="status-filter"
+          aria-label="Filter status kebiasaan"
+        >
+          <option value="all">Semua Status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Nonaktif</option>
+        </select>
+      </div>
+
+      <div class="panel-summary">
         <div>
-          <h2>Daftar Kebiasaan</h2>
-          <p>Total {{ habits.length }} kebiasaan</p>
+          <h3>Tujuh Kebiasaan Utama</h3>
+
+          <p>
+            Menampilkan
+            <strong>{{ filteredHabits.length }}</strong>
+            dari
+            <strong>{{ habits.length }}</strong>
+            kebiasaan
+          </p>
         </div>
 
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Cari kebiasaan..."
-        />
-      </div>
+        <div class="summary-badges">
+          <span>
+            {{ formatNumber(habits.length) }} kebiasaan
+          </span>
 
-      <div v-if="loading" class="empty-state">
-        Memuat data kebiasaan...
-      </div>
-
-      <div v-else-if="filteredHabits.length === 0" class="empty-state">
-        Belum ada data kebiasaan.
-      </div>
-
-      <div v-else class="habit-grid">
-        <div v-for="habit in filteredHabits" :key="habit.id" class="habit-card">
-          <div class="habit-main">
-            <div class="habit-code">
-              {{ habit.code || 'H' + habit.id }}
-            </div>
-
-            <div>
-              <h3>{{ habit.name }}</h3>
-              <span :class="['status-pill', habit.is_active ? 'active' : 'inactive']">
-                {{ habit.is_active ? 'Aktif' : 'Nonaktif' }}
-              </span>
-            </div>
-          </div>
-
-          <div class="habit-actions">
-            <button class="small-btn" @click="openEditForm(habit)">
-              Edit
-            </button>
-
-            <button class="small-btn danger" @click="deleteHabit(habit)">
-              Hapus
-            </button>
-          </div>
+          <span class="active-summary">
+            {{ formatNumber(activeHabitCount) }} aktif
+          </span>
         </div>
+      </div>
+
+      <div
+        v-if="loading"
+        class="loading-grid"
+      >
+        <div
+          v-for="item in 7"
+          :key="item"
+          class="loading-card"
+        ></div>
+      </div>
+
+      <div
+        v-else-if="!filteredHabits.length"
+        class="empty-state"
+      >
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect
+              x="4"
+              y="4"
+              width="16"
+              height="16"
+              rx="3"
+            />
+            <path d="m8 12 2.5 2.5L16 9" />
+          </svg>
+        </div>
+
+        <strong>Kebiasaan tidak ditemukan</strong>
+
+        <p>
+          Ubah kata pencarian atau filter status yang digunakan.
+        </p>
+      </div>
+
+      <div
+        v-else
+        class="habit-grid"
+      >
+        <article
+          v-for="habit in filteredHabits"
+          :key="habit.id"
+          class="habit-card"
+        >
+          <div class="habit-card-head">
+            <div class="order-badge">
+              {{ habit.sort_order || '-' }}
+            </div>
+
+            <span
+              class="status-badge"
+              :class="{
+                inactive: !normalizeBoolean(
+                  habit.is_active,
+                ),
+              }"
+            >
+              {{ formatStatus(habit.is_active) }}
+            </span>
+          </div>
+
+          <div class="habit-icon">
+            <svg
+              v-if="habitIcon(habit) === 'sun'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2" />
+              <path d="m4.93 4.93 1.42 1.42" />
+              <path d="m17.65 17.65 1.42 1.42" />
+              <path d="M2 12h2M20 12h2" />
+              <path d="m4.93 19.07 1.42-1.42" />
+              <path d="m17.65 6.35 1.42-1.42" />
+            </svg>
+
+            <svg
+              v-else-if="habitIcon(habit) === 'pray'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path d="M12 3v7" />
+              <path d="m8 6 4 4 4-4" />
+              <path d="M7 21v-4a5 5 0 0 1 10 0v4" />
+              <path d="M4 21h16" />
+            </svg>
+
+            <svg
+              v-else-if="habitIcon(habit) === 'exercise'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path d="M6 7v10M18 7v10" />
+              <path d="M3 9v6M21 9v6" />
+              <path d="M6 12h12" />
+            </svg>
+
+            <svg
+              v-else-if="habitIcon(habit) === 'food'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path d="M7 3v8" />
+              <path d="M4 3v5a3 3 0 0 0 6 0V3" />
+              <path d="M7 11v10" />
+              <path d="M16 3v18" />
+              <path d="M16 3c3 2 4 5 4 8h-4" />
+            </svg>
+
+            <svg
+              v-else-if="habitIcon(habit) === 'learn'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"
+              />
+              <path
+                d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"
+              />
+            </svg>
+
+            <svg
+              v-else-if="habitIcon(habit) === 'community'"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle cx="9" cy="8" r="3" />
+              <path d="M3 20a6 6 0 0 1 12 0" />
+              <circle cx="17" cy="9" r="2.5" />
+              <path d="M15 15a5 5 0 0 1 6 5" />
+            </svg>
+
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path d="M6 4h12v16H6z" />
+              <path d="M9 8h6M9 12h6" />
+              <path d="M9 16h3" />
+            </svg>
+          </div>
+
+          <div class="habit-content">
+            <span class="habit-code">
+              {{ habit.code || '-' }}
+            </span>
+
+            <h4>
+              {{ habit.name || 'Tanpa nama' }}
+            </h4>
+
+            <p>
+              {{ habitDescription(habit) }}
+            </p>
+          </div>
+
+          <div class="habit-footer">
+            <span>ID Kebiasaan</span>
+            <strong>#{{ habit.id }}</strong>
+          </div>
+        </article>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
+
 import { habitApi } from '@/api/habit'
+import {
+  formatNumber,
+  formatStatus,
+  normalizeBoolean,
+} from '@/utils/formatter'
 
 const habits = ref([])
-const loading = ref(false)
-const saving = ref(false)
-const showForm = ref(false)
-const editingHabit = ref(null)
-const search = ref('')
+const loading = ref(true)
 const error = ref('')
-const message = ref('')
 
-const form = reactive({
-  code: '',
-  name: '',
-  is_active: true,
-})
+const search = ref('')
+const statusFilter = ref('all')
 
 const filteredHabits = computed(() => {
-  const keyword = search.value.trim().toLowerCase()
+  const keyword = search.value
+    .trim()
+    .toLowerCase()
 
-  if (!keyword) return habits.value
+  return [...habits.value]
+    .filter((habit) => {
+      const isActive = normalizeBoolean(
+        habit.is_active,
+      )
 
+      const matchesSearch =
+        !keyword ||
+        [
+          habit.name,
+          habit.code,
+          habit.sort_order,
+          habit.id,
+        ].some((value) => {
+          return String(value ?? '')
+            .toLowerCase()
+            .includes(keyword)
+        })
+
+      const matchesStatus =
+        statusFilter.value === 'all' ||
+        (
+          statusFilter.value === 'active' &&
+          isActive
+        ) ||
+        (
+          statusFilter.value === 'inactive' &&
+          !isActive
+        )
+
+      return matchesSearch && matchesStatus
+    })
+    .sort((first, second) => {
+      return (
+        Number(first.sort_order ?? 0) -
+        Number(second.sort_order ?? 0)
+      )
+    })
+})
+
+const activeHabitCount = computed(() => {
   return habits.value.filter((habit) => {
-    return (
-      String(habit.code || '').toLowerCase().includes(keyword) ||
-      String(habit.name || '').toLowerCase().includes(keyword)
-    )
-  })
+    return normalizeBoolean(habit.is_active)
+  }).length
 })
 
-onMounted(() => {
-  loadHabits()
-})
+onMounted(loadHabits)
 
 async function loadHabits() {
   try {
@@ -150,432 +371,631 @@ async function loadHabits() {
     error.value = ''
 
     const response = await habitApi.getHabits()
-    const payload = response.data.data
+    const payload = response.data?.data ?? response.data
 
-    habits.value = payload?.items || payload || []
+    habits.value = normalizeItems(payload)
   } catch (err) {
     error.value =
-      err.response?.data?.message ||
-      'Gagal memuat data kebiasaan.'
+      err.response?.data?.message ??
+      err.message ??
+      'Terjadi kesalahan saat mengambil daftar kebiasaan.'
   } finally {
     loading.value = false
   }
 }
 
-function openCreateForm() {
-  editingHabit.value = null
-  resetForm()
-  showForm.value = true
-  error.value = ''
-  message.value = ''
-}
-
-function openEditForm(habit) {
-  editingHabit.value = habit
-  form.code = habit.code || ''
-  form.name = habit.name || ''
-  form.is_active = Boolean(habit.is_active)
-  showForm.value = true
-  error.value = ''
-  message.value = ''
-}
-
-function closeForm() {
-  showForm.value = false
-  editingHabit.value = null
-  resetForm()
-}
-
-function resetForm() {
-  form.code = ''
-  form.name = ''
-  form.is_active = true
-}
-
-function buildPayload() {
-  return {
-    code: form.code.trim(),
-    name: form.name.trim(),
-    is_active: Boolean(form.is_active),
+function normalizeItems(payload) {
+  if (Array.isArray(payload)) {
+    return payload
   }
+
+  if (Array.isArray(payload?.items)) {
+    return payload.items
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data
+  }
+
+  return []
 }
 
-async function submitHabit() {
-  try {
-    saving.value = true
-    error.value = ''
-    message.value = ''
-
-    const payload = buildPayload()
-
-    if (editingHabit.value) {
-      await habitApi.updateHabit(editingHabit.value.id, payload)
-      message.value = 'Data kebiasaan berhasil diperbarui.'
-    } else {
-      await habitApi.createHabit(payload)
-      message.value = 'Kebiasaan baru berhasil ditambahkan.'
-    }
-
-    closeForm()
-    await loadHabits()
-  } catch (err) {
-    const errors = err.response?.data?.errors
-
-    if (err.response?.status === 404) {
-      error.value = 'Endpoint CRUD kebiasaan belum tersedia di backend.'
-    } else if (errors) {
-      error.value = Object.values(errors).flat().join(' ')
-    } else {
-      error.value =
-        err.response?.data?.message ||
-        'Gagal menyimpan data kebiasaan.'
-    }
-  } finally {
-    saving.value = false
-  }
+function normalizeHabitCode(habit) {
+  return String(
+    habit.code ?? habit.name ?? '',
+  )
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_')
 }
 
-async function deleteHabit(habit) {
-  const confirmed = confirm(`Hapus kebiasaan "${habit.name}"?`)
+function habitIcon(habit) {
+  const code = normalizeHabitCode(habit)
 
-  if (!confirmed) return
-
-  try {
-    error.value = ''
-    message.value = ''
-
-    await habitApi.deleteHabit(habit.id)
-
-    message.value = 'Kebiasaan berhasil dihapus.'
-    await loadHabits()
-  } catch (err) {
-    if (err.response?.status === 404) {
-      error.value = 'Endpoint hapus kebiasaan belum tersedia di backend.'
-    } else {
-      error.value =
-        err.response?.data?.message ||
-        'Gagal menghapus kebiasaan.'
-    }
+  const icons = {
+    BANGUN_PAGI: 'sun',
+    BERIBADAH: 'pray',
+    BEROLAHRAGA: 'exercise',
+    MAKAN_SEHAT_DAN_BERGIZI: 'food',
+    GEMAR_BELAJAR: 'learn',
+    BERMASYARAKAT: 'community',
+    TIDUR_CEPAT: 'sleep',
   }
+
+  return icons[code] ?? 'default'
+}
+
+function habitDescription(habit) {
+  const code = normalizeHabitCode(habit)
+
+  const descriptions = {
+    BANGUN_PAGI:
+      'Membiasakan diri memulai hari lebih awal dan teratur.',
+    BERIBADAH:
+      'Menjalankan ibadah sesuai agama dan keyakinan masing-masing.',
+    BEROLAHRAGA:
+      'Menjaga kesehatan tubuh melalui aktivitas fisik yang teratur.',
+    MAKAN_SEHAT_DAN_BERGIZI:
+      'Mengonsumsi makanan sehat, seimbang, dan bergizi.',
+    GEMAR_BELAJAR:
+      'Membangun kebiasaan belajar dan meningkatkan pengetahuan.',
+    BERMASYARAKAT:
+      'Berinteraksi, bekerja sama, dan peduli terhadap lingkungan.',
+    TIDUR_CEPAT:
+      'Menjaga pola istirahat yang cukup dan teratur.',
+  }
+
+  return (
+    descriptions[code] ??
+    'Kebiasaan utama dalam program 7KAIH.'
+  )
 }
 </script>
 
 <style scoped>
-.page {
+.habit-page {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 24px;
-  min-height: 100%;
-  padding: 0 24px 40px;
+  gap: 18px;
 }
 
 .page-header {
-  background: #42b0f5;
-  border-radius: 0 0 20px 20px;
-  padding: 28px 32px;
   display: flex;
-  justify-content: space-between;
-  gap: 18px;
   align-items: center;
-  color: #fff;
-  margin: 0 -24px;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border: 1px solid #e6edf5;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(32, 156, 238, 0.1),
+      transparent 30%
+    ),
+    #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
 }
 
-.header-kicker {
+.page-kicker {
   margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 800;
+  color: #168ad3;
+  font-size: 10px;
+  font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.82;
 }
 
-.page-header h1 {
+.page-header h2 {
   margin: 0;
-  font-size: 26px;
+  color: #172033;
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.page-header p:last-child {
+  max-width: 650px;
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.refresh-button {
+  display: inline-flex;
+  min-height: 42px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  background: #edf7fe;
+  color: #168ad3;
+  font: inherit;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease;
 }
 
-.page-header p {
-  margin: 6px 0 0;
-  font-size: 14px;
-  opacity: 0.9;
+.refresh-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #e0f2fe;
 }
 
-.card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+.refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.form-card {
-  border: 1px solid #dbeafe;
+.refresh-button svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.form-head {
+.information-card {
   display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 16px 18px;
+  border: 1px solid #bae6fd;
+  border-radius: 16px;
+  background: #f0f9ff;
+  color: #075985;
+}
+
+.information-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  background: #e0f2fe;
+}
+
+.information-icon svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.information-card strong {
+  display: block;
+  font-size: 12.5px;
+}
+
+.information-card p {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  padding: 15px 17px;
+  border-radius: 15px;
 }
 
-.form-head h2,
-.toolbar h2 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 18px;
-  font-weight: 800;
+.alert strong {
+  display: block;
+  font-size: 12px;
 }
 
-.form-head p,
-.toolbar p {
-  margin: 5px 0 0;
-  color: #64748b;
-  font-size: 13.5px;
+.alert p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 160px 1fr 170px;
-  gap: 16px;
-  align-items: end;
-}
-
-.form-group {
-  display: grid;
-  gap: 8px;
-}
-
-.form-group label {
-  color: #334155;
-  font-size: 13.5px;
-  font-weight: 700;
-}
-
-.form-group input,
-.toolbar input {
-  width: 100%;
-  height: 44px;
-  border: 1px solid #dbe5f0;
-  border-radius: 12px;
-  padding: 0 14px;
-  outline: none;
-  font: inherit;
-  color: #0f172a;
-  background: #fff;
-}
-
-.form-group input:focus,
-.toolbar input:focus {
-  border-color: #42b0f5;
-  box-shadow: 0 0 0 4px rgba(66, 176, 245, 0.14);
-}
-
-.checkbox-row {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #334155;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.form-actions {
-  grid-column: 1 / -1;
-}
-
-.primary-btn,
-.secondary-btn,
-.small-btn {
+.alert button {
   border: 0;
-  font: inherit;
+  background: transparent;
+  color: inherit;
+  font-size: 21px;
+  line-height: 1;
   cursor: pointer;
-  transition: 0.18s ease;
 }
 
-.primary-btn {
-  min-height: 42px;
-  padding: 0 18px;
-  border-radius: 12px;
-  background: #fff;
-  color: #1f8fd0;
-  font-weight: 800;
+.error-alert {
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  color: #be123c;
 }
 
-.form-actions .primary-btn {
-  background: #42b0f5;
-  color: #fff;
-}
-
-.primary-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
-}
-
-.primary-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.secondary-btn {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  color: #334155;
-  font-weight: 700;
+.data-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e6edf5;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 20px;
-}
-
-.toolbar input {
-  max-width: 280px;
-}
-
-.habit-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: space-between;
   gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.search-field {
+  position: relative;
+  width: min(100%, 470px);
+}
+
+.search-field svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  stroke: #94a3b8;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.search-field input,
+.status-filter {
+  height: 42px;
+  border: 1px solid #dfe7f0;
+  border-radius: 11px;
+  outline: none;
+  background: #ffffff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 12px;
+}
+
+.search-field input {
+  width: 100%;
+  padding: 0 14px 0 42px;
+}
+
+.status-filter {
+  min-width: 155px;
+  padding: 0 34px 0 12px;
+}
+
+.search-field input:focus,
+.status-filter:focus {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+}
+
+.panel-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 20px;
+}
+
+.panel-summary h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.panel-summary p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+
+.summary-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.summary-badges span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf7fe;
+  color: #168ad3;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.summary-badges .active-summary {
+  background: #e9f9ef;
+  color: #168c50;
+}
+
+.habit-grid,
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+  gap: 15px;
+  padding: 0 20px 20px;
 }
 
 .habit-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 18px;
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  transition: 0.18s ease;
+  min-width: 0;
+  min-height: 280px;
+  flex-direction: column;
+  padding: 19px;
+  border: 1px solid #e6edf5;
+  border-radius: 18px;
+  background: #ffffff;
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .habit-card:hover {
-  border-color: #bfdbfe;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+  border-color: #bae6fd;
+  box-shadow: 0 13px 30px rgba(15, 23, 42, 0.07);
 }
 
-.habit-main {
+.habit-card-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
 }
 
-.habit-code {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: #eaf6ff;
-  color: #1f8fd0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.order-badge {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 10px;
+  background: #172033;
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 900;
-  font-size: 13px;
-  flex-shrink: 0;
 }
 
-.habit-card h3 {
-  margin: 0 0 7px;
-  color: #0f172a;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.status-pill {
+.status-badge {
   display: inline-flex;
+  min-height: 26px;
   align-items: center;
-  min-height: 24px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 11.5px;
+  background: #e9f9ef;
+  color: #168c50;
+  font-size: 10.5px;
   font-weight: 800;
 }
 
-.status-pill.active {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.status-pill.inactive {
+.status-badge.inactive {
   background: #f1f5f9;
   color: #64748b;
 }
 
-.habit-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.small-btn {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+.habit-icon {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  margin-top: 20px;
+  place-items: center;
+  border-radius: 16px;
   background: #eaf6ff;
-  color: #1f8fd0;
-  font-size: 13px;
-  font-weight: 800;
+  color: #168ad3;
 }
 
-.small-btn.danger {
-  background: #fff1f2;
-  color: #be123c;
+.habit-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.alert {
-  padding: 14px 16px;
-  border-radius: 14px;
-  font-size: 13.5px;
+.habit-content {
+  margin-top: 16px;
+}
+
+.habit-code {
+  display: block;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.habit-content h4 {
+  margin: 6px 0 0;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.habit-content p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 11.5px;
+  line-height: 1.65;
+}
+
+.habit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 17px;
+  border-top: 1px solid #edf2f7;
+}
+
+.habit-footer span {
+  color: #94a3b8;
+  font-size: 10px;
   font-weight: 700;
 }
 
-.alert.success {
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
-  color: #047857;
+.habit-footer strong {
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 900;
 }
 
-.alert.error {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  color: #be123c;
+.loading-card {
+  height: 280px;
+  border-radius: 18px;
+  background: #edf2f7;
+  animation: pulse 1.2s ease-in-out infinite;
 }
 
 .empty-state {
-  padding: 34px;
+  display: grid;
+  min-height: 340px;
+  place-items: center;
+  align-content: center;
+  padding: 32px;
   text-align: center;
-  color: #64748b;
-  font-weight: 700;
 }
 
-@media (max-width: 960px) {
-  .habit-grid {
-    grid-template-columns: 1fr;
+.empty-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 17px;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.empty-icon svg {
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty-state strong {
+  margin-top: 13px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.empty-state p {
+  margin: 5px 0 0;
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+
+.rotating {
+  animation: rotate 0.8s linear infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.55;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
+  50% {
+    opacity: 1;
   }
+}
 
-  .toolbar,
-  .page-header,
-  .form-head {
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1050px) {
+  .habit-grid,
+  .loading-grid {
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+  }
+}
+
+@media (max-width: 680px) {
+  .page-header {
+    align-items: flex-start;
     flex-direction: column;
-    align-items: stretch;
+    padding: 20px;
   }
 
-  .toolbar input {
-    max-width: 100%;
+  .refresh-button {
+    width: 100%;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-field,
+  .status-filter {
+    width: 100%;
+  }
+
+  .panel-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .habit-grid,
+  .loading-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header h2 {
+    font-size: 20px;
+  }
+
+  .information-card {
+    padding: 14px;
+  }
+
+  .panel-summary,
+  .toolbar {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .habit-grid,
+  .loading-grid {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .habit-card {
+    min-height: 260px;
   }
 }
 </style>

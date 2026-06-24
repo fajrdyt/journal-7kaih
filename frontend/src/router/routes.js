@@ -15,7 +15,8 @@ export const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/pages/auth/LoginPage.vue'),
+    component: () =>
+      import('@/pages/auth/LoginPage.vue'),
     beforeEnter: guestGuard,
     meta: {
       title: 'Login',
@@ -37,13 +38,17 @@ export const routes = [
     children: [
       {
         path: '',
-        redirect: '/student/dashboard',
+        redirect: {
+          name: 'student-dashboard',
+        },
       },
       {
         path: 'dashboard',
         name: 'student-dashboard',
         component: () =>
-          import('@/pages/student/StudentDashboardPage.vue'),
+          import(
+            '@/pages/student/StudentDashboardPage.vue'
+          ),
         meta: {
           title: 'Dashboard Siswa',
         },
@@ -52,7 +57,9 @@ export const routes = [
         path: 'checkin',
         name: 'student-checkin',
         component: () =>
-          import('@/pages/student/DailyCheckinPage.vue'),
+          import(
+            '@/pages/student/DailyCheckinPage.vue'
+          ),
         meta: {
           title: 'Check-in Harian',
         },
@@ -61,7 +68,9 @@ export const routes = [
         path: 'history',
         name: 'student-history',
         component: () =>
-          import('@/pages/student/CheckinHistoryPage.vue'),
+          import(
+            '@/pages/student/CheckinHistoryPage.vue'
+          ),
         meta: {
           title: 'Riwayat Check-in',
         },
@@ -70,7 +79,9 @@ export const routes = [
         path: 'recap',
         name: 'student-recap',
         component: () =>
-          import('@/pages/student/PersonalRecapPage.vue'),
+          import(
+            '@/pages/student/PersonalRecapPage.vue'
+          ),
         meta: {
           title: 'Rekap Pribadi',
         },
@@ -79,7 +90,9 @@ export const routes = [
         path: 'settings',
         name: 'student-settings',
         component: () =>
-          import('@/pages/student/StudentSettingsPage.vue'),
+          import(
+            '@/pages/student/StudentSettingsPage.vue'
+          ),
         meta: {
           title: 'Pengaturan Akun',
         },
@@ -87,65 +100,72 @@ export const routes = [
     ],
   },
   {
-  children: [
-        {
-  path: '/parent',
-  component: DashboardLayout,
-  beforeEnter: roleGuard(['orang_tua', 'parent']),
-  children: [
-    {
-      path: '',
-      redirect: {
+    path: '/parent',
+    component: DashboardLayout,
+    beforeEnter: roleGuard([
+      'orang_tua',
+      'parent',
+    ]),
+    children: [
+      {
+        path: '',
+        redirect: {
+          name: 'parent-dashboard',
+        },
+      },
+      {
+        path: 'dashboard',
         name: 'parent-dashboard',
+        component: () =>
+          import(
+            '@/pages/parent/ParentDashboardPage.vue'
+          ),
+        meta: {
+          title: 'Dashboard Orang Tua',
+        },
       },
-    },
-    {
-      path: 'dashboard',
-      name: 'parent-dashboard',
-      component: () =>
-        import('@/pages/parent/ParentDashboardPage.vue'),
-      meta: {
-        title: 'Dashboard Orang Tua',
+      {
+        path: 'validation',
+        name: 'parent-validation',
+        component: () =>
+          import(
+            '@/pages/parent/ParentValidationPage.vue'
+          ),
+        meta: {
+          title: 'Validasi Check-in Anak',
+        },
       },
-    },
-    {
-      path: 'validation',
-      name: 'parent-validation',
-      component: () =>
-        import('@/pages/parent/ParentValidationPage.vue'),
-      meta: {
-        title: 'Validasi Check-in Anak',
+      {
+        path: 'history',
+        name: 'parent-history',
+        component: () =>
+          import(
+            '@/pages/parent/ParentHistoryPage.vue'
+          ),
+        meta: {
+          title: 'Riwayat Check-in Anak',
+        },
       },
-    },
-    {
-      path: 'history',
-      name: 'parent-history',
-      component: () =>
-        import('@/pages/parent/ParentHistoryPage.vue'),
-      meta: {
-        title: 'Riwayat Check-in Anak',
+      {
+        path: 'recap',
+        name: 'parent-recap',
+        component: () =>
+          import(
+            '@/pages/parent/ParentRecapPage.vue'
+          ),
+        meta: {
+          title: 'Rekap Perkembangan Anak',
+        },
       },
-    },
-    {
-      path: 'recap',
-      name: 'parent-recap',
-      component: () =>
-        import('@/pages/parent/ParentRecapPage.vue'),
-      meta: {
-        title: 'Rekap Perkembangan Anak',
+      {
+        path: 'settings',
+        name: 'parent-settings',
+        component: () =>
+          import('@/pages/shared/ProfilePage.vue'),
+        meta: {
+          title: 'Pengaturan Akun',
+        },
       },
-    },
-    {
-      path: 'settings',
-      name: 'parent-settings',
-      component: () =>
-        import('@/pages/shared/ProfilePage.vue'),
-      meta: {
-        title: 'Pengaturan Akun',
-      },
-    },
-  ],
-},
     ],
   },
   {
@@ -155,13 +175,17 @@ export const routes = [
     children: [
       {
         path: '',
-        redirect: '/teacher/dashboard',
+        redirect: {
+          name: 'teacher-dashboard',
+        },
       },
       {
         path: 'dashboard',
         name: 'teacher-dashboard',
         component: () =>
-          import('@/pages/teacher/TeacherDashboard.vue'),
+          import(
+            '@/pages/teacher/TeacherDashboard.vue'
+          ),
         meta: {
           title: 'Dashboard Guru',
         },
@@ -170,7 +194,9 @@ export const routes = [
         path: 'monitoring',
         name: 'teacher-monitoring',
         component: () =>
-          import('@/pages/teacher/StudentMonitoringPage.vue'),
+          import(
+            '@/pages/teacher/StudentMonitoringPage.vue'
+          ),
         meta: {
           title: 'Monitoring & Validasi',
         },
@@ -179,7 +205,9 @@ export const routes = [
         path: 'recap',
         name: 'teacher-recap',
         component: () =>
-          import('@/pages/teacher/ClassRecapPage.vue'),
+          import(
+            '@/pages/teacher/ClassRecapPage.vue'
+          ),
         meta: {
           title: 'Rekap Kelas',
         },
@@ -193,13 +221,17 @@ export const routes = [
     children: [
       {
         path: '',
-        redirect: '/admin/dashboard',
+        redirect: {
+          name: 'admin-dashboard',
+        },
       },
       {
         path: 'dashboard',
         name: 'admin-dashboard',
         component: () =>
-          import('@/pages/admin/AdminDashboardPage.vue'),
+          import(
+            '@/pages/admin/AdminDashboardPage.vue'
+          ),
         meta: {
           title: 'Dashboard Admin',
         },
@@ -208,7 +240,9 @@ export const routes = [
         path: 'users',
         name: 'admin-users',
         component: () =>
-          import('@/pages/admin/UserManagementPage.vue'),
+          import(
+            '@/pages/admin/UserManagementPage.vue'
+          ),
         meta: {
           title: 'Manajemen Pengguna',
         },
@@ -217,27 +251,33 @@ export const routes = [
         path: 'classes',
         name: 'admin-classes',
         component: () =>
-          import('@/pages/admin/ClassManagementPage.vue'),
+          import(
+            '@/pages/admin/ClassManagementPage.vue'
+          ),
         meta: {
           title: 'Manajemen Kelas',
-        },
-      },
-      {
-        path: 'habits',
-        name: 'admin-habits',
-        component: () =>
-          import('@/pages/admin/HabitManagementPage.vue'),
-        meta: {
-          title: 'Manajemen Kebiasaan',
         },
       },
       {
         path: 'relations',
         name: 'admin-relations',
         component: () =>
-          import('@/pages/admin/RelationManagementPage.vue'),
+          import(
+            '@/pages/admin/RelationManagementPage.vue'
+          ),
         meta: {
-          title: 'Relasi Siswa dan Orang Tua',
+          title: 'Relasi Orang Tua dan Siswa',
+        },
+      },
+      {
+        path: 'habits',
+        name: 'admin-habits',
+        component: () =>
+          import(
+            '@/pages/admin/HabitManagementPage.vue'
+          ),
+        meta: {
+          title: 'Daftar Kebiasaan',
         },
       },
     ],

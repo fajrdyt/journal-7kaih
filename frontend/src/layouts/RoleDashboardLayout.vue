@@ -2,15 +2,15 @@
   <div class="dashboard-shell">
     <AppSidebar
       :mobile-open="sidebarOpen"
-      @close="sidebarOpen = false"
+      @close="closeSidebar"
     />
 
     <button
       v-if="sidebarOpen"
       type="button"
       class="sidebar-backdrop"
-      aria-label="Tutup sidebar"
-      @click="sidebarOpen = false"
+      aria-label="Tutup navigasi"
+      @click="closeSidebar"
     ></button>
 
     <section class="workspace">
@@ -19,8 +19,8 @@
           <button
             type="button"
             class="menu-button"
-            aria-label="Buka sidebar"
-            @click="sidebarOpen = true"
+            aria-label="Buka navigasi"
+            @click="openSidebar"
           >
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M4 7h16" />
@@ -31,7 +31,7 @@
 
           <div class="page-info">
             <span>{{ roleLabel }}</span>
-            <strong>{{ pageTitle }}</strong>
+            <h1>{{ pageTitle }}</h1>
           </div>
         </div>
 
@@ -39,26 +39,33 @@
           type="button"
           class="profile-button"
           aria-label="Buka pengaturan akun"
-          @click="router.push('/settings')"
+          @click="openSettings"
         >
-          <span class="avatar">{{ initials }}</span>
-
-          <span class="profile-copy">
+          <div class="profile-copy">
             <strong>{{ displayName }}</strong>
-            <small>{{ roleLabel }}</small>
-          </span>
+            <span>{{ roleLabel }}</span>
+          </div>
+
+          <div class="avatar">
+            {{ initials }}
+          </div>
         </button>
       </header>
 
       <main class="dashboard-content">
-        <router-view />
+        <RouterView />
       </main>
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  watch,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppSidebar from '@/components/common/AppSidebar.vue'
@@ -70,12 +77,39 @@ const authStore = useAuthStore()
 
 const sidebarOpen = ref(false)
 
+const normalizedRole = computed(() => {
+  const sourceRole =
+    typeof authStore.role === 'object'
+      ? authStore.role?.name ??
+        authStore.role?.code ??
+        ''
+      : authStore.role
+
+  const value = String(sourceRole ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+
+  const aliases = {
+    student: 'siswa',
+    siswa: 'siswa',
+    teacher: 'guru',
+    guru: 'guru',
+    parent: 'orang_tua',
+    orang_tua: 'orang_tua',
+    orangtua: 'orang_tua',
+    admin: 'admin',
+  }
+
+  return aliases[value] ?? value
+})
+
 const displayName = computed(() => {
   return (
-    authStore.user?.display_name ||
-    authStore.user?.full_name ||
-    authStore.user?.name ||
-    authStore.user?.username ||
+    authStore.user?.display_name ??
+    authStore.user?.full_name ??
+    authStore.user?.name ??
+    authStore.user?.username ??
     'Pengguna'
   )
 })
@@ -86,122 +120,69 @@ const initials = computed(() => {
     .split(/\s+/)
     .filter(Boolean)
 
-  if (words.length === 0) {
-    return 'U'
+  if (!words.length) {
+    return 'P'
   }
 
   if (words.length === 1) {
     return words[0].slice(0, 2).toUpperCase()
   }
 
-  return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase()
+  return `${words[0][0]}${words.at(-1)[0]}`.toUpperCase()
 })
 
 const roleLabel = computed(() => {
   const labels = {
-    admin: 'Admin',
     siswa: 'Siswa',
     guru: 'Guru',
     orang_tua: 'Orang Tua',
-    parent: 'Orang Tua',
+    admin: 'Admin',
   }
 
-  return labels[authStore.role] || 'Pengguna'
+  return labels[normalizedRole.value] ?? 'Pengguna'
 })
 
 const pageTitle = computed(() => {
-  if (route.meta?.title) {
-    return route.meta.title
-  }
-
-  const path = route.path
-
-  if (
-    path === '/student' ||
-    path === '/student/dashboard'
-  ) {
-    return 'Dashboard'
-  }
-
-  if (path.startsWith('/student/checkin')) {
-    return 'Check-in'
-  }
-
-  if (path.startsWith('/student/history')) {
-    return 'Riwayat'
-  }
-
-  if (path.startsWith('/student/recap')) {
-    return 'Rekap'
-  }
-
-  if (
-    path === '/teacher' ||
-    path === '/teacher/dashboard'
-  ) {
-    return 'Dashboard'
-  }
-
-  if (path.startsWith('/teacher/monitoring')) {
-    return 'Monitoring & Validasi'
-  }
-
-  if (path.startsWith('/teacher/recap')) {
-    return 'Rekap Kelas'
-  }
-
-  if (
-    path === '/parent' ||
-    path === '/parent/dashboard'
-  ) {
-    return 'Dashboard'
-  }
-
-  if (path.startsWith('/parent/validation')) {
-    return 'Validasi'
-  }
-
-  if (path.startsWith('/parent/history')) {
-    return 'Riwayat'
-  }
-
-  if (path.startsWith('/parent/recap')) {
-    return 'Rekap'
-  }
-
-  if (path.startsWith('/admin/dashboard')) {
-    return 'Dashboard'
-  }
-
-  if (path.startsWith('/admin/users')) {
-    return 'Manajemen Pengguna'
-  }
-
-  if (path.startsWith('/admin/classes')) {
-    return 'Manajemen Kelas'
-  }
-
-  if (path.startsWith('/admin/habits')) {
-    return 'Manajemen Kebiasaan'
-  }
-
-  if (path.startsWith('/admin/relations')) {
-    return 'Relasi Siswa dan Orang Tua'
-  }
-
-  if (path.startsWith('/settings')) {
-    return 'Pengaturan Akun'
-  }
-
-  return 'Dashboard'
+  return route.meta?.title ?? 'Dashboard'
 })
+
+const settingsPath = computed(() => {
+  const paths = {
+    siswa: '/student/settings',
+    orang_tua: '/parent/settings',
+    guru: '/settings',
+    admin: '/settings',
+  }
+
+  return paths[normalizedRole.value] ?? '/settings'
+})
+
+function openSidebar() {
+  sidebarOpen.value = true
+}
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+function openSettings() {
+  router.push(settingsPath.value)
+}
 
 watch(
   () => route.fullPath,
   () => {
-    sidebarOpen.value = false
+    closeSidebar()
   },
 )
+
+watch(sidebarOpen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+})
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
@@ -211,14 +192,6 @@ watch(
   grid-template-columns: 232px minmax(0, 1fr);
   background: #f5f8fc;
   color: #0f172a;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
 }
 
 .workspace {
@@ -236,8 +209,8 @@ watch(
   justify-content: space-between;
   gap: 20px;
   padding: 0 26px;
+  border-bottom: 1px solid #e7edf5;
   background: rgba(255, 255, 255, 0.94);
-  border-bottom: 1px solid #e8eef5;
   backdrop-filter: blur(14px);
 }
 
@@ -250,20 +223,30 @@ watch(
 
 .menu-button {
   display: none;
-  width: 38px;
-  height: 38px;
-  place-items: center;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
+  place-items: center;
   border: 1px solid #e2e8f0;
-  border-radius: 11px;
+  border-radius: 12px;
   background: #ffffff;
   color: #475569;
   cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.menu-button:hover {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+  color: #0284c7;
 }
 
 .menu-button svg {
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
@@ -275,65 +258,58 @@ watch(
 
 .page-info span {
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   color: #94a3b8;
   font-size: 10px;
   font-weight: 800;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.page-info strong {
-  display: block;
+.page-info h1 {
+  max-width: 440px;
+  margin: 0;
   overflow: hidden;
   color: #1e293b;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .profile-button {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 7px 4px 4px;
+  gap: 11px;
+  padding: 5px 6px 5px 12px;
   border: 1px solid transparent;
-  border-radius: 24px;
+  border-radius: 999px;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .profile-button:hover {
-  background: #f1f7fc;
-}
-
-.avatar {
-  width: 35px;
-  height: 35px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #209cee, #75caff);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 900;
-  box-shadow: 0 7px 18px rgba(32, 156, 238, 0.22);
+  border-color: #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 }
 
 .profile-copy {
   min-width: 0;
-  display: block;
-  text-align: left;
+  text-align: right;
 }
 
 .profile-copy strong {
   display: block;
-  max-width: 145px;
+  max-width: 170px;
   overflow: hidden;
   color: #1e293b;
   font-size: 12px;
@@ -342,12 +318,26 @@ watch(
   white-space: nowrap;
 }
 
-.profile-copy small {
+.profile-copy span {
   display: block;
   margin-top: 2px;
   color: #94a3b8;
   font-size: 10px;
   font-weight: 600;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #209cee, #75caff);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(32, 156, 238, 0.22);
 }
 
 .dashboard-content {
@@ -374,7 +364,7 @@ watch(
     z-index: 40;
     display: block;
     border: 0;
-    background: rgba(15, 23, 42, 0.38);
+    background: rgba(15, 23, 42, 0.4);
     backdrop-filter: blur(2px);
   }
 
@@ -386,20 +376,44 @@ watch(
   .dashboard-content {
     padding: 18px 16px 28px;
   }
+}
 
+@media (max-width: 640px) {
   .profile-copy {
     display: none;
   }
+
+  .profile-button {
+    padding: 3px;
+  }
+
+  .page-info h1 {
+    max-width: 230px;
+    font-size: 15px;
+  }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 420px) {
+  .topbar {
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .topbar-left {
+    gap: 10px;
+  }
+
   .page-info span {
     display: none;
   }
 
-  .page-info strong {
-    max-width: 190px;
+  .page-info h1 {
+    max-width: 180px;
     font-size: 14px;
+  }
+
+  .dashboard-content {
+    padding: 14px 12px 24px;
   }
 }
 </style>
