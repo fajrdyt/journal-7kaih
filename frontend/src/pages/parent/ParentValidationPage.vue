@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -420,10 +419,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="space-y-6 px-8 pb-10">
+  <section class="space-y-5 pb-10 sm:space-y-6">
     <!-- Header -->
     <div
-      class="rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_12px_32px_rgba(15,23,42,0.05)]"
+      class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)] sm:p-7"
     >
       <div
         class="flex flex-col justify-between gap-5 lg:flex-row lg:items-center"
@@ -436,7 +435,7 @@ onMounted(async () => {
           </p>
 
           <h1
-            class="mt-2 text-3xl font-extrabold tracking-tight text-slate-950"
+            class="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
           >
             Validasi Check-in Anak
           </h1>
@@ -447,10 +446,10 @@ onMounted(async () => {
           </p>
         </div>
 
-        <div class="flex flex-col gap-3 sm:flex-row">
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <button
             type="button"
-            class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+            class="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 sm:w-auto"
             @click="goToDashboard"
           >
             Kembali ke Dashboard
@@ -458,7 +457,7 @@ onMounted(async () => {
 
           <div
             v-if="children.length"
-            class="min-w-56"
+            class="w-full sm:min-w-56"
           >
             <select
               v-model="selectedChildId"
@@ -509,7 +508,7 @@ onMounted(async () => {
     <template v-else>
       <!-- Child summary -->
       <div
-        class="rounded-3xl bg-gradient-to-r from-sky-800 via-sky-600 to-cyan-500 p-6 text-white shadow-[0_16px_40px_rgba(2,132,199,0.18)]"
+        class="rounded-3xl bg-gradient-to-r from-sky-800 via-sky-600 to-cyan-500 p-5 text-white shadow-[0_16px_40px_rgba(2,132,199,0.18)] sm:p-6"
       >
         <div
           class="flex flex-col justify-between gap-5 sm:flex-row sm:items-center"
@@ -538,7 +537,7 @@ onMounted(async () => {
 
           <div
             v-if="currentCheckin"
-            class="rounded-2xl bg-white/15 px-5 py-3 text-sm backdrop-blur"
+            class="w-full rounded-2xl bg-white/15 px-5 py-3 text-sm backdrop-blur sm:w-auto"
           >
             <p class="font-semibold text-white/75">
               Tanggal check-in
@@ -571,7 +570,7 @@ onMounted(async () => {
       >
         <!-- Check-in list -->
         <aside
-          class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+          class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
         >
           <div>
             <h2 class="text-lg font-extrabold text-slate-950">
@@ -651,7 +650,7 @@ onMounted(async () => {
 
         <!-- Check-in detail -->
         <main
-          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
         >
           <div
             v-if="parentStore.loadingDetail"
@@ -694,7 +693,7 @@ onMounted(async () => {
 
               <button
                 type="button"
-                class="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 :disabled="
                   parentStore.validating ||
                   !itemsWaitingValidation.length
@@ -760,7 +759,7 @@ onMounted(async () => {
               <article
                 v-for="item in currentItems"
                 :key="item.id ?? item.habit_id"
-                class="rounded-2xl border p-5 transition"
+                class="rounded-2xl border p-4 transition sm:p-5"
                 :class="
                   isParentValidated(item)
                     ? 'border-emerald-200 bg-emerald-50/50'
@@ -866,4 +865,3 @@ onMounted(async () => {
     </template>
   </section>
 </template>
-```

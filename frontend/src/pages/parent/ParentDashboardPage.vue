@@ -243,10 +243,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="space-y-6 px-8 pb-10">
+  <section class="space-y-5 pb-10 sm:space-y-6">
     <!-- Header -->
     <div
-      class="rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_12px_32px_rgba(15,23,42,0.05)]"
+      class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)] sm:p-7"
     >
       <div
         class="flex flex-col justify-between gap-5 md:flex-row md:items-center"
@@ -259,7 +259,7 @@ onMounted(async () => {
           </p>
 
           <h1
-            class="mt-2 text-3xl font-extrabold tracking-tight text-slate-950"
+            class="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
           >
             Selamat Datang, {{ parentName }}!
           </h1>
@@ -357,7 +357,7 @@ onMounted(async () => {
         "
       >
         <div
-          class="flex flex-col justify-between gap-6 p-7 md:flex-row md:items-center"
+          class="flex flex-col justify-between gap-6 p-5 sm:p-7 md:flex-row md:items-center"
         >
           <div class="flex items-center gap-4">
             <div
@@ -386,7 +386,7 @@ onMounted(async () => {
 
           <button
             type="button"
-            class="rounded-2xl bg-white px-5 py-3 text-sm font-bold text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50"
+            class="w-full rounded-2xl bg-white px-5 py-3 text-sm font-bold text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50 sm:w-auto"
             @click="goToValidation"
           >
             Periksa Check-in
@@ -478,7 +478,7 @@ onMounted(async () => {
 
       <!-- Latest check-in -->
       <section
-        class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_34px_rgba(15,23,42,0.05)]"
+        class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_34px_rgba(15,23,42,0.05)] sm:p-6"
       >
         <div
           class="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center"
@@ -495,7 +495,7 @@ onMounted(async () => {
 
           <button
             type="button"
-            class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 sm:w-auto"
             @click="goToHistory"
           >
             Lihat Riwayat

@@ -13,9 +13,12 @@ const loadingRecap = ref(false)
 const errorMessage = ref('')
 
 const selectedChild = computed(() => {
-  return children.value.find(
-    (child) => String(child.student_id) === String(selectedStudentId.value),
-  )
+  return children.value.find((child) => {
+    return (
+      String(child.student_id) ===
+      String(selectedStudentId.value)
+    )
+  }) ?? null
 })
 
 const summary = computed(() => {
@@ -92,7 +95,7 @@ onMounted(async () => {
 async function loadChildren() {
   try {
     loadingChildren.value = true
-    error.value = ''
+    errorMessage.value = ''
 
     const response = await validationApi.getChildren()
     const payload = response.data?.data
@@ -103,9 +106,7 @@ async function loadChildren() {
         ? payload.items
         : []
 
-    children.value = items.filter(
-      (item) => item?.student?.id,
-    )
+    children.value = normalizeChildren(items)
 
     if (!children.value.length) {
       selectedStudentId.value = ''
@@ -113,9 +114,18 @@ async function loadChildren() {
       return
     }
 
-    selectedStudentId.value = String(
-      children.value[0].student.id,
-    )
+    const currentStudentExists = children.value.some((child) => {
+      return (
+        String(child.student_id) ===
+        String(selectedStudentId.value)
+      )
+    })
+
+    if (!currentStudentExists) {
+      selectedStudentId.value = String(
+        children.value[0].student_id,
+      )
+    }
 
     await loadRecap()
   } catch (err) {
@@ -123,9 +133,10 @@ async function loadChildren() {
     selectedStudentId.value = ''
     recap.value = null
 
-    error.value =
-      err.response?.data?.message ??
-      'Gagal mengambil daftar anak.'
+    errorMessage.value = getApiError(
+      err,
+      'Gagal mengambil daftar anak.',
+    )
   } finally {
     loadingChildren.value = false
   }
@@ -141,9 +152,9 @@ async function loadRecap() {
 
   try {
     loadingRecap.value = true
-    error.value = ''
+    errorMessage.value = ''
 
-    const period = resolveMonthPeriod(selectedMonth.value)
+    const period = getMonthPeriod(selectedMonth.value)
 
     const response = await validationApi.getChildRecap(
       studentId,
@@ -157,9 +168,10 @@ async function loadRecap() {
   } catch (err) {
     recap.value = null
 
-    error.value =
-      err.response?.data?.message ??
-      'Gagal mengambil rekap perkembangan anak.'
+    errorMessage.value = getApiError(
+      err,
+      'Gagal mengambil rekap perkembangan anak.',
+    )
   } finally {
     loadingRecap.value = false
   }
@@ -235,7 +247,11 @@ function getClassLabel() {
 }
 
 function getStudentName() {
-  return recap.value?.student?.full_name || selectedChild.value?.student_name || '-'
+  return (
+    recap.value?.student?.full_name ??
+    selectedChild.value?.student_name ??
+    '-'
+  )
 }
 
 function getMonthPeriod(monthValue) {
@@ -318,8 +334,8 @@ function getApiError(error, fallback) {
 </script>
 
 <template>
-  <section class="space-y-6">
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+  <section class="space-y-5 pb-10 sm:space-y-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
@@ -337,18 +353,19 @@ function getApiError(error, fallback) {
           <label class="space-y-2">
             <span class="text-xs font-semibold text-slate-600">Pilih Anak</span>
             <select
-                v-model="selectedStudentId"
-                :disabled="loadingChildren || !children.length"
-                @change="loadRecap"
-                >
-                <option
-                    v-for="relation in children"
-                    :key="relation.relation_id"
-                    :value="String(relation.student.id)"
-                >
-                    {{ relation.student.full_name }}
-                </option>
-                </select>
+              v-model="selectedStudentId"
+              :disabled="loadingChildren || !children.length"
+              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              @change="loadRecap"
+            >
+              <option
+                v-for="child in children"
+                :key="child.student_id"
+                :value="String(child.student_id)"
+              >
+                {{ child.student_name }}
+              </option>
+            </select>
           </label>
 
           <label class="space-y-2">
@@ -390,7 +407,20 @@ function getApiError(error, fallback) {
       </p>
     </div>
 
-    <template v-else-if="recap">
+    <div
+      v-else-if="!recap"
+      class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"
+    >
+      <h2 class="text-lg font-bold text-slate-800">
+        Rekap belum tersedia
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Belum ada data rekap untuk anak dan periode yang dipilih.
+      </p>
+    </div>
+
+    <template v-else>
       <div class="rounded-3xl bg-gradient-to-r from-blue-600 to-sky-500 p-6 text-white shadow-sm">
         <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
