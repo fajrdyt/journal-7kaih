@@ -1,24 +1,41 @@
-```vue
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '../../stores/authStore'
 
+defineProps({
+  mobileOpen: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['close'])
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
 const normalizedRole = computed(() => {
-  const role = String(authStore.userRole ?? '')
+  const sourceRole =
+    typeof authStore.userRole === 'object'
+      ? authStore.userRole?.name ??
+        authStore.userRole?.code ??
+        ''
+      : authStore.userRole
+
+  const role = String(sourceRole ?? '')
     .trim()
     .toLowerCase()
+    .replace(/[\s-]+/g, '_')
 
   const aliases = {
     student: 'siswa',
     siswa: 'siswa',
     parent: 'orang_tua',
     orang_tua: 'orang_tua',
+    orangtua: 'orang_tua',
     teacher: 'guru',
     guru: 'guru',
     admin: 'admin',
@@ -57,18 +74,33 @@ const menus = computed(() => {
       },
     ],
 
-    orang_tua: [
-      {
-        label: 'Dashboard',
-        to: '/parent/dashboard',
-        icon: '▦',
-      },
-      {
-        label: 'Validasi',
-        to: '/parent/validation',
-        icon: '☑',
-      },
-    ],
+     orang_tua: [
+  {
+    label: 'Dashboard',
+    to: '/parent/dashboard',
+    icon: '▦',
+  },
+  {
+    label: 'Validasi',
+    to: '/parent/validation',
+    icon: '☑',
+  },
+  {
+    label: 'Riwayat',
+    to: '/parent/history',
+    icon: '↺',
+  },
+  {
+    label: 'Rekap',
+    to: '/parent/recap',
+    icon: '▣',
+  },
+  {
+    label: 'Pengaturan',
+    to: '/parent/settings',
+    icon: '⚙',
+  },
+],
 
     guru: [
       {
@@ -97,28 +129,63 @@ function isMenuActive(menuPath) {
   )
 }
 
-async function handleLogout() {
-  await authStore.logout()
+function closeSidebar() {
+  emit('close')
+}
 
-  router.push('/login')
+async function handleLogout() {
+  emit('close')
+  await authStore.logout()
+  await router.replace('/login')
 }
 </script>
 
 <template>
   <aside
-    class="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col bg-white shadow-[18px_0_45px_rgba(15,23,42,0.04)]"
+    class="fixed left-0 top-0 z-50 flex h-dvh w-60 flex-col bg-white shadow-[18px_0_45px_rgba(15,23,42,0.08)] transition-transform duration-300 lg:z-40 lg:translate-x-0 lg:shadow-[18px_0_45px_rgba(15,23,42,0.04)]"
+    :class="
+      mobileOpen
+        ? 'translate-x-0'
+        : '-translate-x-full'
+    "
   >
-    <div class="px-6 py-6">
-      <h1 class="text-lg font-extrabold leading-none text-sky-700">
-        Jurnal 7KAIH
-      </h1>
+    <div
+      class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-6 lg:border-b-0 lg:px-6"
+    >
+      <div>
+        <h1 class="text-lg font-extrabold leading-none text-sky-700">
+          Jurnal 7KAIH
+        </h1>
 
-      <p class="mt-2 text-xs font-medium text-slate-400">
-        SMA N 1 Mirit
-      </p>
+        <p class="mt-2 text-xs font-medium text-slate-400">
+          SMA N 1 Mirit
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 lg:hidden"
+        aria-label="Tutup navigasi"
+        @click="closeSidebar"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          class="h-5 w-5"
+        >
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
     </div>
 
-    <nav class="mt-4 flex flex-1 flex-col gap-2 px-4">
+    <nav
+      class="mt-3 flex flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4 lg:mt-4"
+    >
       <RouterLink
         v-for="menu in menus"
         :key="menu.to"
@@ -129,6 +196,7 @@ async function handleLogout() {
             ? 'border-sky-600 bg-sky-50 text-sky-700'
             : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
         "
+        @click="closeSidebar"
       >
         <span class="w-5 text-center text-base">
           {{ menu.icon }}
@@ -147,7 +215,7 @@ async function handleLogout() {
       </div>
     </nav>
 
-    <div class="px-6 py-6">
+    <div class="border-t border-slate-100 px-4 py-5 lg:px-6 lg:py-6">
       <button
         type="button"
         class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600"
@@ -164,4 +232,3 @@ async function handleLogout() {
     </div>
   </aside>
 </template>
-```

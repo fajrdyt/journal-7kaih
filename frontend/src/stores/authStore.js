@@ -7,7 +7,20 @@ import {
   logout as logoutApi,
   updatePassword as updatePasswordApi,
   updateProfile as updateProfileApi,
-} from '../api/auth'
+} from '@/api/auth'
+
+const TOKEN_KEY = 'token'
+const USER_KEY = 'user'
+
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || 'null')
+  } catch {
+    localStorage.removeItem(USER_KEY)
+
+    return null
+  }
+}
 
 function unwrap(payload) {
   const data = payload?.data ?? payload
@@ -16,21 +29,43 @@ function unwrap(payload) {
 }
 
 function normalizeRole(role) {
-  if (!role) return null
+  const rawRole =
+    typeof role === 'object' && role !== null
+      ? role.name ??
+        role.code ??
+        role.slug ??
+        role.role_name ??
+        null
+      : role
 
-  if (typeof role === 'string') {
-    return role
+  const value = String(rawRole ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+
+  const aliases = {
+    student: 'siswa',
+    siswa: 'siswa',
+    teacher: 'guru',
+    guru: 'guru',
+    parent: 'orang_tua',
+    orang_tua: 'orang_tua',
+    orangtua: 'orang_tua',
+    admin: 'admin',
   }
 
-  return role.name ?? role.code ?? null
+  return aliases[value] || value || null
 }
 
 function normalizeUser(user) {
-  if (!user) return null
+  if (!user) {
+    return null
+  }
 
   return {
     ...user,
     display_name:
+      user.display_name ??
       user.full_name ??
       user.name ??
       user.username ??
@@ -39,35 +74,96 @@ function normalizeUser(user) {
   }
 }
 
+function dashboardByRole(role) {
+  const dashboards = {
+    siswa: '/student/dashboard',
+    guru: '/teacher/dashboard',
+    orang_tua: '/parent/dashboard',
+    admin: '/admin/dashboard',
+  }
+
+  return dashboards[normalizeRole(role)] || '/login'
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
-    token: localStorage.getItem('token') || null,
+    user: normalizeUser(getStoredUser()),
+    token: localStorage.getItem(TOKEN_KEY) || null,
     loading: false,
     error: null,
   }),
 
   getters: {
-    isAuthenticated: (state) => Boolean(state.token),
-
-    userRole: (state) => {
-      return state.user?.role ?? null
+    isAuthenticated(state) {
+      return Boolean(state.token)
     },
 
-    isStudent: (state) => {
-      return ['siswa', 'student'].includes(state.user?.role)
+    isLoggedIn(state) {
+      return Boolean(state.token)
+    },
+
+    userRole(state) {
+      return normalizeRole(state.user?.role)
+    },
+
+    role(state) {
+      return normalizeRole(state.user?.role)
+    },
+
+    isStudent(state) {
+      return normalizeRole(state.user?.role) === 'siswa'
+    },
+
+    isSiswa(state) {
+      return normalizeRole(state.user?.role) === 'siswa'
+    },
+
+    isGuru(state) {
+      return normalizeRole(state.user?.role) === 'guru'
+    },
+
+    isOrangTua(state) {
+      return normalizeRole(state.user?.role) === 'orang_tua'
+    },
+
+    isAdmin(state) {
+      return normalizeRole(state.user?.role) === 'admin'
+    },
+
+    dashboardPath(state) {
+      return dashboardByRole(state.user?.role)
     },
   },
 
   actions: {
-    async login(payload) {
+    persistUser() {
+      if (this.user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(this.user))
+
+        return
+      }
+
+      localStorage.removeItem(USER_KEY)
+    },
+
+    setUser(user) {
+      this.user = normalizeUser(user)
+      this.persistUser()
+
+      return this.user
+    },
+
+    async login(payloadOrIdentifier, password = null) {
       this.loading = true
       this.error = null
 
       try {
-        const response = await loginApi(payload)
-        const data = unwrap(response)
+        const response = await loginApi(
+          payloadOrIdentifier,
+          password,
+        )
 
+        const data = unwrap(response)
         const token = data?.access_token ?? data?.token
 
         if (!token) {
@@ -76,10 +172,10 @@ export const useAuthStore = defineStore('auth', {
           )
         }
 
-        this.user = normalizeUser(data?.user)
         this.token = token
+        localStorage.setItem(TOKEN_KEY, token)
 
-        localStorage.setItem('token', token)
+        this.setUser(data?.user)
 
         if (!this.user) {
           await this.fetchUser()
@@ -92,6 +188,8 @@ export const useAuthStore = defineStore('auth', {
           error.message ??
           'Login gagal.'
 
+        this.clearAuth()
+
         throw error
       } finally {
         this.loading = false
@@ -99,7 +197,9 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchUser() {
-      if (!this.token) return null
+      if (!this.token) {
+        return null
+      }
 
       this.loading = true
       this.error = null
@@ -108,9 +208,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await getMe()
         const data = unwrap(response)
 
-        this.user = normalizeUser(data?.user ?? data)
-
-        return this.user
+        return this.setUser(data?.user ?? data)
       } catch (error) {
         this.error =
           error.response?.data?.message ??
@@ -124,8 +222,14 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async fetchMe() {
+      return this.fetchUser()
+    },
+
     async fetchProfile() {
-      if (!this.token) return null
+      if (!this.token) {
+        return null
+      }
 
       this.loading = true
       this.error = null
@@ -135,12 +239,10 @@ export const useAuthStore = defineStore('auth', {
         const data = unwrap(response)
         const profile = data?.user ?? data
 
-        this.user = normalizeUser({
+        return this.setUser({
           ...this.user,
           ...profile,
         })
-
-        return this.user
       } catch (error) {
         this.error =
           error.response?.data?.message ??
@@ -161,7 +263,7 @@ export const useAuthStore = defineStore('auth', {
         const data = unwrap(response)
         const updatedProfile = data?.user ?? data
 
-        this.user = normalizeUser({
+        this.setUser({
           ...this.user,
           ...updatedProfile,
         })
@@ -169,7 +271,7 @@ export const useAuthStore = defineStore('auth', {
         return {
           user: this.user,
           message:
-            response?.data?.message ??
+            response?.message ??
             data?.message ??
             'Profil berhasil diperbarui.',
         }
@@ -193,9 +295,9 @@ export const useAuthStore = defineStore('auth', {
         const data = unwrap(response)
 
         return {
-          ...data,
+          ...(data ?? {}),
           message:
-            response?.data?.message ??
+            response?.message ??
             data?.message ??
             'Password berhasil diperbarui.',
         }
@@ -215,8 +317,6 @@ export const useAuthStore = defineStore('auth', {
         if (this.token) {
           await logoutApi()
         }
-      } catch (error) {
-        console.error(error)
       } finally {
         this.clearAuth()
       }
@@ -225,9 +325,11 @@ export const useAuthStore = defineStore('auth', {
     clearAuth() {
       this.user = null
       this.token = null
+      this.loading = false
       this.error = null
 
-      localStorage.removeItem('token')
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
     },
   },
 })
