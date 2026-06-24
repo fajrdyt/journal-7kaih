@@ -53,6 +53,20 @@ export async function updatePassword(payload) {
   return response.data
 }
 
+export async function uploadAvatar(file) {
+  const response = await api.postForm('/profile/avatar', {
+    avatar: file,
+  })
+
+  return response.data
+}
+
+export async function deleteAvatar() {
+  const response = await api.delete('/profile/avatar')
+
+  return response.data
+}
+
 export const authApi = {
   login: (identifier, password) =>
     api.post(
@@ -71,4 +85,12 @@ export const authApi = {
 
   updatePassword: (payload) =>
     api.put('/profile/password', payload),
+
+  uploadAvatar: (file) =>
+    api.postForm('/profile/avatar', {
+      avatar: file,
+    }),
+
+  deleteAvatar: () =>
+    api.delete('/profile/avatar'),
 }
