@@ -98,6 +98,21 @@ const menus = computed(() => {
         to: '/teacher/dashboard',
         icon: 'home',
       },
+      {
+        label: 'Monitoring',
+        to: '/teacher/monitoring',
+        icon: 'monitoring',
+      },
+      {
+        label: 'Rekap',
+        to: '/teacher/recap',
+        icon: 'recap',
+      },
+      {
+        label: 'Pengaturan',
+        to: '/settings',
+        icon: 'settings',
+      },
     ],
 
     admin: [
@@ -189,6 +204,18 @@ function isMenuActive(menuPath) {
           </svg>
 
           <svg
+            v-else-if="menu.icon === 'monitoring'"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="9" cy="8" r="3" />
+            <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+            <circle cx="17" cy="9" r="2.5" />
+            <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
+          </svg>
+
+          <svg
             v-else-if="menu.icon === 'recap'"
             viewBox="0 0 24 24"
             fill="none"
@@ -240,9 +267,8 @@ function isMenuActive(menuPath) {
     calc(7px + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(226, 232, 240, 0.96);
   border-radius: 22px 22px 0 0;
-  background: rgba(255, 255, 255, 0.98);
+  background: #ffffff;
   box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(18px);
 }
 
 .navigation-item {
