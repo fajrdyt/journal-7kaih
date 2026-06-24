@@ -40,14 +40,15 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => 'Profil berhasil diambil.',
-            'data'    => $this->formatProfile($user),
+            'data' => $this->formatProfile($user),
         ]);
     }
 
-    public function updateProfile(Request $request): JsonResponse
-    {
+    public function updateProfile(
+        Request $request
+    ): JsonResponse {
         $user = $request->user()->loadMissing('role');
 
         $validated = $request->validate([
@@ -93,11 +94,11 @@ class AuthController extends Controller
             ],
         ], [
             'username.unique' => 'Username sudah digunakan.',
-            'email.email'     => 'Format email tidak valid.',
-            'email.unique'    => 'Email sudah digunakan.',
-            'phone.max'       => 'Nomor telepon maksimal 20 karakter.',
-            'nisn.regex'      => 'NISN harus terdiri dari tepat 10 digit angka.',
-            'nisn.unique'     => 'NISN sudah digunakan oleh siswa lain.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah digunakan.',
+            'phone.max' => 'Nomor telepon maksimal 20 karakter.',
+            'nisn.regex' => 'NISN harus terdiri dari tepat 10 digit angka.',
+            'nisn.unique' => 'NISN sudah digunakan oleh siswa lain.',
         ]);
 
         if ($user->role?->name !== 'siswa') {
@@ -105,7 +106,9 @@ class AuthController extends Controller
         }
 
         if (array_key_exists('full_name', $validated)) {
-            $validated['full_name'] = filled($validated['full_name'])
+            $validated['full_name'] = filled(
+                $validated['full_name']
+            )
                 ? trim($validated['full_name'])
                 : null;
 
@@ -113,25 +116,33 @@ class AuthController extends Controller
         }
 
         if (array_key_exists('username', $validated)) {
-            $validated['username'] = filled($validated['username'])
+            $validated['username'] = filled(
+                $validated['username']
+            )
                 ? trim($validated['username'])
                 : null;
         }
 
         if (array_key_exists('email', $validated)) {
-            $validated['email'] = filled($validated['email'])
+            $validated['email'] = filled(
+                $validated['email']
+            )
                 ? trim($validated['email'])
                 : null;
         }
 
         if (array_key_exists('phone', $validated)) {
-            $validated['phone'] = filled($validated['phone'])
+            $validated['phone'] = filled(
+                $validated['phone']
+            )
                 ? trim($validated['phone'])
                 : null;
         }
 
         if (array_key_exists('nisn', $validated)) {
-            $validated['nisn'] = filled($validated['nisn'])
+            $validated['nisn'] = filled(
+                $validated['nisn']
+            )
                 ? trim($validated['nisn'])
                 : null;
         }
@@ -144,14 +155,15 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => 'Profil berhasil diperbarui.',
-            'data'    => $this->formatProfile($user),
+            'data' => $this->formatProfile($user),
         ]);
     }
 
-    public function updatePassword(Request $request): JsonResponse
-    {
+    public function updatePassword(
+        Request $request
+    ): JsonResponse {
         $user = $request->user();
 
         $validated = $request->validate([
@@ -169,15 +181,15 @@ class AuthController extends Controller
         ]);
 
         if (
-            !Hash::check(
+            ! Hash::check(
                 $validated['current_password'],
                 $user->password
             )
         ) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Password lama tidak sesuai.',
-                'data'    => null,
+                'data' => null,
             ], 422);
         }
 
@@ -186,31 +198,32 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => 'Password berhasil diperbarui.',
-            'data'    => null,
+            'data' => null,
         ]);
     }
 
     private function formatProfile(User $user): array
     {
         return [
-            'id'        => $user->id,
+            'id' => $user->id,
             'full_name' => $user->full_name,
-            'username'  => $user->username,
-            'nisn'      => $user->nisn,
-            'email'     => $user->email,
-            'phone'     => $user->phone,
+            'username' => $user->username,
+            'nisn' => $user->nisn,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'avatar_url' => $user->avatar_url,
             'is_active' => $user->is_active,
 
             'role' => $user->role ? [
-                'id'   => $user->role->id,
+                'id' => $user->role->id,
                 'name' => $user->role->name,
             ] : null,
 
             'class' => $user->classRoom ? [
-                'id'          => $user->classRoom->id,
-                'name'        => $user->classRoom->name,
+                'id' => $user->classRoom->id,
+                'name' => $user->classRoom->name,
                 'grade_level' => $user->classRoom->grade_level,
             ] : null,
         ];

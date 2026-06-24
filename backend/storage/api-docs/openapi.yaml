@@ -148,6 +148,50 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '422':
           $ref: '#/components/responses/ValidationError'
+  /profile/avatar:
+    post:
+      tags:
+      - Auth
+      summary: Upload atau ganti foto profil user login
+      description: |
+        Digunakan oleh semua role untuk mengunggah atau mengganti foto profil sendiri.
+        File harus berupa JPG, JPEG, PNG, atau WEBP dengan ukuran maksimal 2 MB.
+        Dimensi gambar minimal 128 x 128 piksel dan maksimal 4096 x 4096 piksel.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateAvatarRequest'
+      responses:
+        '200':
+          description: Foto profil berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileAvatarResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+      - Auth
+      summary: Hapus foto profil user login
+      description: Digunakan oleh semua role untuk menghapus foto profil sendiri.
+      responses:
+        '200':
+          description: Foto profil berhasil dihapus atau sudah tidak tersedia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileAvatarResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /roles:
     get:
       tags:
@@ -1511,6 +1555,11 @@ components:
         phone:
           type: string
           nullable: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          example: http://127.0.0.1:8000/storage/avatars/example.jpg
         role:
           $ref: '#/components/schemas/Role'
         class:
@@ -1538,6 +1587,11 @@ components:
           type: string
           nullable: true
           example: 081234567890
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          example: http://127.0.0.1:8000/storage/avatars/example.jpg
         is_active:
           type: boolean
           example: true
@@ -1599,6 +1653,32 @@ components:
           type: string
           minLength: 8
           example: passwordbaru123
+    UpdateAvatarRequest:
+      type: object
+      required:
+      - avatar
+      properties:
+        avatar:
+          type: string
+          format: binary
+          description: File foto profil berformat JPG, JPEG, PNG, atau WEBP dengan ukuran maksimal 2 MB.
+    ProfileAvatarResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Foto profil berhasil diperbarui.
+        data:
+          type: object
+          properties:
+            avatar_url:
+              type: string
+              format: uri
+              nullable: true
+              example: http://127.0.0.1:8000/storage/avatars/example.jpg
     AdminDashboardSummaryResponse:
       type: object
       properties:
