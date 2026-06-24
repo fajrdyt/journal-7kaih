@@ -1,5 +1,10 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+} from 'vue'
 
 import HabitCard from '../../components/cards/HabitCard.vue'
 import { useCheckinStore } from '../../stores/checkinStore'
@@ -14,9 +19,15 @@ const currentDateKey = ref(getLocalDateKey())
 let dateRefreshTimer = null
 
 const habits = computed(() => checkinStore.habits)
-const completedCount = computed(() => checkinStore.completedCount)
-const totalHabits = computed(() => checkinStore.totalHabits)
-const progressPercent = computed(() => checkinStore.progressPercent)
+const completedCount = computed(
+  () => checkinStore.completedCount,
+)
+const totalHabits = computed(
+  () => checkinStore.totalHabits,
+)
+const progressPercent = computed(
+  () => checkinStore.progressPercent,
+)
 
 const generalNotes = computed({
   get() {
@@ -31,20 +42,26 @@ const generalNotes = computed({
 })
 
 const displayDate = computed(() => {
-  const dateString = checkinStore.todayCheckin?.checkin_date
+  const dateString =
+    checkinStore.todayCheckin?.checkin_date
 
   if (!dateString) {
     return formatDate(new Date())
   }
 
   const normalizedDate = String(dateString).slice(0, 10)
-  const [year, month, day] = normalizedDate.split('-').map(Number)
+
+  const [year, month, day] = normalizedDate
+    .split('-')
+    .map(Number)
 
   if (!year || !month || !day) {
     return formatDate(new Date())
   }
 
-  return formatDate(new Date(year, month - 1, day))
+  return formatDate(
+    new Date(year, month - 1, day),
+  )
 })
 
 const isEditableToday = computed(() => {
@@ -61,8 +78,14 @@ const isEditableToday = computed(() => {
 
 function getLocalDateKey(date = new Date()) {
   const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+
+  const month = String(
+    date.getMonth() + 1,
+  ).padStart(2, '0')
+
+  const day = String(
+    date.getDate(),
+  ).padStart(2, '0')
 
   return `${year}-${month}-${day}`
 }
@@ -92,7 +115,11 @@ function updateHabitNote(habitId, notes) {
   if (!isEditableToday.value) return
 
   clearFeedback()
-  checkinStore.updateHabitNote(habitId, notes)
+
+  checkinStore.updateHabitNote(
+    habitId,
+    notes,
+  )
 }
 
 function handleGeneralNotesInput() {
@@ -109,7 +136,12 @@ async function handleCancel() {
 }
 
 async function handleSave() {
-  if (!isEditableToday.value || saving.value) return
+  if (
+    !isEditableToday.value ||
+    saving.value
+  ) {
+    return
+  }
 
   saving.value = true
   clearFeedback()
@@ -117,7 +149,8 @@ async function handleSave() {
   try {
     await checkinStore.saveCheckin()
 
-    successMessage.value = 'Check-in hari ini berhasil disimpan.'
+    successMessage.value =
+      'Check-in hari ini berhasil disimpan.'
   } catch (error) {
     actionError.value =
       error.response?.data?.message ??
@@ -131,7 +164,11 @@ async function handleSave() {
 async function refreshDateIfChanged() {
   const latestDateKey = getLocalDateKey()
 
-  if (latestDateKey === currentDateKey.value) return
+  if (
+    latestDateKey === currentDateKey.value
+  ) {
+    return
+  }
 
   currentDateKey.value = latestDateKey
   clearFeedback()
@@ -157,40 +194,45 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="px-8 pb-10">
-    <!-- Informasi halaman dan progress -->
+  <section class="space-y-5 pb-4 sm:space-y-6 sm:pb-6 lg:pb-10">
     <div
-      class="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-center"
+      class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"
     >
-      <div>
+      <div class="min-w-0">
         <p class="text-xs font-semibold text-sky-600">
           Check-in Harian
         </p>
 
-        <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+        <h1
+          class="mt-2 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
+        >
           {{ displayDate }}
         </h1>
       </div>
 
       <div
-        class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:w-72"
+        class="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 md:w-72 md:shrink-0"
       >
-        <div class="flex items-center justify-between gap-5">
+        <div class="flex items-center justify-between gap-4 sm:gap-5">
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-3">
               <p class="text-xs font-bold text-slate-700">
                 Progress Hari Ini
               </p>
 
-              <p class="text-xs font-bold text-sky-600">
+              <p class="shrink-0 text-xs font-bold text-sky-600">
                 {{ completedCount }}/{{ totalHabits }}
               </p>
             </div>
 
-            <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+            <div
+              class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"
+            >
               <div
                 class="h-full rounded-full bg-sky-500 transition-all duration-300"
-                :style="{ width: `${progressPercent}%` }"
+                :style="{
+                  width: `${progressPercent}%`,
+                }"
               />
             </div>
 
@@ -200,7 +242,7 @@ onUnmounted(() => {
           </div>
 
           <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-xl text-sky-600"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-lg text-sky-600 sm:h-12 sm:w-12 sm:text-xl"
           >
             ⚡
           </div>
@@ -208,34 +250,33 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Informasi check-in lama -->
     <div
       v-if="!isEditableToday && checkinStore.todayCheckin"
-      class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4"
+      class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5"
     >
       <p class="text-sm font-semibold text-amber-800">
-        Check-in ini berasal dari hari sebelumnya dan hanya dapat dilihat.
+        Check-in ini berasal dari hari sebelumnya dan hanya
+        dapat dilihat.
       </p>
 
       <p class="mt-1 text-xs leading-5 text-amber-700">
-        Kebiasaan dan catatan tidak dapat diubah setelah hari berganti.
+        Kebiasaan dan catatan tidak dapat diubah setelah hari
+        berganti.
       </p>
     </div>
 
-    <!-- Loading -->
     <div
       v-if="checkinStore.loading && !habits.length"
-      class="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm"
+      class="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-6"
     >
       <p class="text-sm font-medium text-slate-500">
         Memuat data kebiasaan...
       </p>
     </div>
 
-    <!-- Error fetch -->
     <div
       v-else-if="checkinStore.error && !habits.length"
-      class="rounded-2xl border border-red-200 bg-red-50 px-6 py-5"
+      class="rounded-2xl border border-red-200 bg-red-50 px-5 py-5"
     >
       <p class="text-sm font-semibold text-red-700">
         {{ checkinStore.error }}
@@ -251,24 +292,26 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-      <!-- Grid kebiasaan -->
-      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div
+        class="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3"
+      >
         <HabitCard
           v-for="habit in habits"
           :key="habit.id"
           :habit="habit"
           :editable="isEditableToday"
           @toggle="toggleHabit(habit.id)"
-          @update-note="updateHabitNote(habit.id, $event)"
+          @update-note="
+            updateHabitNote(habit.id, $event)
+          "
         />
 
-        <!-- Catatan umum -->
         <article
-          class="flex min-h-[200px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] xl:col-span-2"
+          class="flex min-h-[180px] flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:min-h-[200px] sm:p-5 md:col-span-2 xl:col-span-2"
         >
           <div class="flex items-center gap-3">
             <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-lg font-bold text-sky-600"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-lg font-bold text-sky-600"
             >
               ≡
             </div>
@@ -289,28 +332,26 @@ onUnmounted(() => {
         </article>
       </div>
 
-      <!-- Feedback -->
       <div
         v-if="successMessage"
-        class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700"
+        class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm font-semibold text-emerald-700 sm:px-5"
       >
         {{ successMessage }}
       </div>
 
       <div
         v-if="actionError"
-        class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+        class="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm font-semibold text-red-700 sm:px-5"
       >
         {{ actionError }}
       </div>
 
-      <!-- Tombol aksi -->
       <div
-        class="mt-7 flex flex-col-reverse items-stretch justify-end gap-3 sm:flex-row sm:items-center"
+        class="flex flex-col-reverse items-stretch justify-end gap-3 sm:flex-row sm:items-center"
       >
         <button
           type="button"
-          class="rounded-xl bg-indigo-50 px-7 py-3 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+          class="w-full rounded-xl bg-indigo-50 px-7 py-3 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           :disabled="
             saving ||
             checkinStore.loading ||
@@ -323,7 +364,7 @@ onUnmounted(() => {
 
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-7 py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(14,165,233,0.25)] transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-7 py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(14,165,233,0.25)] transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           :disabled="
             saving ||
             checkinStore.loading ||
@@ -344,6 +385,7 @@ onUnmounted(() => {
               stroke-width="1.7"
               stroke-linejoin="round"
             />
+
             <path
               d="M7 3.5v4h6v-4M7 13h6"
               stroke="currentColor"
@@ -352,7 +394,11 @@ onUnmounted(() => {
             />
           </svg>
 
-          {{ saving ? 'Menyimpan...' : 'Simpan Check-in' }}
+          {{
+            saving
+              ? 'Menyimpan...'
+              : 'Simpan Check-in'
+          }}
         </button>
       </div>
     </template>

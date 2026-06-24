@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -241,13 +240,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="px-8 pb-10">
+  <section class="space-y-5 pb-4 sm:space-y-6 sm:pb-6 lg:pb-10">
     <!-- Page header -->
     <div
-      class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
+      class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
     >
       <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-950">
+        <h1 class="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
           Rekap Pribadi
         </h1>
 
@@ -257,7 +256,7 @@ onMounted(async () => {
       </div>
 
       <div
-        class="inline-flex w-fit items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
+        class="inline-flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm sm:w-fit"
       >
         <svg
           viewBox="0 0 24 24"
@@ -320,145 +319,138 @@ onMounted(async () => {
     </div>
 
     <template v-else>
-      <!-- Main recap banner -->
-      <section
-        class="relative overflow-hidden rounded-3xl px-7 py-8 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8"
-        style="
-          background:
-            linear-gradient(
-              135deg,
-              #0369a1 0%,
-              #0284c7 48%,
-              #06b6d4 100%
-            );
-        "
-      >
-        <div
-          class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10"
-        />
-
-        <div
-          class="pointer-events-none absolute -bottom-28 right-40 h-56 w-56 rounded-full bg-white/10"
-        />
-
-        <div
-          class="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_164px] lg:items-center"
+     <section
+          class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-700 via-sky-600 to-cyan-500 px-5 py-6 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8 sm:py-8"
         >
-          <div>
-            <div class="flex flex-wrap items-center gap-2.5">
-              <span
-                class="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white"
-              >
-                Ringkasan Bulan Ini
-              </span>
+          <div
+            class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10"
+          />
 
-              <span
-                class="rounded-full px-3 py-1.5 text-[11px] font-bold"
-                :class="overallStatus.badgeClass"
-              >
-                {{ overallStatus.label }}
-              </span>
-            </div>
-
-            <h2
-              class="mt-5 max-w-3xl text-2xl font-extrabold leading-tight sm:text-3xl"
-            >
-              Konsistensi kebiasaanmu mencapai
-              {{ Math.round(completionPercentage) }}%
-            </h2>
-
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-white">
-              {{ overallStatus.description }}
-            </p>
-
-            <div class="mt-7 max-w-3xl">
-              <div
-                class="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold"
-              >
-                <span class="text-white">
-                  {{ completedItems }} dari
-                  {{ totalItems }} aktivitas selesai
-                </span>
-
-                <span class="text-white">
-                  {{ Math.round(completionPercentage) }}%
-                </span>
-              </div>
-
-              <div
-                class="h-3.5 overflow-hidden rounded-full bg-white/25"
-              >
-                <div
-                  class="h-full rounded-full bg-white transition-all duration-700"
-                  :style="{
-                    width: `${completionPercentage}%`,
-                  }"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Circular progress -->
-          <div class="flex justify-start lg:justify-end">
-            <div class="relative flex items-center justify-center">
-              <svg
-                width="144"
-                height="144"
-                viewBox="0 0 144 144"
-                class="-rotate-90"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="72"
-                  cy="72"
-                  :r="RING_R"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.2)"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                />
-
-                <circle
-                  cx="72"
-                  cy="72"
-                  :r="RING_R"
-                  fill="none"
-                  :stroke="overallStatus.ringColor"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                  :stroke-dasharray="RING_CIRC"
-                  :stroke-dashoffset="ringDashoffset"
-                  style="
-                    transition:
-                      stroke-dashoffset 0.7s ease,
-                      stroke 0.3s ease;
-                  "
-                />
-              </svg>
-
-              <div
-                class="absolute flex flex-col items-center justify-center text-center"
-              >
-                <p class="text-3xl font-extrabold leading-none text-white">
-                  {{ Math.round(completionPercentage) }}%
-                </p>
-
-                <p
-                  class="mt-1 text-[11px] font-semibold text-white/80"
+          <div
+            class="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center"
+          >
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="rounded-full bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white sm:text-[11px]"
                 >
-                  bulan ini
+                  Ringkasan Bulan Ini
+                </span>
+
+                <span
+                  class="rounded-full px-3 py-1.5 text-[10px] font-bold sm:text-[11px]"
+                  :class="overallStatus.badgeClass"
+                >
+                  {{ overallStatus.label }}
+                </span>
+              </div>
+
+              <h2
+                class="mt-5 max-w-2xl text-2xl font-extrabold leading-tight sm:text-3xl"
+              >
+                Konsistensi kebiasaanmu
+              </h2>
+
+              <div class="mt-3 flex items-end gap-2">
+                <p
+                  class="text-5xl font-extrabold leading-none text-white sm:text-6xl"
+                >
+                  {{ Math.round(completionPercentage) }}%
                 </p>
+
+                <span class="pb-1 text-sm font-semibold text-white/75">
+                  bulan ini
+                </span>
+              </div>
+
+              <p
+                class="mt-4 max-w-2xl text-sm leading-6 text-white/85"
+              >
+                {{ overallStatus.description }}
+              </p>
+
+              <div class="mt-7 max-w-2xl">
+                <div
+                  class="mb-2.5 flex items-center justify-between gap-4 text-xs font-semibold"
+                >
+                  <span class="text-white/90">
+                    {{ completedItems }} dari
+                    {{ totalItems }} aktivitas selesai
+                  </span>
+
+                  <span class="shrink-0 text-white">
+                    {{ Math.round(completionPercentage) }}%
+                  </span>
+                </div>
+
+                <div
+                  class="h-3 overflow-hidden rounded-full bg-white/25"
+                >
+                  <div
+                    class="h-full rounded-full bg-white transition-all duration-700"
+                    :style="{
+                      width: `${completionPercentage}%`,
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="hidden justify-end lg:flex">
+              <div class="relative flex h-36 w-36 items-center justify-center">
+                <svg
+                  viewBox="0 0 144 144"
+                  class="h-36 w-36 -rotate-90"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="72"
+                    cy="72"
+                    :r="RING_R"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                  />
+
+                  <circle
+                    cx="72"
+                    cy="72"
+                    :r="RING_R"
+                    fill="none"
+                    :stroke="overallStatus.ringColor"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    :stroke-dasharray="RING_CIRC"
+                    :stroke-dashoffset="ringDashoffset"
+                    style="
+                      transition:
+                        stroke-dashoffset 0.7s ease,
+                        stroke 0.3s ease;
+                    "
+                  />
+                </svg>
+
+                <div
+                  class="absolute flex flex-col items-center justify-center text-center"
+                >
+                  <p class="text-3xl font-extrabold leading-none">
+                    {{ Math.round(completionPercentage) }}%
+                  </p>
+
+                  <p class="mt-1 text-[11px] font-semibold text-white/75">
+                    bulan ini
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
+        </section>
       <!-- Summary cards -->
-      <div class="mt-6 grid gap-5 md:grid-cols-3">
+      <div class="grid gap-4 sm:gap-5 md:grid-cols-3">
         <!-- Total check-in -->
         <article
-          class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_18px_38px_rgba(14,165,233,0.12)]"
+          class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_18px_38px_rgba(14,165,233,0.12)] sm:p-5"
         >
           <div class="flex items-center justify-between gap-4">
             <div>
@@ -513,7 +505,7 @@ onMounted(async () => {
 
         <!-- Completed days -->
         <article
-          class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(16,185,129,0.12)]"
+          class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(16,185,129,0.12)] sm:p-5"
         >
           <div class="flex items-center justify-between gap-4">
             <div>
@@ -567,7 +559,7 @@ onMounted(async () => {
 
         <!-- Monthly progress -->
         <article
-          class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_18px_38px_rgba(245,158,11,0.12)]"
+          class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_18px_38px_rgba(245,158,11,0.12)] sm:p-5"
         >
           <div class="flex items-center justify-between gap-4">
             <div>
@@ -613,7 +605,7 @@ onMounted(async () => {
 
       <!-- Habit recap -->
       <section
-        class="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_36px_rgba(15,23,42,0.05)]"
+        class="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)] sm:p-6"
       >
         <div
           class="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center"
@@ -628,10 +620,10 @@ onMounted(async () => {
             </p>
           </div>
 
-          <div class="flex flex-wrap gap-3">
+          <div class="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
             <button
               type="button"
-              class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+              class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 sm:w-auto"
               @click="goToHistory"
             >
               Lihat Riwayat
@@ -639,7 +631,7 @@ onMounted(async () => {
 
             <button
               type="button"
-              class="rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-700"
+              class="w-full rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-700 sm:w-auto"
               @click="goToCheckin"
             >
               Isi Check-in
@@ -663,7 +655,7 @@ onMounted(async () => {
           <article
             v-for="habit in habits"
             :key="habit.id ?? habit.name"
-            class="group rounded-2xl border border-slate-100 bg-slate-50/60 px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-[0_12px_28px_rgba(14,165,233,0.08)]"
+            class="group rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-[0_12px_28px_rgba(14,165,233,0.08)] sm:px-5"
           >
             <div
               class="grid gap-4 md:grid-cols-12 md:items-center"
@@ -743,4 +735,3 @@ onMounted(async () => {
     </template>
   </section>
 </template>
-```

@@ -99,17 +99,30 @@ const avatarFileDescription = computed(() => {
 })
 
 const roleLabel = computed(() => {
-  const role = user.value?.role
+  const sourceRole =
+    typeof user.value?.role === 'object'
+      ? user.value?.role?.name ??
+        user.value?.role?.code ??
+        ''
+      : user.value?.role
 
-  if (role === 'siswa' || role === 'student') return 'Siswa'
-  if (role === 'guru' || role === 'teacher') return 'Guru'
-  if (role === 'orang_tua' || role === 'parent') {
-    return 'Orang Tua'
+  const role = String(sourceRole ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+
+  const labels = {
+    student: 'Siswa',
+    siswa: 'Siswa',
+    teacher: 'Guru',
+    guru: 'Guru',
+    parent: 'Orang Tua',
+    orang_tua: 'Orang Tua',
+    orangtua: 'Orang Tua',
+    admin: 'Admin',
   }
 
-  if (role === 'admin') return 'Admin'
-
-  return role ?? '-'
+  return labels[role] ?? 'Pengguna'
 })
 
 const className = computed(() => {
@@ -161,6 +174,46 @@ function syncProfileForm(profile = user.value) {
   profileForm.phone = stringValue(profile?.phone)
 }
 
+function normalizeValidationMessage(field, message) {
+  const value = String(message ?? '').trim()
+  const normalized = value.toLowerCase()
+
+  const isDuplicate =
+    normalized.includes('already been taken') ||
+    normalized.includes('has already been taken') ||
+    normalized.includes('unique') ||
+    normalized.includes('sudah digunakan') ||
+    normalized.includes('telah digunakan') ||
+    normalized.includes('sudah ada')
+
+  if (field === 'username' && isDuplicate) {
+    return 'Username sudah digunakan. Silakan pilih username lain.'
+  }
+
+  if (field === 'email' && isDuplicate) {
+    return 'Email sudah digunakan oleh akun lain.'
+  }
+
+  if (field === 'avatar') {
+    if (
+      normalized.includes('dimension') ||
+      normalized.includes('dimensi')
+    ) {
+      return 'Foto tidak sesuai. Gunakan foto yang jelas, tidak terlalu kecil, dan tidak terlalu besar.'
+    }
+
+    if (
+      normalized.includes('kilobytes') ||
+      normalized.includes('maximum') ||
+      normalized.includes('maksimal')
+    ) {
+      return 'Ukuran foto maksimal 2 MB.'
+    }
+  }
+
+  return value
+}
+
 function extractValidationErrors(error) {
   const errors = error.response?.data?.errors
 
@@ -174,12 +227,20 @@ function extractValidationErrors(error) {
   }
 
   return Object.fromEntries(
-    Object.entries(errors).map(([field, messages]) => [
-      fieldAliases[field] || field,
-      Array.isArray(messages)
+    Object.entries(errors).map(([field, messages]) => {
+      const resolvedField = fieldAliases[field] || field
+      const message = Array.isArray(messages)
         ? messages[0]
-        : String(messages),
-    ]),
+        : messages
+
+      return [
+        resolvedField,
+        normalizeValidationMessage(
+          resolvedField,
+          message,
+        ),
+      ]
+    }),
   )
 }
 
@@ -280,7 +341,7 @@ async function handleAvatarChange(event) {
       dimensions.height < 128
     ) {
       throw new Error(
-        'Dimensi foto minimal 128 × 128 piksel.',
+        'Foto terlalu kecil. Gunakan foto yang lebih jelas dan tidak pecah.',
       )
     }
 
@@ -289,7 +350,7 @@ async function handleAvatarChange(event) {
       dimensions.height > 4096
     ) {
       throw new Error(
-        'Dimensi foto maksimal 4096 × 4096 piksel.',
+        'Resolusi foto terlalu besar. Pilih foto lain dengan ukuran yang lebih kecil.',
       )
     }
 
@@ -386,13 +447,51 @@ async function handleUpdateProfile() {
   }
 
   clearProfileFeedback()
+
+  const fullName = profileForm.full_name.trim()
+  const username = profileForm.username.trim()
+  const email = profileForm.email.trim()
+  const phone = profileForm.phone.trim()
+
+  const clientErrors = {}
+
+  if (!fullName) {
+    clientErrors.full_name =
+      'Nama lengkap wajib diisi.'
+  }
+
+  if (!username) {
+    clientErrors.username =
+      'Username wajib diisi.'
+  }
+
+  if (
+    email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    clientErrors.email =
+      'Format email belum valid.'
+  }
+
+  if (phone.length > 20) {
+    clientErrors.phone =
+      'Nomor telepon maksimal 20 karakter.'
+  }
+
+  if (Object.keys(clientErrors).length) {
+    profileErrors.value = clientErrors
+    profileError.value =
+      'Periksa kembali data profil yang diisi.'
+    return
+  }
+
   profileSaving.value = true
 
   const payload = {
-    full_name: profileForm.full_name.trim(),
-    username: profileForm.username.trim(),
-    email: profileForm.email.trim() || null,
-    phone: profileForm.phone.trim() || null,
+    full_name: fullName,
+    username,
+    email: email || null,
+    phone: phone || null,
   }
 
   try {
@@ -404,13 +503,24 @@ async function handleUpdateProfile() {
 
     syncProfileForm(result?.user ?? authStore.user)
   } catch (error) {
-    profileErrors.value =
+    const validationErrors =
       extractValidationErrors(error)
 
-    profileError.value =
-      error.response?.data?.message ??
-      authStore.error ??
-      'Gagal memperbarui profil.'
+    profileErrors.value = validationErrors
+
+    const firstValidationMessage =
+      Object.values(validationErrors)[0]
+
+    if (error.response?.status === 422) {
+      profileError.value =
+        firstValidationMessage ??
+        'Data profil belum dapat disimpan. Periksa kembali kolom yang ditandai.'
+    } else {
+      profileError.value =
+        error.response?.data?.message ??
+        authStore.error ??
+        'Gagal memperbarui profil.'
+    }
   } finally {
     profileSaving.value = false
   }
@@ -492,7 +602,7 @@ async function handleUpdatePassword() {
 
 async function handleLogout() {
   await authStore.logout()
-  router.push('/login')
+  await router.replace('/login')
 }
 
 watch(
@@ -530,9 +640,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="space-y-6">
+  <section class="space-y-5 pb-10 pt-4 sm:space-y-6 sm:pt-5 lg:pt-6">
     <div
-      class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+      class="rounded-[28px] bg-white px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:px-8 sm:py-7"
     >
       <p
         class="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600"
@@ -567,10 +677,10 @@ onBeforeUnmount(() => {
 
     <div
       v-else
-      class="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)]"
+      class="grid gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-10"
     >
       <form
-        class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+        class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"
         @submit.prevent="handleUpdateProfile"
       >
         <div
@@ -664,8 +774,8 @@ onBeforeUnmount(() => {
                 <p
                   class="mt-3 max-w-sm text-sm leading-6 text-slate-500"
                 >
-                  Gunakan foto JPG, JPEG, PNG, atau WEBP dengan
-                  ukuran maksimal 2 MB dan dimensi 128–4096 piksel.
+                  Gunakan foto JPG, PNG, atau WEBP maksimal 2 MB.
+                  Sebaiknya pilih foto persegi, jelas, dan tidak buram.
                 </p>
 
                 <button
@@ -853,6 +963,13 @@ onBeforeUnmount(() => {
             />
 
             <p
+              v-if="!profileErrors.username"
+              class="mt-2 text-xs leading-5 text-slate-400"
+            >
+              Username harus unik dan tidak boleh sama dengan pengguna lain.
+            </p>
+
+            <p
               v-if="profileErrors.username"
               class="mt-2 text-xs font-medium text-red-600"
             >
@@ -996,9 +1113,9 @@ onBeforeUnmount(() => {
         </div>
       </form>
 
-      <div class="space-y-6">
+      <div class="space-y-6 lg:space-y-8">
         <form
-          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"
           @submit.prevent="handleUpdatePassword"
         >
           <h2 class="text-lg font-bold text-slate-900">
@@ -1208,7 +1325,7 @@ onBeforeUnmount(() => {
         </form>
 
         <div
-          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"
         >
           <h2 class="text-lg font-bold text-slate-900">
             Tampilan
@@ -1269,7 +1386,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"
         >
           <h2 class="text-lg font-bold text-slate-900">
             Sesi Akun

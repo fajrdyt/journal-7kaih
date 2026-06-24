@@ -8,6 +8,13 @@ import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '../../stores/authStore'
 
+defineProps({
+  showMenuButton: {
+    type: Boolean,
+    default: true,
+  },
+})
+
 const emit = defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
@@ -97,6 +104,7 @@ watch(
   >
     <div class="flex min-w-0 items-center gap-3">
       <button
+        v-if="showMenuButton"
         type="button"
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:hidden"
         aria-label="Buka navigasi"

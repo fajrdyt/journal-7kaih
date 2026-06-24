@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -306,10 +305,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="px-8 pb-10">
+  <section class="space-y-5 pb-4 sm:space-y-6 sm:pb-6 lg:pb-10">
     <!-- Page heading -->
-    <div class="mb-7">
-      <h1 class="text-3xl font-extrabold tracking-tight text-slate-950">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
         Riwayat Check-in
       </h1>
 
@@ -321,7 +320,7 @@ onUnmounted(() => {
 
     <!-- Filter -->
     <div
-      class="mb-8 rounded-2xl bg-white p-5 shadow-[0_14px_35px_rgba(15,23,42,0.06)]"
+      class="rounded-2xl bg-white p-4 shadow-[0_14px_35px_rgba(15,23,42,0.06)] sm:p-5"
     >
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
         <div class="relative flex-1">
@@ -382,7 +381,7 @@ onUnmounted(() => {
 
             <select
               v-model="monthInput"
-              class="h-12 min-w-44 appearance-none rounded-xl border border-transparent bg-indigo-50/70 pl-11 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+              class="h-12 w-full min-w-0 appearance-none rounded-xl border border-transparent bg-indigo-50/70 pl-11 pr-10 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100 sm:min-w-44"
             >
               <option value="all">
                 Semua Bulan
@@ -415,7 +414,7 @@ onUnmounted(() => {
 
           <button
             type="button"
-            class="h-12 rounded-xl bg-sky-600 px-6 text-sm font-bold text-white shadow-[0_10px_24px_rgba(2,132,199,0.2)] transition hover:bg-sky-700 active:scale-[0.98]"
+            class="h-12 w-full rounded-xl bg-sky-600 px-6 text-sm font-bold text-white shadow-[0_10px_24px_rgba(2,132,199,0.2)] transition hover:bg-sky-700 active:scale-[0.98] sm:w-auto"
             @click="applyFilters"
           >
             Filter
@@ -483,7 +482,7 @@ onUnmounted(() => {
     <!-- History -->
     <div
       v-else
-      class="space-y-8"
+      class="space-y-6 sm:space-y-8"
     >
       <section
         v-for="(items, month) in groupedHistory"
@@ -505,7 +504,7 @@ onUnmounted(() => {
         <article
           v-for="item in items"
           :key="item.id"
-          class="group rounded-2xl border p-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(14,165,233,0.10)]"
+          class="group rounded-2xl border p-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(14,165,233,0.10)] sm:p-6"
           :class="statusTheme(item).card"
         >
           <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -585,7 +584,7 @@ onUnmounted(() => {
 
                 <button
                   type="button"
-                  class="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-sky-700 transition hover:text-sky-900"
+                  class="inline-flex w-fit shrink-0 items-center gap-2 text-sm font-bold text-sky-700 transition hover:text-sky-900"
                   @click="toggleDetail(item.id)"
                 >
                   {{ expandedId === item.id ? 'Tutup Detail' : 'Lihat Detail' }}
@@ -610,7 +609,7 @@ onUnmounted(() => {
 
               <p
                 v-if="item.notes"
-                class="mt-4 max-w-3xl text-sm italic leading-6 text-slate-500"
+                class="mt-4 max-w-3xl break-words text-sm italic leading-6 text-slate-500"
               >
                 “{{ item.notes }}”
               </p>
@@ -638,7 +637,7 @@ onUnmounted(() => {
 
                     <p
                       v-if="checkinItem.notes"
-                      class="mt-1 truncate text-xs text-slate-500"
+                      class="mt-1 break-words text-xs text-slate-500"
                     >
                       {{ checkinItem.notes }}
                     </p>
@@ -663,18 +662,18 @@ onUnmounted(() => {
 
       <!-- Pagination -->
       <div
-        class="flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row"
+        class="flex flex-col items-stretch justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center"
       >
         <button
           type="button"
-          class="rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40"
+          class="w-full rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           :disabled="currentPage === 1"
           @click="currentPage -= 1"
         >
           ← Sebelumnya
         </button>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-2">
           <button
             v-for="page in visiblePages"
             :key="page"
@@ -707,7 +706,7 @@ onUnmounted(() => {
 
         <button
           type="button"
-          class="rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40"
+          class="w-full rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           :disabled="currentPage === totalPages"
           @click="currentPage += 1"
         >
@@ -717,4 +716,3 @@ onUnmounted(() => {
     </div>
   </section>
 </template>
-```
