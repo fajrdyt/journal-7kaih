@@ -39,7 +39,8 @@ class UserController extends Controller
                     ->orWhere('name', 'like', "%{$search}%")
                     ->orWhere('username', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('nisn', 'like', "%{$search}%");
             });
         }
 
@@ -190,6 +191,12 @@ class UserController extends Controller
             'username'  => ['required', 'string', 'max:255', 'unique:users,username'],
             'email'     => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone'     => ['nullable', 'string', 'max:20'],
+            'nisn'      => [
+                'nullable',
+                'string',
+                'regex:/^\d{10}$/',
+                Rule::unique('users', 'nisn'),
+            ],
             'password'  => ['required', 'string', 'min:8'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -210,6 +217,9 @@ class UserController extends Controller
         }
 
         $validated['class_id'] = $roleClassValidation['class_id'];
+        $validated['nisn'] = $roleName === 'siswa'
+            ? ($validated['nisn'] ?? null)
+            : null;
         $validated['name'] = $validated['name'] ?? $validated['full_name'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_active'] = $validated['is_active'] ?? true;
@@ -277,6 +287,12 @@ class UserController extends Controller
                 Rule::unique('users', 'email')->ignore($id),
             ],
             'phone'     => ['nullable', 'string', 'max:20'],
+            'nisn'      => [
+                'nullable',
+                'string',
+                'regex:/^\d{10}$/',
+                Rule::unique('users', 'nisn')->ignore($id),
+            ],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -301,6 +317,14 @@ class UserController extends Controller
         }
 
         $validated['class_id'] = $roleClassValidation['class_id'];
+
+        $currentNisn = array_key_exists('nisn', $validated)
+            ? $validated['nisn']
+            : $user->nisn;
+
+        $validated['nisn'] = $roleName === 'siswa'
+            ? $currentNisn
+            : null;
 
         if (isset($validated['full_name']) && !isset($validated['name'])) {
             $validated['name'] = $validated['full_name'];
@@ -624,6 +648,7 @@ class UserController extends Controller
             'id'        => $user->id,
             'full_name' => $user->full_name,
             'username'  => $user->username,
+            'nisn'      => $user->nisn,
             'email'     => $user->email,
             'phone'     => $user->phone,
             'is_active' => $user->is_active,
@@ -652,6 +677,7 @@ class UserController extends Controller
                 'id'        => $relation->student->id,
                 'full_name' => $relation->student->full_name,
                 'username'  => $relation->student->username,
+                'nisn'      => $relation->student->nisn,
                 'email'     => $relation->student->email,
                 'role'      => $relation->student->role ? [
                     'id'   => $relation->student->role->id,
