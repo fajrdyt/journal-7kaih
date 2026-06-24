@@ -91,7 +91,7 @@
           <input
             v-model="search"
             type="search"
-            placeholder="Cari nama, username, email, atau kelas..."
+            placeholder="Cari nama, username, NISN, email, atau kelas..."
             aria-label="Cari pengguna"
           />
         </div>
@@ -205,6 +205,12 @@
                       <span>
                         @{{ user.username || '-' }}
                       </span>
+
+                      <small
+                        v-if="normalizeRoleName(user.role) === 'siswa'"
+                      >
+                        NISN: {{ user.nisn || 'Belum diisi' }}
+                      </small>
                     </div>
                   </div>
                 </td>
@@ -320,6 +326,12 @@
                   <span>
                     @{{ user.username || '-' }}
                   </span>
+
+                  <small
+                    v-if="normalizeRoleName(user.role) === 'siswa'"
+                  >
+                    NISN: {{ user.nisn || 'Belum diisi' }}
+                  </small>
                 </div>
               </div>
 
@@ -363,6 +375,16 @@
 
                 <strong>
                   {{ user.phone || '—' }}
+                </strong>
+              </div>
+
+              <div
+                v-if="normalizeRoleName(user.role) === 'siswa'"
+              >
+                <span>NISN</span>
+
+                <strong>
+                  {{ user.nisn || 'Belum diisi' }}
                 </strong>
               </div>
             </div>
@@ -549,6 +571,34 @@
               <small v-if="fieldError('role_id')">
                 {{ fieldError('role_id') }}
               </small>
+            </div>
+
+            <div
+              v-if="isStudentRole"
+              class="form-group"
+            >
+              <label for="nisn">NISN</label>
+
+              <input
+                id="nisn"
+                :value="form.nisn"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                placeholder="10 digit NISN"
+                @input="handleNisnInput"
+              />
+
+              <small v-if="fieldError('nisn')">
+                {{ fieldError('nisn') }}
+              </small>
+
+              <p v-else>
+                Kosongkan jika belum tersedia. Jika diisi, wajib
+                10 digit dan unik.
+              </p>
             </div>
 
             <div class="form-group">
@@ -888,6 +938,7 @@ const resetPassword = ref('')
 const form = reactive({
   full_name: '',
   username: '',
+  nisn: '',
   email: '',
   phone: '',
   role_id: null,
@@ -938,6 +989,7 @@ const filteredUsers = computed(() => {
       [
         user.full_name,
         user.username,
+        user.nisn,
         user.email,
         user.phone,
         user.class?.name,
@@ -1169,6 +1221,7 @@ function openEditModal(user) {
 
   form.full_name = user.full_name ?? ''
   form.username = user.username ?? ''
+  form.nisn = user.nisn ?? ''
   form.email = user.email ?? ''
   form.phone = user.phone ?? ''
   form.role_id = user.role?.id ?? null
@@ -1231,6 +1284,7 @@ function closeDeleteModal() {
 function resetForm() {
   form.full_name = ''
   form.username = ''
+  form.nisn = ''
   form.email = ''
   form.phone = ''
   form.role_id = null
@@ -1244,10 +1298,31 @@ function clearFormState() {
   fieldErrors.value = {}
 }
 
+function handleNisnInput(event) {
+  form.nisn = String(event.target.value ?? '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
+
+  event.target.value = form.nisn
+
+  if (fieldErrors.value?.nisn) {
+    const nextErrors = {
+      ...fieldErrors.value,
+    }
+
+    delete nextErrors.nisn
+    fieldErrors.value = nextErrors
+  }
+}
+
 function buildPayload() {
   const payload = {
     full_name: form.full_name.trim(),
     username: form.username.trim(),
+    nisn:
+      isStudentRole.value && form.nisn
+        ? form.nisn
+        : null,
     email: form.email.trim() || null,
     phone: form.phone.trim() || null,
     role_id: Number(form.role_id),
@@ -1271,6 +1346,20 @@ async function submitUser() {
     clearFormState()
     error.value = ''
     message.value = ''
+
+    if (
+      isStudentRole.value &&
+      form.nisn &&
+      form.nisn.length !== 10
+    ) {
+      fieldErrors.value = {
+        ...fieldErrors.value,
+        nisn: ['NISN harus terdiri dari tepat 10 digit.'],
+      }
+      formError.value =
+        'Periksa kembali NISN siswa.'
+      return
+    }
 
     const payload = buildPayload()
 
@@ -1708,7 +1797,8 @@ td {
 }
 
 .user-cell strong,
-.user-cell span {
+.user-cell span,
+.user-cell small {
   display: block;
   max-width: 210px;
   overflow: hidden;
@@ -1726,6 +1816,13 @@ td {
   margin-top: 3px;
   color: #94a3b8;
   font-size: 10.5px;
+}
+
+.user-cell small {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 9.5px;
+  font-weight: 700;
 }
 
 .contact-cell span,

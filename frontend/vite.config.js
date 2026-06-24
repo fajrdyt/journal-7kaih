@@ -6,9 +6,17 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ command }) => {
-  const apiProxy = {
+  const backendTarget = 'http://127.0.0.1:8000'
+
+  const proxy = {
     '/api': {
-      target: 'http://127.0.0.1:8000',
+      target: backendTarget,
+      changeOrigin: true,
+      secure: false,
+    },
+
+    '/storage': {
+      target: backendTarget,
       changeOrigin: true,
       secure: false,
     },
@@ -23,10 +31,12 @@ export default defineConfig(({ command }) => {
     plugins.push(
       VitePWA({
         registerType: 'autoUpdate',
+
         includeAssets: [
           'favicon.ico',
           'apple-touch-icon.png',
         ],
+
         manifest: {
           id: '/',
           name: 'Jurnal 7KAIH',
@@ -40,6 +50,7 @@ export default defineConfig(({ command }) => {
           orientation: 'portrait',
           background_color: '#f8fafc',
           theme_color: '#0284c7',
+
           icons: [
             {
               src: '/pwa-192x192.png',
@@ -59,6 +70,7 @@ export default defineConfig(({ command }) => {
             },
           ],
         },
+
         workbox: {
           cleanupOutdatedCaches: true,
           navigateFallback: '/index.html',
@@ -74,24 +86,28 @@ export default defineConfig(({ command }) => {
       host: '0.0.0.0',
       port: 5173,
       strictPort: true,
+
       allowedHosts: [
         '.ngrok-free.app',
         '.ngrok-free.dev',
         '.ngrok.app',
       ],
-      proxy: apiProxy,
+
+      proxy,
     },
 
     preview: {
       host: '0.0.0.0',
       port: 4173,
       strictPort: true,
+
       allowedHosts: [
         '.ngrok-free.app',
         '.ngrok-free.dev',
         '.ngrok.app',
       ],
-      proxy: apiProxy,
+
+      proxy,
     },
 
     resolve: {

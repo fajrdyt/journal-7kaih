@@ -16,7 +16,9 @@ const USER_KEY = 'user'
 
 function getStoredUser() {
   try {
-    return JSON.parse(localStorage.getItem(USER_KEY) || 'null')
+    return JSON.parse(
+      localStorage.getItem(USER_KEY) || 'null',
+    )
   } catch {
     localStorage.removeItem(USER_KEY)
 
@@ -59,6 +61,56 @@ function normalizeRole(role) {
   return aliases[value] || value || null
 }
 
+function normalizeAvatarUrl(value) {
+  const source = String(value ?? '').trim()
+
+  if (!source) {
+    return null
+  }
+
+  try {
+    const url = new URL(
+      source,
+      window.location.origin,
+    )
+
+    if (
+      url.hostname === '127.0.0.1' ||
+      url.hostname === 'localhost'
+    ) {
+      return `${window.location.origin}${url.pathname}${url.search}`
+    }
+
+    return url.href
+  } catch {
+    return source
+  }
+}
+
+function addAvatarCacheBuster(value) {
+  const normalizedUrl = normalizeAvatarUrl(value)
+
+  if (!normalizedUrl) {
+    return null
+  }
+
+  try {
+    const url = new URL(
+      normalizedUrl,
+      window.location.origin,
+    )
+
+    url.searchParams.set(
+      'v',
+      String(Date.now()),
+    )
+
+    return url.href
+  } catch {
+    return normalizedUrl
+  }
+}
+
 function normalizeUser(user) {
   if (!user) {
     return null
@@ -72,7 +124,9 @@ function normalizeUser(user) {
       user.name ??
       user.username ??
       'Pengguna',
-    avatar_url: user.avatar_url ?? null,
+    avatar_url: normalizeAvatarUrl(
+      user.avatar_url,
+    ),
     role: normalizeRole(user.role),
   }
 }
@@ -85,13 +139,30 @@ function dashboardByRole(role) {
     admin: '/admin/dashboard',
   }
 
-  return dashboards[normalizeRole(role)] || '/login'
+  return (
+    dashboards[normalizeRole(role)] ||
+    '/login'
+  )
+}
+
+function responseMessage(
+  response,
+  data,
+  fallback,
+) {
+  return (
+    response?.data?.message ??
+    data?.message ??
+    fallback
+  )
 }
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: normalizeUser(getStoredUser()),
-    token: localStorage.getItem(TOKEN_KEY) || null,
+    token:
+      localStorage.getItem(TOKEN_KEY) ||
+      null,
     loading: false,
     avatarLoading: false,
     error: null,
@@ -115,34 +186,54 @@ export const useAuthStore = defineStore('auth', {
     },
 
     isStudent(state) {
-      return normalizeRole(state.user?.role) === 'siswa'
+      return (
+        normalizeRole(state.user?.role) ===
+        'siswa'
+      )
     },
 
     isSiswa(state) {
-      return normalizeRole(state.user?.role) === 'siswa'
+      return (
+        normalizeRole(state.user?.role) ===
+        'siswa'
+      )
     },
 
     isGuru(state) {
-      return normalizeRole(state.user?.role) === 'guru'
+      return (
+        normalizeRole(state.user?.role) ===
+        'guru'
+      )
     },
 
     isOrangTua(state) {
-      return normalizeRole(state.user?.role) === 'orang_tua'
+      return (
+        normalizeRole(state.user?.role) ===
+        'orang_tua'
+      )
     },
 
     isAdmin(state) {
-      return normalizeRole(state.user?.role) === 'admin'
+      return (
+        normalizeRole(state.user?.role) ===
+        'admin'
+      )
     },
 
     dashboardPath(state) {
-      return dashboardByRole(state.user?.role)
+      return dashboardByRole(
+        state.user?.role,
+      )
     },
   },
 
   actions: {
     persistUser() {
       if (this.user) {
-        localStorage.setItem(USER_KEY, JSON.stringify(this.user))
+        localStorage.setItem(
+          USER_KEY,
+          JSON.stringify(this.user),
+        )
 
         return
       }
@@ -157,7 +248,10 @@ export const useAuthStore = defineStore('auth', {
       return this.user
     },
 
-    async login(payloadOrIdentifier, password = null) {
+    async login(
+      payloadOrIdentifier,
+      password = null,
+    ) {
       this.loading = true
       this.error = null
 
@@ -168,7 +262,9 @@ export const useAuthStore = defineStore('auth', {
         )
 
         const data = unwrap(response)
-        const token = data?.access_token ?? data?.token
+        const token =
+          data?.access_token ??
+          data?.token
 
         if (!token) {
           throw new Error(
@@ -177,7 +273,11 @@ export const useAuthStore = defineStore('auth', {
         }
 
         this.token = token
-        localStorage.setItem(TOKEN_KEY, token)
+
+        localStorage.setItem(
+          TOKEN_KEY,
+          token,
+        )
 
         this.setUser(data?.user)
 
@@ -212,7 +312,9 @@ export const useAuthStore = defineStore('auth', {
         const response = await getMe()
         const data = unwrap(response)
 
-        return this.setUser(data?.user ?? data)
+        return this.setUser(
+          data?.user ?? data,
+        )
       } catch (error) {
         this.error =
           error.response?.data?.message ??
@@ -239,9 +341,12 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const response = await getProfileApi()
+        const response =
+          await getProfileApi()
+
         const data = unwrap(response)
-        const profile = data?.user ?? data
+        const profile =
+          data?.user ?? data
 
         return this.setUser({
           ...this.user,
@@ -263,9 +368,12 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const response = await updateProfileApi(payload)
+        const response =
+          await updateProfileApi(payload)
+
         const data = unwrap(response)
-        const updatedProfile = data?.user ?? data
+        const updatedProfile =
+          data?.user ?? data
 
         this.setUser({
           ...this.user,
@@ -274,10 +382,11 @@ export const useAuthStore = defineStore('auth', {
 
         return {
           user: this.user,
-          message:
-            response?.message ??
-            data?.message ??
+          message: responseMessage(
+            response,
+            data,
             'Profil berhasil diperbarui.',
+          ),
         }
       } catch (error) {
         this.error =
@@ -295,15 +404,18 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const response = await updatePasswordApi(payload)
+        const response =
+          await updatePasswordApi(payload)
+
         const data = unwrap(response)
 
         return {
           ...(data ?? {}),
-          message:
-            response?.message ??
-            data?.message ??
+          message: responseMessage(
+            response,
+            data,
             'Password berhasil diperbarui.',
+          ),
         }
       } catch (error) {
         this.error =
@@ -318,28 +430,62 @@ export const useAuthStore = defineStore('auth', {
 
     async uploadAvatar(file) {
       if (!file) {
-        throw new Error('Foto profil belum dipilih.')
+        throw new Error(
+          'Foto profil belum dipilih.',
+        )
       }
 
       this.avatarLoading = true
       this.error = null
 
       try {
-        const response = await uploadAvatarApi(file)
+        const response =
+          await uploadAvatarApi(file)
+
         const data = unwrap(response)
-        const avatarUrl = data?.avatar_url ?? null
+
+        let avatarUrl =
+          data?.avatar_url ??
+          data?.user?.avatar_url ??
+          null
+
+        if (!avatarUrl) {
+          const refreshedUser =
+            await this.fetchProfile()
+
+          avatarUrl =
+            refreshedUser?.avatar_url ??
+            null
+        }
+
+        if (!avatarUrl) {
+          throw new Error(
+            'Foto tersimpan, tetapi URL foto tidak dikembalikan oleh server.',
+          )
+        }
+
+        const updatedUser =
+          data?.user ?? {}
 
         this.setUser({
           ...this.user,
-          avatar_url: avatarUrl,
+          ...updatedUser,
+          avatar_url:
+            addAvatarCacheBuster(
+              avatarUrl,
+            ),
         })
 
         return {
-          avatar_url: avatarUrl,
-          message:
-            response?.message ??
-            data?.message ??
+          user: this.user,
+          avatar_url:
+            this.user?.avatar_url ??
+            null,
+          message: responseMessage(
+            response,
+            data,
             'Foto profil berhasil diperbarui.',
+          ),
         }
       } catch (error) {
         this.error =
@@ -358,25 +504,32 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const response = await deleteAvatarApi()
+        const response =
+          await deleteAvatarApi()
+
         const data = unwrap(response)
-        const avatarUrl = data?.avatar_url ?? null
+        const updatedUser =
+          data?.user ?? {}
 
         this.setUser({
           ...this.user,
-          avatar_url: avatarUrl,
+          ...updatedUser,
+          avatar_url: null,
         })
 
         return {
-          avatar_url: avatarUrl,
-          message:
-            response?.message ??
-            data?.message ??
+          user: this.user,
+          avatar_url: null,
+          message: responseMessage(
+            response,
+            data,
             'Foto profil berhasil dihapus.',
+          ),
         }
       } catch (error) {
         this.error =
           error.response?.data?.message ??
+          error.message ??
           'Gagal menghapus foto profil.'
 
         throw error
