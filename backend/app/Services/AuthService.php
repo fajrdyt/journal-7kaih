@@ -13,21 +13,19 @@ class AuthService
     public function login(
         LoginRequest $request
     ): JsonResponse {
+        $identifier = trim(
+            (string) $request->validated('identifier')
+        );
+
         $user = User::query()
             ->with([
                 'role',
                 'classRoom',
             ])
-            ->where(function ($query) use ($request) {
+            ->where(function ($query) use ($identifier) {
                 $query
-                    ->where(
-                        'username',
-                        $request->identifier
-                    )
-                    ->orWhere(
-                        'email',
-                        $request->identifier
-                    );
+                    ->where('username', $identifier)
+                    ->orWhere('email', $identifier);
             })
             ->first();
 
@@ -41,7 +39,7 @@ class AuthService
 
         if (
             ! Hash::check(
-                $request->password,
+                $request->validated('password'),
                 $user->password
             )
         ) {
@@ -59,8 +57,6 @@ class AuthService
                 'data' => null,
             ], 403);
         }
-
-        $user->tokens()->delete();
 
         $token = $user
             ->createToken('auth_token')
