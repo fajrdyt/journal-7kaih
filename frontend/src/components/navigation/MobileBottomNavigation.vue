@@ -121,6 +121,26 @@ const menus = computed(() => {
         to: '/admin/dashboard',
         icon: 'home',
       },
+      {
+        label: 'Pengguna',
+        to: '/admin/users',
+        icon: 'users',
+      },
+      {
+        label: 'Kelas',
+        to: '/admin/classes',
+        icon: 'classes',
+      },
+      {
+        label: 'Relasi',
+        to: '/admin/relations',
+        icon: 'relations',
+      },
+      {
+        label: 'Kebiasaan',
+        to: '/admin/habits',
+        icon: 'habits',
+      },
     ],
   }
 
@@ -213,6 +233,52 @@ function isMenuActive(menuPath) {
             <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
             <circle cx="17" cy="9" r="2.5" />
             <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
+          </svg>
+
+          <svg
+            v-else-if="menu.icon === 'users'"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="9" cy="8" r="3" />
+            <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+            <circle cx="17" cy="9" r="2.5" />
+            <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
+          </svg>
+
+          <svg
+            v-else-if="menu.icon === 'classes'"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M4 5.5 12 3l8 2.5-8 2.5-8-2.5Z" />
+            <path d="M6 8v7.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V8" />
+            <path d="M20 6v6" />
+          </svg>
+
+          <svg
+            v-else-if="menu.icon === 'relations'"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="7" cy="7" r="3" />
+            <circle cx="17" cy="17" r="3" />
+            <path d="M9.5 9.5 14.5 14.5" />
+            <path d="M14.5 9.5 9.5 14.5" />
+          </svg>
+
+          <svg
+            v-else-if="menu.icon === 'habits'"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z" />
+            <path d="M9 4V2M15 4V2M8 9h8M8 13h3M8 17h5" />
+            <path d="m15 14 1.5 1.5L19 13" />
           </svg>
 
           <svg

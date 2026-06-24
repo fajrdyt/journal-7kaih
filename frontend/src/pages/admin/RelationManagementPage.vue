@@ -1364,22 +1364,22 @@ td {
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   overflow-y: auto;
   padding: 24px;
   background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(3px);
 }
 
 .modal-card {
   width: min(100%, 640px);
-  max-height: calc(100dvh - 48px);
-  overflow: visible;
+  margin: auto 0;
   padding: 23px;
   border: 1px solid #e2e8f0;
   border-radius: 22px;
   background: #ffffff;
+  box-sizing: border-box;
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.24);
 }
 
@@ -1604,7 +1604,7 @@ td {
   }
 
   .modal-layer {
-    align-items: end;
+    align-items: flex-end;
     padding: 0;
   }
 
@@ -1612,6 +1612,7 @@ td {
     width: 100%;
     max-height: 92dvh;
     overflow-y: auto;
+    margin: 0;
     padding: 20px 16px;
     border-radius: 22px 22px 0 0;
   }
