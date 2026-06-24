@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -30,15 +31,31 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'avatar_path',
+    ];
+
+    protected $appends = [
+        'avatar_url',
     ];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (! $this->avatar_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url(
+            $this->avatar_path
+        );
     }
 
     public function role(): BelongsTo
@@ -48,12 +65,18 @@ class User extends Authenticatable
 
     public function classRoom(): BelongsTo
     {
-        return $this->belongsTo(ClassRoom::class, 'class_id');
+        return $this->belongsTo(
+            ClassRoom::class,
+            'class_id'
+        );
     }
 
     public function checkins(): HasMany
     {
-        return $this->hasMany(DailyCheckin::class, 'student_id');
+        return $this->hasMany(
+            DailyCheckin::class,
+            'student_id'
+        );
     }
 
     public function parentRelations(): HasMany
