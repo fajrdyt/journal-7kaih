@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CheckinController;
 use App\Http\Controllers\API\ClassController;
+use App\Http\Controllers\API\ExportController;
 use App\Http\Controllers\API\HabitController;
 use App\Http\Controllers\API\RecapController;
 use App\Http\Controllers\API\UserController;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 
 Route::prefix('v1')->group(function () {
-
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])
             ->middleware('throttle:10,1');
@@ -27,7 +27,6 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::middleware('auth:sanctum')->group(function () {
-
         Route::get('/roles', fn () => response()->json([
             'status' => 'success',
             'message' => 'Daftar role berhasil diambil.',
@@ -41,11 +40,15 @@ Route::prefix('v1')->group(function () {
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::put('/profile/password', [AuthController::class, 'updatePassword']);
 
-        Route::post('/profile/avatar', [ProfileAvatarController::class, 'update'])
-            ->middleware('throttle:10,1');
+        Route::post(
+            '/profile/avatar',
+            [ProfileAvatarController::class, 'update']
+        )->middleware('throttle:10,1');
 
-        Route::delete('/profile/avatar', [ProfileAvatarController::class, 'destroy'])
-            ->middleware('throttle:10,1');
+        Route::delete(
+            '/profile/avatar',
+            [ProfileAvatarController::class, 'destroy']
+        )->middleware('throttle:10,1');
 
         Route::post('/events/track', function (
             Request $request,
@@ -91,11 +94,15 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:admin')
             ->prefix('admin')
             ->group(function () {
-
                 Route::get(
                     '/dashboard-summary',
                     [UserController::class, 'dashboardSummary']
                 );
+
+                Route::get(
+                    '/exports/classes',
+                    [ExportController::class, 'exportClasses']
+                )->name('admin.exports.classes');
 
                 Route::get('/users', [UserController::class, 'index']);
                 Route::post('/users', [UserController::class, 'store']);
@@ -143,12 +150,30 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:siswa')
             ->prefix('student')
             ->group(function () {
-                Route::get('/checkins/today', [CheckinController::class, 'today']);
-                Route::get('/checkins', [CheckinController::class, 'index']);
-                Route::post('/checkins', [CheckinController::class, 'store']);
-                Route::get('/checkins/{id}', [CheckinController::class, 'show']);
+                Route::get(
+                    '/checkins/today',
+                    [CheckinController::class, 'today']
+                );
 
-                Route::get('/recap', [RecapController::class, 'personal']);
+                Route::get(
+                    '/checkins',
+                    [CheckinController::class, 'index']
+                );
+
+                Route::post(
+                    '/checkins',
+                    [CheckinController::class, 'store']
+                );
+
+                Route::get(
+                    '/checkins/{id}',
+                    [CheckinController::class, 'show']
+                );
+
+                Route::get(
+                    '/recap',
+                    [RecapController::class, 'personal']
+                );
 
                 Route::get(
                     '/habit-statistics',
