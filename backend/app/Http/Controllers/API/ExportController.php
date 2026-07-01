@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Exports\ClassesExport;
 use App\Exports\ClassCheckinsExport;
+use App\Exports\StudentRecapExport;
 use App\Http\Controllers\Controller;
 use App\Models\ClassRoom;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -42,8 +44,10 @@ class ExportController extends Controller
         ]);
 
         $filters = [
-            'class_id' => $validated['class_id'] ?? null,
-            'search' => $validated['search'] ?? null,
+            'class_id' =>
+                $validated['class_id'] ?? null,
+            'search' =>
+                $validated['search'] ?? null,
             'grade_level' =>
                 $validated['grade_level'] ?? null,
             'is_active' =>
@@ -63,44 +67,29 @@ class ExportController extends Controller
     public function exportClassCheckins(
         Request $request
     ): BinaryFileResponse {
-        $validated = $request->validate([
-            'class_id' => [
-                'required',
-                'integer',
-                'exists:classes,id',
-            ],
-            'start_date' => [
-                'required',
-                'date_format:Y-m-d',
-            ],
-            'end_date' => [
-                'required',
-                'date_format:Y-m-d',
-                'after_or_equal:start_date',
-                'before_or_equal:today',
-            ],
-        ]);
-
-        $startDate = CarbonImmutable::parse(
-            $validated['start_date']
-        )->startOfDay();
-
-        $endDate = CarbonImmutable::parse(
-            $validated['end_date']
-        )->startOfDay();
-
-        if (
-            $startDate->diffInDays($endDate) > 365
-        ) {
-            throw ValidationException::withMessages([
-                'end_date' => [
-                    'Periode export maksimal 366 hari.',
+        $validated = $request->validate(
+            array_merge(
+                [
+                    'class_id' => [
+                        'required',
+                        'integer',
+                        'exists:classes,id',
+                    ],
                 ],
-            ]);
-        }
+                $this->dateRangeRules()
+            )
+        );
+
+        [$startDate, $endDate] =
+            $this->resolveDateRange(
+                $validated['start_date'],
+                $validated['end_date']
+            );
 
         $classRoom = ClassRoom::query()
-            ->findOrFail($validated['class_id']);
+            ->findOrFail(
+                $validated['class_id']
+            );
 
         return Excel::download(
             new ClassCheckinsExport(
@@ -116,6 +105,114 @@ class ExportController extends Controller
             ExcelWriter::XLSX,
             $this->downloadHeaders()
         );
+    }
+
+    public function exportStudentRecap(
+        Request $request
+    ): BinaryFileResponse {
+        $validated = $request->validate(
+            array_merge(
+                [
+                    'student_id' => [
+                        'required',
+                        'integer',
+                        'exists:users,id',
+                    ],
+                ],
+                $this->dateRangeRules()
+            )
+        );
+
+        [$startDate, $endDate] =
+            $this->resolveDateRange(
+                $validated['start_date'],
+                $validated['end_date']
+            );
+
+        $student = User::query()
+            ->whereHas(
+                'role',
+                function ($query) {
+                    $query->where(
+                        'name',
+                        'siswa'
+                    );
+                }
+            )
+            ->find(
+                $validated['student_id']
+            );
+
+        if (!$student) {
+            throw ValidationException::withMessages([
+                'student_id' => [
+                    'Pengguna yang dipilih harus memiliki peran siswa.',
+                ],
+            ]);
+        }
+
+        return Excel::download(
+            new StudentRecapExport(
+                studentId: $student->id,
+                startDate: $startDate,
+                endDate: $endDate
+            ),
+            $this->buildStudentRecapFileName(
+                student: $student,
+                startDate: $startDate,
+                endDate: $endDate
+            ),
+            ExcelWriter::XLSX,
+            $this->downloadHeaders()
+        );
+    }
+
+    private function dateRangeRules(): array
+    {
+        return [
+            'start_date' => [
+                'required',
+                'date_format:Y-m-d',
+            ],
+            'end_date' => [
+                'required',
+                'date_format:Y-m-d',
+                'after_or_equal:start_date',
+                'before_or_equal:today',
+            ],
+        ];
+    }
+
+    private function resolveDateRange(
+        string $startDateValue,
+        string $endDateValue
+    ): array {
+        $startDate = CarbonImmutable::createFromFormat(
+            'Y-m-d',
+            $startDateValue,
+            config('app.timezone')
+        )->startOfDay();
+
+        $endDate = CarbonImmutable::createFromFormat(
+            'Y-m-d',
+            $endDateValue,
+            config('app.timezone')
+        )->startOfDay();
+
+        if (
+            $startDate->diffInDays($endDate) > 365
+        ) {
+            throw ValidationException::withMessages([
+                'end_date' => [
+                    'Periode export maksimal 366 hari.',
+                ],
+            ]);
+        }
+
+        return [
+            $startDate,
+            $endDate,
+        ];
     }
 
     private function buildClassFileName(
@@ -161,13 +258,43 @@ class ExportController extends Controller
         );
     }
 
+    private function buildStudentRecapFileName(
+        User $student,
+        CarbonImmutable $startDate,
+        CarbonImmutable $endDate
+    ): string {
+        $studentName =
+            $student->full_name
+            ?? $student->name
+            ?? $student->username
+            ?? "siswa-{$student->id}";
+
+        $safeStudentName = Str::slug(
+            $studentName
+        );
+
+        if ($safeStudentName === '') {
+            $safeStudentName =
+                "siswa-{$student->id}";
+        }
+
+        return sprintf(
+            'rekap-siswa-%s-%s-sampai-%s.xlsx',
+            $safeStudentName,
+            $startDate->format('Y-m-d'),
+            $endDate->format('Y-m-d')
+        );
+    }
+
     private function downloadHeaders(): array
     {
         return [
             'Cache-Control' =>
                 'no-store, no-cache, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
+            'Pragma' =>
+                'no-cache',
+            'Expires' =>
+                '0',
         ];
     }
 }
