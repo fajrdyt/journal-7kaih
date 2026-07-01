@@ -166,6 +166,11 @@ Route::prefix('v1')->group(function () {
                 );
 
                 Route::get(
+                    '/checkins/history',
+                    [CheckinController::class, 'history']
+                );
+
+                Route::get(
                     '/checkins',
                     [CheckinController::class, 'index']
                 );
@@ -178,7 +183,7 @@ Route::prefix('v1')->group(function () {
                 Route::get(
                     '/checkins/{id}',
                     [CheckinController::class, 'show']
-                );
+                )->whereNumber('id');
 
                 Route::get(
                     '/recap',

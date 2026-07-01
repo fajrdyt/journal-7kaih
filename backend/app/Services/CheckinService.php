@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DailyCheckin;
 use App\Models\DailyCheckinItem;
+use App\Models\Habit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -105,6 +106,148 @@ class CheckinService
                     'per_page'    => $checkins->perPage(),
                     'total'       => $checkins->total(),
                     'total_pages' => $checkins->lastPage(),
+                ],
+            ],
+        ]);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'start_date' => [
+                'nullable',
+                'date_format:Y-m-d',
+            ],
+            'end_date' => [
+                'nullable',
+                'date_format:Y-m-d',
+                'after_or_equal:start_date',
+                'before_or_equal:today',
+            ],
+            'page' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        $student = $request->user();
+        $today = now()->startOfDay();
+
+        $accountStartDate = $student->created_at
+            ? Carbon::parse($student->created_at)->startOfDay()
+            : $today->copy();
+
+        $requestedStartDate = !empty($validated['start_date'])
+            ? Carbon::createFromFormat(
+                'Y-m-d',
+                $validated['start_date']
+            )->startOfDay()
+            : $accountStartDate->copy();
+
+        $requestedEndDate = !empty($validated['end_date'])
+            ? Carbon::createFromFormat(
+                'Y-m-d',
+                $validated['end_date']
+            )->startOfDay()
+            : $today->copy();
+
+        $startDate = $requestedStartDate->greaterThan($accountStartDate)
+            ? $requestedStartDate
+            : $accountStartDate;
+
+        $endDate = $requestedEndDate->lessThan($today)
+            ? $requestedEndDate
+            : $today;
+
+        $page = $validated['page'] ?? 1;
+        $perPage = $validated['per_page'] ?? 10;
+
+        $total = $endDate->lessThan($startDate)
+            ? 0
+            : $startDate->diffInDays($endDate) + 1;
+
+        $offset = ($page - 1) * $perPage;
+        $remaining = max(0, $total - $offset);
+        $itemCount = min($perPage, $remaining);
+
+        $dates = collect();
+
+        for ($index = 0; $index < $itemCount; $index++) {
+            $dates->push(
+                $endDate
+                    ->copy()
+                    ->subDays($offset + $index)
+                    ->toDateString()
+            );
+        }
+
+        $checkins = $dates->isEmpty()
+            ? collect()
+            : DailyCheckin::with([
+                'items.habit',
+                'items.validations.validator',
+            ])
+                ->where('student_id', $student->id)
+                ->whereIn('checkin_date', $dates->all())
+                ->get()
+                ->keyBy(
+                    fn (DailyCheckin $checkin) =>
+                        $checkin->checkin_date->format('Y-m-d')
+                );
+
+        $activeHabitCount = Habit::query()
+            ->where('is_active', true)
+            ->count();
+
+        $items = $dates
+            ->map(function (string $date) use (
+                $checkins,
+                $student,
+                $today,
+                $activeHabitCount
+            ) {
+                $checkin = $checkins->get($date);
+
+                if ($checkin) {
+                    return $this->formatHistoryCheckin(
+                        $checkin,
+                        $activeHabitCount
+                    );
+                }
+
+                $status = $date === $today->toDateString()
+                    ? 'pending'
+                    : 'missed';
+
+                return $this->formatVirtualHistoryItem(
+                    studentId: $student->id,
+                    date: $date,
+                    status: $status,
+                    activeHabitCount: $activeHabitCount
+                );
+            })
+            ->values();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Riwayat lengkap check-in berhasil diambil.',
+            'data'    => [
+                'items' => $items,
+                'pagination' => [
+                    'page'        => $page,
+                    'per_page'    => $perPage,
+                    'total'       => $total,
+                    'total_pages' => max(
+                        1,
+                        (int) ceil($total / $perPage)
+                    ),
                 ],
             ],
         ]);
@@ -301,6 +444,52 @@ class CheckinService
             'message' => 'Detail check-in berhasil diambil.',
             'data'    => $this->formatCheckin($checkin),
         ]);
+    }
+
+    private function formatHistoryCheckin(
+        DailyCheckin $checkin,
+        int $activeHabitCount
+    ): array {
+        $data = $this->formatCheckin($checkin);
+        $totalDone = $data['summary']['total_done'];
+
+        $data['status'] = 'submitted';
+        $data['is_virtual'] = false;
+        $data['is_complete'] = $activeHabitCount > 0
+            && $totalDone >= $activeHabitCount;
+
+        return $data;
+    }
+
+    private function formatVirtualHistoryItem(
+        int $studentId,
+        string $date,
+        string $status,
+        int $activeHabitCount
+    ): array {
+        return [
+            'id' => null,
+            'student_id' => $studentId,
+            'checkin_date' => $date,
+            'notes' => null,
+            'submitted_at' => null,
+            'created_at' => null,
+            'updated_at' => null,
+            'status' => $status,
+            'is_virtual' => true,
+            'is_complete' => false,
+            'summary' => [
+                'total_habits' => $activeHabitCount,
+                'total_done' => 0,
+                'total_not_done' => $status === 'missed'
+                    ? $activeHabitCount
+                    : 0,
+                'total_validations' => 0,
+                'parent_validations' => 0,
+                'teacher_validations' => 0,
+            ],
+            'items' => [],
+        ];
     }
 
     private function formatCheckin(

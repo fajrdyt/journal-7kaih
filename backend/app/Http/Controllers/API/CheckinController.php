@@ -11,7 +11,8 @@ class CheckinController extends Controller
 {
     public function __construct(
         protected CheckinService $checkinService
-    ) {}
+    ) {
+    }
 
     public function today(Request $request)
     {
@@ -21,6 +22,11 @@ class CheckinController extends Controller
     public function index(Request $request)
     {
         return $this->checkinService->index($request);
+    }
+
+    public function history(Request $request)
+    {
+        return $this->checkinService->history($request);
     }
 
     public function store(StoreCheckinRequest $request)
