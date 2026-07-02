@@ -134,6 +134,93 @@
         </div>
       </section>
 
+      <section class="export-panel">
+        <div class="section-heading">
+          <div>
+            <p>Ekspor Data</p>
+            <h3>Rekap Check-in Kelas</h3>
+          </div>
+        </div>
+
+        <div
+          v-if="exportError"
+          class="export-error"
+        >
+          {{ exportError }}
+        </div>
+
+        <div class="export-form">
+          <div class="export-field">
+            <label for="export-class">Kelas</label>
+            <select
+              id="export-class"
+              v-model="exportForm.class_id"
+              :disabled="loadingClasses || !classOptions.length"
+            >
+              <option :value="null" disabled>
+                {{
+                  loadingClasses
+                    ? 'Memuat kelas...'
+                    : 'Pilih kelas'
+                }}
+              </option>
+              <option
+                v-for="classItem in classOptions"
+                :key="classItem.id"
+                :value="classItem.id"
+              >
+                {{ classItem.name }}
+                <template v-if="classItem.grade_level">
+                  &nbsp;(Tingkat {{ classItem.grade_level }})
+                </template>
+              </option>
+            </select>
+          </div>
+
+          <div class="export-field">
+            <label for="export-start">Dari Tanggal</label>
+            <input
+              id="export-start"
+              v-model="exportForm.start_date"
+              type="date"
+              required
+              :max="exportForm.end_date || todayDateString"
+            />
+          </div>
+
+          <div class="export-field">
+            <label for="export-end">Sampai Tanggal</label>
+            <input
+              id="export-end"
+              v-model="exportForm.end_date"
+              type="date"
+              required
+              :min="exportForm.start_date || undefined"
+              :max="todayDateString"
+            />
+          </div>
+
+          <button
+            type="button"
+            class="export-button"
+            :disabled="exportingRecap || !exportFormValid"
+            @click="exportClassCheckins"
+          >
+            {{
+              exportingRecap
+                ? 'Mengunduh...'
+                : 'Export Excel'
+            }}
+          </button>
+        </div>
+
+        <p class="export-hint">
+          Kelas dan rentang tanggal wajib dipilih, tanggal akhir
+          tidak boleh melebihi hari ini, dan rentang maksimal
+          366 hari.
+        </p>
+      </section>
+
       <section class="activity-layout">
         <div class="activity-panel">
           <div class="section-heading">
@@ -429,6 +516,38 @@ const todayActivity = reactive({
   pending_validation_items: 0,
 })
 
+// --- Export Rekap Check-in Kelas ---
+const classOptions = ref([])
+const loadingClasses = ref(false)
+const exportingRecap = ref(false)
+const exportError = ref('')
+
+const exportForm = reactive({
+  class_id: null,
+  start_date: getDefaultStartDate(),
+  end_date: getDefaultEndDate(),
+})
+
+const todayDateString = getDefaultEndDate()
+
+const exportFormValid = computed(() => {
+  return Boolean(
+    exportForm.class_id &&
+      exportForm.start_date &&
+      exportForm.end_date,
+  )
+})
+
+function getDefaultEndDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getDefaultStartDate() {
+  const date = new Date()
+  date.setDate(date.getDate() - 29)
+  return date.toISOString().slice(0, 10)
+}
+
 const adminName = computed(() => {
   return (
     authStore.user?.display_name ??
@@ -500,7 +619,10 @@ const itemPercentage = computed(() => {
   )
 })
 
-onMounted(loadSummary)
+onMounted(() => {
+  loadSummary()
+  loadClassOptions()
+})
 
 async function loadSummary() {
   try {
@@ -528,6 +650,103 @@ async function loadSummary() {
       'Terjadi kesalahan saat mengambil ringkasan admin.'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadClassOptions() {
+  try {
+    loadingClasses.value = true
+
+    const response = await userApi.getClasses({
+      page: 1,
+      per_page: 100,
+    })
+
+    const payload = response.data?.data
+    const items = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : []
+
+    classOptions.value = items
+  } catch (err) {
+    // Dropdown kelas gagal dimuat tidak menghalangi dashboard utama,
+    // cukup biarkan opsi "Semua kelas" saja yang tersedia.
+    classOptions.value = []
+  } finally {
+    loadingClasses.value = false
+  }
+}
+
+async function exportClassCheckins() {
+  if (!exportFormValid.value) {
+    exportError.value =
+      'Pilih kelas dan lengkapi rentang tanggal terlebih dahulu.'
+    return
+  }
+
+  try {
+    exportingRecap.value = true
+    exportError.value = ''
+
+    const params = new URLSearchParams({
+      class_id: exportForm.class_id,
+      start_date: exportForm.start_date,
+      end_date: exportForm.end_date,
+    })
+
+    const token = localStorage.getItem('token')
+
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/admin/exports/class-checkins?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(
+        'Gagal mengunduh rekap check-in kelas.',
+      )
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get(
+      'content-disposition',
+    )
+
+    const filename =
+      disposition?.match(/filename="?([^"]+)"?/)?.[1] ??
+      'rekap-checkin.xlsx'
+
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = filename
+
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    exportError.value =
+      err?.message ??
+      'Gagal mengunduh rekap check-in kelas.'
+  } finally {
+    exportingRecap.value = false
   }
 }
 
@@ -675,7 +894,8 @@ function getInitials(name) {
 .summary-section,
 .activity-panel,
 .validation-panel,
-.recent-section {
+.recent-section,
+.export-panel {
   min-width: 0;
 }
 
@@ -805,6 +1025,94 @@ function getInitials(name) {
   border-radius: 8px;
   background: #edf2f7;
   animation: pulse 1.2s ease-in-out infinite;
+}
+
+.export-panel {
+  padding: 22px;
+  border: 1px solid #e7edf5;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
+}
+
+.export-error {
+  margin-bottom: 14px;
+  padding: 12px 13px;
+  border: 1px solid #fecdd3;
+  border-radius: 11px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.export-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.export-field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.export-field label {
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.export-field select,
+.export-field input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dfe7f0;
+  border-radius: 11px;
+  outline: none;
+  background: #ffffff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 12px;
+}
+
+.export-field select:focus,
+.export-field input:focus {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+}
+
+.export-field select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.export-button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 11px;
+  background: #168ad3;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-hint {
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .activity-layout {
@@ -1145,6 +1453,14 @@ function getInitials(name) {
   .activity-layout {
     grid-template-columns: 1fr;
   }
+
+  .export-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .export-button {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 680px) {
@@ -1182,9 +1498,14 @@ function getInitials(name) {
 
   .activity-panel,
   .validation-panel,
-  .recent-section {
+  .recent-section,
+  .export-panel {
     padding: 17px;
     border-radius: 18px;
+  }
+
+  .export-form {
+    grid-template-columns: 1fr;
   }
 
   .validation-grid {

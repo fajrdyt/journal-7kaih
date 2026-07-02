@@ -7,6 +7,7 @@ const api = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 })
 
@@ -36,4 +37,3 @@ api.interceptors.response.use(
 )
 
 export default api
-

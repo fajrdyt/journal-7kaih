@@ -8,24 +8,37 @@
       </div>
 
       <div class="header-actions">
-        <button
-          type="button"
-          class="secondary-button"
-          :disabled="loading"
-          @click="loadPageData"
-        >
-          {{ loading ? 'Memuat...' : 'Perbarui' }}
-        </button>
+      <button
+        type="button"
+        class="secondary-button"
+        :disabled="loading || exporting"
+        @click="loadPageData"
+      >
+        {{ loading ? 'Memuat...' : 'Perbarui' }}
+      </button>
 
-        <button
-          type="button"
-          class="primary-button"
-          :disabled="loading || !teachers.length"
-          @click="openCreateModal"
-        >
-          Tambah Kelas
-        </button>
-      </div>
+      <button
+        type="button"
+        class="secondary-button"
+        :disabled="exporting"
+        @click="exportClasses"
+      >
+        {{
+          exporting
+            ? 'Mengunduh...'
+            : 'Export Excel'
+        }}
+      </button>
+
+      <button
+        type="button"
+        class="primary-button"
+        :disabled="loading || !teachers.length"
+        @click="openCreateModal"
+      >
+        Tambah Kelas
+      </button>
+    </div>
     </section>
 
     <div v-if="message" class="alert success">
@@ -329,6 +342,7 @@ import {
 
 const loading = ref(true)
 const saving = ref(false)
+const exporting = ref(false)
 const error = ref('')
 const message = ref('')
 const formError = ref('')
@@ -570,6 +584,126 @@ function resetForm() {
 function clearFormState() {
   formError.value = ''
   fieldErrors.value = {}
+}
+
+async function exportClasses() {
+  try {
+    exporting.value = true
+    error.value = ''
+    message.value = ''
+
+    const params =
+      new URLSearchParams()
+
+    if (
+      search.value?.trim()
+    ) {
+      params.set(
+        'search',
+        search.value.trim(),
+      )
+    }
+
+    if (
+      statusFilter.value ===
+      'active'
+    ) {
+      params.set(
+        'is_active',
+        '1',
+      )
+    }
+
+    if (
+      statusFilter.value ===
+      'inactive'
+    ) {
+      params.set(
+        'is_active',
+        '0',
+      )
+    }
+
+    const token =
+      localStorage.getItem(
+        'token',
+      )
+
+    const response =
+      await fetch(
+        `${
+          import.meta.env
+            .VITE_API_BASE_URL
+        }/admin/exports/classes?${
+          params.toString()
+        }`,
+        {
+          method: 'GET',
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        },
+      )
+
+    if (!response.ok) {
+      throw new Error(
+        'Gagal mengunduh file export.',
+      )
+    }
+
+    const blob =
+      await response.blob()
+
+    const disposition =
+      response.headers.get(
+        'content-disposition',
+      )
+
+    const filename =
+      disposition
+        ?.match(
+          /filename="?([^"]+)"?/,
+        )?.[1] ??
+      'export.xlsx'
+
+    const url =
+      window.URL.createObjectURL(
+        blob,
+      )
+
+    const link =
+      document.createElement(
+        'a',
+      )
+
+    link.href = url
+    link.download =
+      filename
+
+    document.body.appendChild(
+      link,
+    )
+
+    link.click()
+
+    link.remove()
+
+    window.URL.revokeObjectURL(
+      url,
+    )
+
+    message.value =
+      'File export berhasil diunduh.'
+  } catch (err) {
+    error.value =
+      err?.message ??
+      'Gagal mengunduh file export.'
+  } finally {
+    exporting.value = false
+  }
 }
 
 async function submitClass() {
