@@ -27,7 +27,6 @@ function normalizeDateOnly(value) {
 
   const rawValue = String(value)
 
-  // API sudah mengirim format date-only.
   if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
     return rawValue
   }
@@ -214,9 +213,23 @@ function extractHistoryList(response) {
 function normalizeHistoryItem(item) {
   const items = item.items ?? item.checkin_items ?? item.daily_checkin_items ?? []
 
-  const completedCount = items.filter((checkinItem) => {
+  const completedFromItems = items.filter((checkinItem) => {
     return Boolean(checkinItem.is_done ?? checkinItem.completed)
   }).length
+
+  const summary = item.summary ?? {}
+
+  const totalCount =
+    item.total_count ??
+    item.total_items ??
+    summary.total_habits ??
+    items.length
+
+  const completedCount =
+    item.completed_count ??
+    item.done_count ??
+    summary.total_done ??
+    completedFromItems
 
   return {
     ...item,
@@ -225,8 +238,11 @@ function normalizeHistoryItem(item) {
     ),
     notes: item.notes ?? '',
     items,
-    completed_count: item.completed_count ?? item.done_count ?? completedCount,
-    total_count: item.total_count ?? item.total_items ?? items.length,
+    status: item.status ?? null,
+    is_virtual: Boolean(item.is_virtual),
+    is_complete: item.is_complete ?? null,
+    completed_count: completedCount,
+    total_count: totalCount,
   }
 }
 
@@ -290,7 +306,6 @@ export const useCheckinStore = defineStore('checkin', {
       )
     },
 
-    // Alias untuk komponen lama
     completedHabits() {
       return this.completedCount
     },
@@ -301,7 +316,6 @@ export const useCheckinStore = defineStore('checkin', {
   },
 
   actions: {
-    // Alias untuk komponen lama
     async fetchTodayCheckin() {
       return this.fetchToday()
     },
@@ -414,7 +428,6 @@ export const useCheckinStore = defineStore('checkin', {
       this.todayCheckin.habits = this.habits
     },
 
-    // Alias untuk HabitCard lama
     updateHabit(habitId, updates) {
       this.habits = this.habits.map((habit) => {
         if (Number(habit.id) !== Number(habitId)) return habit
@@ -434,7 +447,6 @@ export const useCheckinStore = defineStore('checkin', {
       this.todayCheckin.habits = this.habits
     },
 
-    // Alias untuk komponen lama
     async saveCheckin() {
       return this.submitToday(this.todayCheckin.notes)
     },

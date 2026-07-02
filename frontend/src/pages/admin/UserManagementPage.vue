@@ -120,6 +120,24 @@
             <option value="active">Aktif</option>
             <option value="inactive">Nonaktif</option>
           </select>
+
+          <select
+            v-model="classFilter"
+            aria-label="Filter kelas"
+          >
+            <option value="all">Semua Kelas</option>
+
+            <option
+              v-for="classItem in sortedClasses"
+              :key="classItem.id"
+              :value="String(classItem.id)"
+            >
+              {{ classItem.name }}
+              <template v-if="classItem.grade_level">
+                · Tingkat {{ classItem.grade_level }}
+              </template>
+            </option>
+          </select>
         </div>
       </div>
 
@@ -925,6 +943,7 @@ const classes = ref([])
 const search = ref('')
 const roleFilter = ref('all')
 const statusFilter = ref('all')
+const classFilter = ref('all')
 const currentPage = ref(1)
 const pageSize = 8
 
@@ -964,6 +983,16 @@ const normalizedRoles = computed(() => {
 })
 
 const rolesForTemplate = computed(() => normalizedRoles.value)
+
+const sortedClasses = computed(() => {
+  return [...classes.value].sort((first, second) => {
+    return (
+      (Number(first.grade_level) || 0) -
+        (Number(second.grade_level) || 0) ||
+      String(first.name ?? '').localeCompare(String(second.name ?? ''))
+    )
+  })
+})
 
 const selectedRoleName = computed(() => {
   const role = roles.value.find((item) => {
@@ -1009,7 +1038,11 @@ const filteredUsers = computed(() => {
       (statusFilter.value === 'active' && isActive) ||
       (statusFilter.value === 'inactive' && !isActive)
 
-    return matchesSearch && matchesRole && matchesStatus
+    const matchesClass =
+      classFilter.value === 'all' ||
+      String(user.class?.id ?? '') === classFilter.value
+
+    return matchesSearch && matchesRole && matchesStatus && matchesClass
   })
 })
 
@@ -1056,7 +1089,7 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  [search, roleFilter, statusFilter],
+  [search, roleFilter, statusFilter, classFilter],
   () => {
     currentPage.value = 1
   },

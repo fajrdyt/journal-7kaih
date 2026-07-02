@@ -157,7 +157,16 @@
           </thead>
 
           <tbody>
-            <tr v-for="row in filteredRows" :key="row.student_id">
+            <tr
+              v-for="row in filteredRows"
+              :key="row.student_id"
+              class="row-clickable"
+              tabindex="0"
+              role="button"
+              :aria-label="`Lihat detail jurnal ${row.student_name}`"
+              @click="handleRowClick(row)"
+              @keydown.enter="handleRowClick(row)"
+            >
               <td>
                 <div class="student-cell">
                   <span class="student-avatar">
@@ -201,8 +210,12 @@
                 <button
                   type="button"
                   class="detail-button"
-                  :disabled="!row.daily_checkin_id"
-                  @click="openCheckinDetail(row)"
+                  :title="
+                    row.daily_checkin_id
+                      ? ''
+                      : 'Siswa belum check-in hari ini'
+                  "
+                  @click.stop="handleRowClick(row)"
                 >
                   Lihat Jurnal
                   <span>→</span>
@@ -224,6 +237,43 @@
       @validate-item="validateItem"
       @validate-all="validateAll"
     />
+
+    <!-- Lightweight local modal for students who haven't checked in yet.
+         No API call needed — everything shown here already exists in `row`. -->
+    <div
+      v-if="notCheckedInModalOpen"
+      class="simple-modal-overlay"
+      @click.self="closeNotCheckedInModal"
+    >
+      <div class="simple-modal" role="dialog" aria-modal="true">
+        <button
+          type="button"
+          class="simple-modal-close"
+          aria-label="Tutup"
+          @click="closeNotCheckedInModal"
+        >
+          ×
+        </button>
+
+        <span class="simple-modal-icon">◌</span>
+
+        <h3>{{ notCheckedInStudent?.student_name }}</h3>
+
+        <p>
+          Siswa ini belum melakukan check-in pada
+          {{ formattedSelectedDate.toLowerCase() }}. Jurnal akan tersedia
+          begitu siswa mengisi check-in hari ini.
+        </p>
+
+        <button
+          type="button"
+          class="simple-modal-action"
+          @click="closeNotCheckedInModal"
+        >
+          Mengerti
+        </button>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -254,6 +304,10 @@ const selectedCheckin = ref(null)
 const selectedCheckinId = ref(null)
 const validatingItemId = ref(null)
 const validatingAll = ref(false)
+
+// Local-only modal state for the "belum check-in" case.
+const notCheckedInModalOpen = ref(false)
+const notCheckedInStudent = ref(null)
 
 const selectedClass = computed(() => {
   return classes.value.find((item) => {
@@ -381,6 +435,7 @@ async function loadMonitoring() {
 
 async function handleFilterChange() {
   closeDetail()
+  closeNotCheckedInModal()
   await syncQuery()
   await loadMonitoring()
 }
@@ -392,6 +447,33 @@ async function syncQuery() {
       date: selectedDate.value || undefined,
     },
   })
+}
+
+/**
+ * Single entry point for both the row click and the "Lihat Jurnal"
+ * button. Branches based on whether the student has a check-in for
+ * the selected date:
+ *  - checked in  -> open the real journal detail panel (API call)
+ *  - not checked in -> open a lightweight local modal (no API call,
+ *    since there is no daily_checkin_id to fetch details for)
+ */
+function handleRowClick(row) {
+  if (row.daily_checkin_id) {
+    openCheckinDetail(row)
+    return
+  }
+
+  openNotCheckedInModal(row)
+}
+
+function openNotCheckedInModal(row) {
+  notCheckedInStudent.value = row
+  notCheckedInModalOpen.value = true
+}
+
+function closeNotCheckedInModal() {
+  notCheckedInModalOpen.value = false
+  notCheckedInStudent.value = null
 }
 
 async function openCheckinDetail(row) {
@@ -893,6 +975,15 @@ tbody tr:hover {
   background: #fbfdff;
 }
 
+.row-clickable {
+  cursor: pointer;
+}
+
+.row-clickable:focus-visible {
+  outline: 2px solid #209cee;
+  outline-offset: -2px;
+}
+
 .student-cell {
   display: flex;
   align-items: center;
@@ -956,13 +1047,6 @@ tbody tr:hover {
   cursor: pointer;
 }
 
-.detail-button:disabled {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
 .empty-value {
   color: #cbd5e1;
 }
@@ -1005,6 +1089,85 @@ tbody tr:hover {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Lightweight modal for "belum check-in" students */
+.simple-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.simple-modal {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 30px 26px 26px;
+  border-radius: 20px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+}
+
+.simple-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.simple-modal-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 14px;
+  border-radius: 14px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+.simple-modal h3 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.simple-modal p {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.simple-modal-action {
+  width: 100%;
+  min-height: 42px;
+  border: none;
+  border-radius: 11px;
+  background: #209cee;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 @media (max-width: 1120px) {

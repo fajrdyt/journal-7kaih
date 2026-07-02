@@ -77,6 +77,27 @@ function formatMonthLabel(key) {
   }).format(date)
 }
 
+/**
+ * Total habit count for an item.
+ * Backend always sends `summary.total_habits` (both for real
+ * checkins and virtual missed/pending days, where `items` is []),
+ * so that must be checked BEFORE falling back to items.length.
+ */
+function totalCount(item) {
+  if (item.total_count !== undefined) return Number(item.total_count)
+  if (item.total_items !== undefined) return Number(item.total_items)
+  if (item.summary?.total_habits !== undefined) {
+    return Number(item.summary.total_habits)
+  }
+
+  return item.items?.length ?? 0
+}
+
+/**
+ * Completed habit count for an item.
+ * Same reasoning as totalCount: prefer the authoritative
+ * `summary.total_done` from the backend.
+ */
 function completedCount(item) {
   if (item.completed_count !== undefined) {
     return Number(item.completed_count)
@@ -86,23 +107,15 @@ function completedCount(item) {
     return Number(item.done_items)
   }
 
+  if (item.summary?.total_done !== undefined) {
+    return Number(item.summary.total_done)
+  }
+
   const items = item.items ?? []
 
   return items.filter((checkinItem) => {
     return Boolean(checkinItem.is_done ?? checkinItem.completed)
   }).length
-}
-
-function totalCount(item) {
-  if (item.total_count !== undefined) {
-    return Number(item.total_count)
-  }
-
-  if (item.total_items !== undefined) {
-    return Number(item.total_items)
-  }
-
-  return item.items?.length ?? 0
 }
 
 function progressPercentage(item) {
@@ -126,11 +139,80 @@ function isItemDone(item) {
   return Boolean(item.is_done ?? item.completed)
 }
 
+function isVirtual(item) {
+  return Boolean(item.is_virtual)
+}
+
+function isMissed(item) {
+  return item.status === 'missed'
+}
+
+function isPending(item) {
+  return item.status === 'pending'
+}
+
+function isComplete(item) {
+  if (item.is_complete !== undefined) return Boolean(item.is_complete)
+
+  const total = totalCount(item)
+
+  return total > 0 && completedCount(item) >= total
+}
+
 function statusTheme(item) {
   const completed = completedCount(item)
   const total = totalCount(item)
-  const itemDate = getCheckinDateKey(item)
 
+  if (isComplete(item)) {
+    return {
+      label: 'Lengkap',
+      text: 'text-emerald-700',
+      dotActive: 'bg-emerald-500',
+      badge: 'bg-emerald-100 text-emerald-700',
+      percentage: 'text-emerald-600',
+      card: 'border-emerald-100 bg-white',
+      icon: 'bg-emerald-50 text-emerald-600',
+    }
+  }
+
+  if (isPending(item)) {
+    return {
+      label: 'Dalam progres',
+      text: 'text-amber-700',
+      dotActive: 'bg-amber-400',
+      badge: 'bg-amber-100 text-amber-700',
+      percentage: 'text-amber-600',
+      card: 'border-amber-100 bg-white',
+      icon: 'bg-amber-50 text-amber-600',
+    }
+  }
+
+  if (isMissed(item) && completed > 0) {
+    return {
+      label: 'Tidak lengkap',
+      text: 'text-slate-600',
+      dotActive: 'bg-slate-500',
+      badge: 'bg-slate-100 text-slate-600',
+      percentage: 'text-slate-500',
+      card: 'border-slate-200 bg-white',
+      icon: 'bg-slate-100 text-slate-500',
+    }
+  }
+
+  if (isMissed(item) && completed === 0) {
+    return {
+      label: 'Terlewat',
+      text: 'text-slate-400',
+      dotActive: 'bg-slate-300',
+      badge:
+        'border border-dashed border-slate-300 bg-transparent text-slate-500',
+      percentage: 'text-slate-400',
+      card: 'border-dashed border-slate-300 bg-slate-50/60',
+      icon: 'bg-slate-100 text-slate-400',
+    }
+  }
+
+  const itemDate = getCheckinDateKey(item)
   const isToday = itemDate === todayKey.value
   const isPast = Boolean(itemDate) && itemDate < todayKey.value
 
@@ -172,7 +254,7 @@ function statusTheme(item) {
 
   if (isPast && completed === 0) {
     return {
-      label: 'Tidak diisi',
+      label: 'Terlewat',
       text: 'text-slate-400',
       dotActive: 'bg-slate-300',
       badge:
@@ -208,8 +290,10 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-function toggleDetail(id) {
-  expandedId.value = expandedId.value === id ? null : id
+function toggleDetail(item) {
+  if (isVirtual(item)) return
+
+  expandedId.value = expandedId.value === item.id ? null : item.id
 }
 
 const sortedHistory = computed(() => {
@@ -306,7 +390,6 @@ onUnmounted(() => {
 
 <template>
   <section class="space-y-5 pb-4 sm:space-y-6 sm:pb-6 lg:pb-10">
-    <!-- Page heading -->
     <div>
       <h1 class="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
         Riwayat Check-in
@@ -318,7 +401,6 @@ onUnmounted(() => {
       </p>
     </div>
 
-    <!-- Filter -->
     <div
       class="rounded-2xl bg-white p-4 shadow-[0_14px_35px_rgba(15,23,42,0.06)] sm:p-5"
     >
@@ -423,7 +505,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Loading -->
     <div
       v-if="checkinStore.loading && !checkinStore.history.length"
       class="rounded-2xl bg-white px-6 py-14 text-center shadow-[0_12px_30px_rgba(15,23,42,0.05)]"
@@ -433,7 +514,6 @@ onUnmounted(() => {
       </p>
     </div>
 
-    <!-- Error -->
     <div
       v-else-if="checkinStore.error && !checkinStore.history.length"
       class="rounded-2xl border border-red-200 bg-red-50 px-6 py-5"
@@ -451,7 +531,6 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Empty -->
     <div
       v-else-if="!filteredHistory.length"
       class="rounded-2xl bg-white px-6 py-14 text-center shadow-[0_12px_30px_rgba(15,23,42,0.05)]"
@@ -479,7 +558,6 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- History -->
     <div
       v-else
       class="space-y-6 sm:space-y-8"
@@ -503,7 +581,7 @@ onUnmounted(() => {
 
         <article
           v-for="item in items"
-          :key="item.id"
+          :key="item.id ?? item.checkin_date"
           class="group rounded-2xl border p-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(14,165,233,0.10)] sm:p-6"
           :class="statusTheme(item).card"
         >
@@ -546,7 +624,10 @@ onUnmounted(() => {
                   </h2>
 
                   <div class="mt-3 flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-1">
+                    <div
+                      v-if="totalCount(item) > 0"
+                      class="flex items-center gap-1"
+                    >
                       <span
                         v-for="index in totalCount(item)"
                         :key="index"
@@ -567,6 +648,7 @@ onUnmounted(() => {
                     </span>
 
                     <span
+                      v-if="totalCount(item) > 0"
                       class="text-xs font-semibold transition-colors duration-300"
                       :class="statusTheme(item).percentage"
                     >
@@ -583,9 +665,10 @@ onUnmounted(() => {
                 </div>
 
                 <button
+                  v-if="!isVirtual(item)"
                   type="button"
                   class="inline-flex w-fit shrink-0 items-center gap-2 text-sm font-bold text-sky-700 transition hover:text-sky-900"
-                  @click="toggleDetail(item.id)"
+                  @click="toggleDetail(item)"
                 >
                   {{ expandedId === item.id ? 'Tutup Detail' : 'Lihat Detail' }}
 
@@ -615,6 +698,20 @@ onUnmounted(() => {
               </p>
 
               <p
+                v-else-if="isMissed(item)"
+                class="mt-4 text-sm italic text-slate-400"
+              >
+                Kamu melewatkan check-in pada hari ini.
+              </p>
+
+              <p
+                v-else-if="isPending(item)"
+                class="mt-4 text-sm italic text-slate-400"
+              >
+                Check-in hari ini masih bisa diisi.
+              </p>
+
+              <p
                 v-else
                 class="mt-4 text-sm italic text-slate-400"
               >
@@ -622,7 +719,7 @@ onUnmounted(() => {
               </p>
 
               <div
-                v-if="expandedId === item.id"
+                v-if="expandedId === item.id && !isVirtual(item)"
                 class="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2"
               >
                 <div
@@ -660,7 +757,6 @@ onUnmounted(() => {
         </article>
       </section>
 
-      <!-- Pagination -->
       <div
         class="flex flex-col items-stretch justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center"
       >

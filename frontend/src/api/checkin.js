@@ -13,7 +13,7 @@ export function saveCheckin(payload) {
 }
 
 export function getCheckinHistory(params = {}) {
-  return api.get('/student/checkins', { params })
+  return api.get('/student/checkins/history', { params })
 }
 
 export function getCheckinDetail(id) {
