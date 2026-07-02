@@ -273,7 +273,7 @@ onBeforeUnmount(() => {
 
       <div class="min-w-0">
         <h1
-          class="truncate text-base font-bold text-slate-900 sm:text-xl"
+          class="truncate text-base font-bold text-sky-700 sm:text-xl"
         >
           Jurnal Kebiasaan
         </h1>

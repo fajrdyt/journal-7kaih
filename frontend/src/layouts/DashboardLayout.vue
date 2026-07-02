@@ -16,7 +16,7 @@ import Sidebar from '../components/navigation/Sidebar.vue'
       <HeaderBar :show-menu-button="false" />
 
       <div
-        class="min-w-0 px-3 pb-32 sm:px-5 lg:px-8 lg:pb-8"
+        class="min-w-0 px-3 pt-6 pb-32 sm:px-5 lg:px-8 lg:pb-8"
       >
         <RouterView />
       </div>
