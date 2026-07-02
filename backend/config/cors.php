@@ -36,7 +36,7 @@ return [
         'X-CSRF-TOKEN',
     ],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Content-Disposition'],
 
     'max_age' => 3600,
 
