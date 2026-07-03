@@ -27,6 +27,7 @@ export default defineConfig(() => {
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      useCredentials: true, // penting: supaya fetch manifest ikut kirim cookie bypass ngrok
 
       devOptions: {
         enabled: true,
