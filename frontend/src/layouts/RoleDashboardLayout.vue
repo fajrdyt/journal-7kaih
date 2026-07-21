@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-shell">
-    <AppSidebar :mobile-open="false" />
+    <AppSidebar />
 
     <section class="workspace">
       <header class="topbar">
@@ -470,8 +470,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .dashboard-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
   background: #f5f8fc;
   color: #0f172a;
 }
@@ -479,6 +477,12 @@ onBeforeUnmount(() => {
 .workspace {
   min-width: 0;
   min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .workspace {
+    margin-left: 240px; /* selaras lebar AppSidebar (w-60) */
+  }
 }
 
 .topbar {

@@ -1,313 +1,44 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import { useNavConfig } from '@/composables/useNavConfig'
+import { resolveIcon } from '@/config/iconRegistry'
 
-import { useAuthStore } from '../../stores/authStore'
-
-const route = useRoute()
 const authStore = useAuthStore()
+const roleRef = computed(() => authStore.role)
 
-const normalizedRole = computed(() => {
-  const sourceRole =
-    typeof authStore.userRole === 'object'
-      ? authStore.userRole?.name ??
-        authStore.userRole?.code ??
-        ''
-      : authStore.userRole
-
-  const role = String(sourceRole ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_')
-
-  const aliases = {
-    student: 'siswa',
-    siswa: 'siswa',
-    parent: 'orang_tua',
-    orang_tua: 'orang_tua',
-    orangtua: 'orang_tua',
-    teacher: 'guru',
-    guru: 'guru',
-    admin: 'admin',
-  }
-
-  return aliases[role] ?? role
-})
-
-const menus = computed(() => {
-  const roleMenus = {
-    siswa: [
-      {
-        label: 'Dashboard',
-        to: '/student/dashboard',
-        icon: 'home',
-      },
-      {
-        label: 'Riwayat',
-        to: '/student/history',
-        icon: 'history',
-      },
-      {
-        label: 'Check-in',
-        to: '/student/checkin',
-        icon: 'checkin',
-      },
-      {
-        label: 'Rekap',
-        to: '/student/recap',
-        icon: 'recap',
-      },
-      {
-        label: 'Pengaturan',
-        to: '/student/settings',
-        icon: 'settings',
-      },
-    ],
-
-    orang_tua: [
-      {
-        label: 'Dashboard',
-        to: '/parent/dashboard',
-        icon: 'home',
-      },
-      {
-        label: 'Riwayat',
-        to: '/parent/history',
-        icon: 'history',
-      },
-      {
-        label: 'Validasi',
-        to: '/parent/validation',
-        icon: 'checkin',
-      },
-      {
-        label: 'Rekap',
-        to: '/parent/recap',
-        icon: 'recap',
-      },
-      {
-        label: 'Pengaturan',
-        to: '/parent/settings',
-        icon: 'settings',
-      },
-    ],
-
-    guru: [
-      {
-        label: 'Dashboard',
-        to: '/teacher/dashboard',
-        icon: 'home',
-      },
-      {
-        label: 'Monitoring',
-        to: '/teacher/monitoring',
-        icon: 'monitoring',
-      },
-      {
-        label: 'Rekap',
-        to: '/teacher/recap',
-        icon: 'recap',
-      },
-      {
-        label: 'Pengaturan',
-        to: '/settings',
-        icon: 'settings',
-      },
-    ],
-
-    admin: [
-      {
-        label: 'Dashboard',
-        to: '/admin/dashboard',
-        icon: 'home',
-      },
-      {
-        label: 'Pengguna',
-        to: '/admin/users',
-        icon: 'users',
-      },
-      {
-        label: 'Kelas',
-        to: '/admin/classes',
-        icon: 'classes',
-      },
-      {
-        label: 'Relasi',
-        to: '/admin/relations',
-        icon: 'relations',
-      },
-      {
-        label: 'Kebiasaan',
-        to: '/admin/habits',
-        icon: 'habits',
-      },
-    ],
-  }
-
-  return roleMenus[normalizedRole.value] ?? []
-})
+// mobileItems = items utama + settings digabung otomatis oleh composable,
+// jadi menu di sini selalu sinkron dengan AppSidebar.vue (satu sumber data).
+const { mobileItems, isActive } = useNavConfig(roleRef)
 
 const navigationStyle = computed(() => {
   return {
-    gridTemplateColumns: `repeat(${Math.max(menus.value.length, 1)}, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${Math.max(mobileItems.value.length, 1)}, minmax(0, 1fr))`,
   }
 })
-
-function isMenuActive(menuPath) {
-  return (
-    route.path === menuPath ||
-    route.path.startsWith(`${menuPath}/`)
-  )
-}
 </script>
 
 <template>
   <nav
-    v-if="menus.length"
+    v-if="mobileItems.length"
     class="mobile-navigation lg:hidden"
     aria-label="Navigasi utama"
   >
-    <div
-      class="mobile-navigation__inner"
-      :style="navigationStyle"
-    >
+    <div class="mobile-navigation__inner" :style="navigationStyle">
       <RouterLink
-        v-for="menu in menus"
-        :key="menu.to"
-        :to="menu.to"
+        v-for="item in mobileItems"
+        :key="item.to"
+        :to="item.to"
         class="navigation-item"
-        :class="{
-          'navigation-item--active': isMenuActive(menu.to),
-        }"
-        :aria-current="
-          isMenuActive(menu.to) ? 'page' : undefined
-        "
+        :class="{ 'navigation-item--active': isActive(item) }"
+        :aria-current="isActive(item) ? 'page' : undefined"
       >
         <span class="navigation-icon">
-          <svg
-            v-if="menu.icon === 'home'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="m4 10 8-7 8 7" />
-            <path d="M6 9v11h12V9" />
-            <path d="M10 20v-6h4v6" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'history'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="M3 12a9 9 0 1 0 3-6.7" />
-            <path d="M3 4v6h6" />
-            <path d="M12 7v5l3 2" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'checkin'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <rect
-              x="5"
-              y="3"
-              width="14"
-              height="18"
-              rx="3"
-            />
-            <path d="M9 3.5h6" />
-            <path d="m8.5 12 2.2 2.2 4.8-5" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'monitoring'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="9" cy="8" r="3" />
-            <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
-            <circle cx="17" cy="9" r="2.5" />
-            <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'users'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="9" cy="8" r="3" />
-            <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
-            <circle cx="17" cy="9" r="2.5" />
-            <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'classes'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="M4 5.5 12 3l8 2.5-8 2.5-8-2.5Z" />
-            <path d="M6 8v7.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V8" />
-            <path d="M20 6v6" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'relations'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="7" cy="7" r="3" />
-            <circle cx="17" cy="17" r="3" />
-            <path d="M9.5 9.5 14.5 14.5" />
-            <path d="M14.5 9.5 9.5 14.5" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'habits'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z" />
-            <path d="M9 4V2M15 4V2M8 9h8M8 13h3M8 17h5" />
-            <path d="m15 14 1.5 1.5L19 13" />
-          </svg>
-
-          <svg
-            v-else-if="menu.icon === 'recap'"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="M5 20V10" />
-            <path d="M12 20V4" />
-            <path d="M19 20v-7" />
-            <path d="M3 20h18" />
-          </svg>
-
-          <svg
-            v-else
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.87-.34A1.7 1.7 0 0 0 14 20.92V21h-4v-.08a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3v-4h.04A1.7 1.7 0 0 0 4.6 8.92a1.7 1.7 0 0 0-.34-1.87L4.2 6.99l2.83-2.83.06.06a1.7 1.7 0 0 0 1.87.34A1.7 1.7 0 0 0 10 3.04V3h4v.04a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06 2.83 2.83-.06.06a1.7 1.7 0 0 0-.34 1.87A1.7 1.7 0 0 0 20.96 10H21v4h-.04A1.7 1.7 0 0 0 19.4 15Z"
-            />
-          </svg>
+          <component :is="resolveIcon(item.icon)" class="h-[19px] w-[19px]" />
         </span>
 
         <span class="navigation-label">
-          {{ menu.label }}
+          {{ item.mobileLabel ?? item.label }}
         </span>
       </RouterLink>
     </div>
@@ -331,9 +62,9 @@ function isMenuActive(menuPath) {
     7px
     8px
     calc(7px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(226, 232, 240, 0.96);
+  border-top: 1px solid var(--color-ink-border);
   border-radius: 22px 22px 0 0;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.1);
 }
 
@@ -348,7 +79,7 @@ function isMenuActive(menuPath) {
   gap: 4px;
   padding: 5px 2px;
   border-radius: 15px;
-  color: #94a3b8;
+  color: var(--color-ink-muted);
   text-decoration: none;
   transition:
     color 0.18s ease,
@@ -363,7 +94,7 @@ function isMenuActive(menuPath) {
   width: 26px;
   height: 3px;
   border-radius: 999px;
-  background: #0ea5e9;
+  background: var(--color-primary);
   content: '';
   opacity: 0;
   transform: translateX(-50%);
@@ -371,7 +102,7 @@ function isMenuActive(menuPath) {
 }
 
 .navigation-item--active {
-  color: #0284c7;
+  color: var(--color-primary-dark);
 }
 
 .navigation-item--active::before {
@@ -391,18 +122,9 @@ function isMenuActive(menuPath) {
 }
 
 .navigation-item--active .navigation-icon {
-  background: #e0f2fe;
-  color: #0284c7;
-  box-shadow: 0 5px 14px rgba(14, 165, 233, 0.12);
-}
-
-.navigation-icon svg {
-  width: 19px;
-  height: 19px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-dark);
+  box-shadow: 0 5px 14px rgba(13, 153, 255, 0.14);
 }
 
 .navigation-label {
@@ -437,11 +159,6 @@ function isMenuActive(menuPath) {
   .navigation-icon {
     width: 30px;
     height: 30px;
-  }
-
-  .navigation-icon svg {
-    width: 18px;
-    height: 18px;
   }
 }
 </style>
