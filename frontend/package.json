@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
     "axios": "^1.16.0",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
