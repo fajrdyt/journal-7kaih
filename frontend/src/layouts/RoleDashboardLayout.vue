@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-shell">
+  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }">
     <AppSidebar />
 
     <section class="workspace">
@@ -204,6 +204,8 @@
       </Transition>
     </Teleport>
   </div>
+  
+  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }"></div>
 </template>
 
 <script setup>
@@ -223,6 +225,9 @@ import { useAuthStore } from '@/stores/authStore'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+import { useSidebarState } from '@/composables/useSidebarState'
+const { isCollapsed } = useSidebarState()
 
 const accountMenu = ref(null)
 const accountMenuOpen = ref(false)
@@ -477,11 +482,16 @@ onBeforeUnmount(() => {
 .workspace {
   min-width: 0;
   min-height: 100vh;
+  transition: margin-left 0.2s ease;
 }
 
 @media (min-width: 1024px) {
   .workspace {
     margin-left: 240px; /* selaras lebar AppSidebar (w-60) */
+  }
+
+  .dashboard-shell.sidebar-collapsed .workspace {
+    margin-left: 72px;
   }
 }
 
