@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }">
+  <div class="dashboard-shell">
     <AppSidebar />
 
     <section class="workspace">
@@ -204,8 +204,6 @@
       </Transition>
     </Teleport>
   </div>
-
-  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }"></div>
 </template>
 
 <script setup>
@@ -221,9 +219,6 @@ import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from '@/components/common/AppSidebar.vue'
 import MobileBottomNavigation from '@/components/navigation/MobileBottomNavigation.vue'
 import { useAuthStore } from '@/stores/authStore'
-
-import { useSidebarState } from '@/composables/useSidebarState'
-const { isCollapsed } = useSidebarState()
 
 const route = useRoute()
 const router = useRouter()
@@ -482,16 +477,11 @@ onBeforeUnmount(() => {
 .workspace {
   min-width: 0;
   min-height: 100vh;
-  transition: margin-left 0.2s ease;
 }
 
 @media (min-width: 1024px) {
   .workspace {
     margin-left: 240px; /* selaras lebar AppSidebar (w-60) */
-  }
-
-  .dashboard-shell.sidebar-collapsed .workspace {
-    margin-left: 72px;
   }
 }
 
@@ -600,10 +590,10 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   place-items: center;
   overflow: hidden;
-  border: 2px solid #dbeafe;
+  border: 2px solid var(--color-primary-tint);
   border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
   font-weight: 900;
 }
 
@@ -611,7 +601,7 @@ onBeforeUnmount(() => {
   width: 38px;
   height: 38px;
   font-size: 11px;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+  box-shadow: 0 8px 18px rgba(13, 153, 255, 0.16);
 }
 
 .dropdown-avatar {
@@ -714,8 +704,8 @@ onBeforeUnmount(() => {
 }
 
 .account-action:hover {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
 }
 
 .account-action-icon {
@@ -725,7 +715,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   place-items: center;
   border-radius: 9px;
-  background: #eff6ff;
+  background: var(--color-primary-tint);
 }
 
 .account-action-icon svg {

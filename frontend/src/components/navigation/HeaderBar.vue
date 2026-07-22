@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
       <button
         v-if="showMenuButton"
         type="button"
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:hidden"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary-tint hover:bg-primary-tint hover:text-primary-deep lg:hidden"
         aria-label="Buka navigasi"
         @click="emit('toggle-sidebar')"
       >
@@ -273,7 +273,7 @@ onBeforeUnmount(() => {
 
       <div class="min-w-0">
         <h1
-          class="truncate text-base font-bold text-sky-700 sm:text-xl"
+          class="truncate text-base font-bold text-slate-800 sm:text-xl"
         >
           Jurnal Kebiasaan
         </h1>
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-100 text-xs font-bold text-blue-700 shadow-sm"
+          class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary-tint bg-primary-tint text-xs font-bold text-primary-deep shadow-sm"
         >
           <img
             v-if="avatarUrl && !avatarLoadError"
@@ -363,7 +363,7 @@ onBeforeUnmount(() => {
           <div class="border-b border-slate-100 px-4 py-4">
             <div class="flex items-center gap-3">
               <div
-                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-bold text-blue-700"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-tint text-xs font-bold text-primary-deep"
               >
                 <img
                   v-if="avatarUrl && !avatarLoadError"
@@ -397,11 +397,11 @@ onBeforeUnmount(() => {
             <button
               type="button"
               role="menuitem"
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-primary-tint hover:text-primary-deep"
               @click="openSettings"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-tint text-primary-deep"
               >
                 <svg
                   viewBox="0 0 24 24"
