@@ -101,6 +101,10 @@ const roleLabel = computed(() => {
   return labels[normalizedRole.value] ?? 'Pengguna'
 })
 
+const pageTitle = computed(() => {
+  return route.meta?.title ?? 'Dashboard'
+})
+
 const settingsPath = computed(() => {
   const paths = {
     siswa: '/student/settings',
@@ -272,17 +276,17 @@ onBeforeUnmount(() => {
       </button>
 
       <div class="min-w-0">
-        <h1
-          class="truncate text-base font-bold text-slate-800 sm:text-xl"
-        >
-          Jurnal Kebiasaan
-        </h1>
-
         <p
-          class="hidden truncate text-xs font-medium text-slate-400 sm:block"
+          class="mb-0.5 truncate text-[10px] font-extrabold uppercase tracking-wider text-slate-400"
         >
-          Jurnal 7 Kebiasaan Anak Indonesia Hebat
+          {{ roleLabel }}
         </p>
+
+        <h1
+          class="max-w-[440px] truncate text-base font-bold text-slate-800 sm:text-xl"
+        >
+          {{ pageTitle }}
+        </h1>
       </div>
     </div>
 
