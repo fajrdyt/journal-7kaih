@@ -859,15 +859,14 @@ function getInitials(name) {
   justify-content: center;
   gap: 9px;
   padding: 0 16px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.17);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--color-primary-deep);
   font: inherit;
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
-  backdrop-filter: blur(10px);
   transition:
     background 0.18s ease,
     transform 0.18s ease;
@@ -875,7 +874,7 @@ function getInitials(name) {
 
 .refresh-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.25);
+  background: #ffffff;
 }
 
 .refresh-button:disabled {

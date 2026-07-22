@@ -547,13 +547,13 @@ function getLocalDate() {
 .primary-button {
   border: 1px solid #ffffff;
   background: #ffffff;
-  color: #1686d1;
+  color: var(--color-primary-deep);
 }
 
 .secondary-button {
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-deep);
 }
 
 .primary-button:hover,
@@ -562,7 +562,7 @@ function getLocalDate() {
 }
 
 .secondary-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffffff;
 }
 
 .secondary-button:disabled {

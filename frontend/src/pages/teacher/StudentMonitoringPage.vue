@@ -768,10 +768,10 @@ function formatDate(value) {
   gap: 8px;
   padding: 0 15px;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--color-primary-deep);
   font: inherit;
   font-size: 12px;
   font-weight: 800;

@@ -403,12 +403,21 @@ onMounted(async () => {
                   class="h-36 w-36 -rotate-90"
                   aria-hidden="true"
                 >
+                  <!-- Backing solid supaya angka & ring tetap kontras
+                       di mana pun ring ini jatuh pada hero-gradient -->
+                  <circle
+                    cx="72"
+                    cy="72"
+                    r="46"
+                    fill="rgba(255,255,255,0.94)"
+                  />
+
                   <circle
                     cx="72"
                     cy="72"
                     :r="RING_R"
                     fill="none"
-                    stroke="rgba(255,255,255,0.2)"
+                    stroke="rgba(255,255,255,0.35)"
                     stroke-width="12"
                     stroke-linecap="round"
                   />
@@ -434,11 +443,11 @@ onMounted(async () => {
                 <div
                   class="absolute flex flex-col items-center justify-center text-center"
                 >
-                  <p class="text-3xl font-extrabold leading-none">
+                  <p class="text-3xl font-extrabold leading-none text-primary-deep">
                     {{ Math.round(completionPercentage) }}%
                   </p>
 
-                  <p class="mt-1 text-[11px] font-semibold text-white/75">
+                  <p class="mt-1 text-[11px] font-semibold text-primary-deep/70">
                     bulan ini
                   </p>
                 </div>
