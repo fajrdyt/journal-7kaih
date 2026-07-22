@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
 import { useCheckinStore } from '../../stores/checkinStore'
 
+import { SparklesIcon } from '@heroicons/vue/24/outline'
+
 const router = useRouter()
 const authStore = useAuthStore()
 const checkinStore = useCheckinStore()
@@ -589,10 +591,8 @@ onMounted(async () => {
             </p>
           </div>
 
-          <div
-            class="flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 text-2xl text-sky-600"
-          >
-            🌀
+          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 text-sky-600">
+            <SparklesIcon class="h-7 w-7" />
           </div>
         </div>
       </section>
