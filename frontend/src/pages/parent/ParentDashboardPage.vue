@@ -350,9 +350,9 @@ onMounted(async () => {
           background:
             linear-gradient(
               135deg,
-              #075985 0%,
-              #0284c7 52%,
-              #06b6d4 100%
+              var(--color-primary-deep) 0%,
+              var(--color-primary) 55%,
+              var(--color-primary-light) 100%
             );
         "
       >

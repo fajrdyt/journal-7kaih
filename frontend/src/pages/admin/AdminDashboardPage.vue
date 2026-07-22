@@ -813,7 +813,12 @@ function getInitials(name) {
       rgba(255, 255, 255, 0.24),
       transparent 30%
     ),
-    linear-gradient(135deg, #1597e5, #58bdf8);
+    linear-gradient(
+      135deg,
+      var(--color-primary-deep) 0%,
+      var(--color-primary) 55%,
+      var(--color-primary-light) 100%
+    );
   color: #ffffff;
   box-shadow: 0 18px 40px rgba(32, 156, 238, 0.2);
 }

@@ -508,7 +508,7 @@ onMounted(async () => {
     <template v-else>
       <!-- Child summary -->
       <div
-        class="rounded-3xl bg-gradient-to-r from-sky-800 via-sky-600 to-cyan-500 p-5 text-white shadow-[0_16px_40px_rgba(2,132,199,0.18)] sm:p-6"
+        class="rounded-3xl hero-gradient p-5 text-white shadow-[0_16px_40px_rgba(2,132,199,0.18)] sm:p-6"
       >
         <div
           class="flex flex-col justify-between gap-5 sm:flex-row sm:items-center"

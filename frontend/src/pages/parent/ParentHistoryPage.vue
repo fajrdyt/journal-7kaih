@@ -430,7 +430,7 @@ function getApiError(error, fallback) {
 
     <div
       v-if="selectedChild"
-      class="rounded-3xl bg-gradient-to-r from-blue-600 to-sky-500 p-6 text-white shadow-sm"
+      class="rounded-3xl hero-gradient p-6 text-white shadow-sm"
     >
       <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
         <div>

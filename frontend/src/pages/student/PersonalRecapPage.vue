@@ -320,7 +320,7 @@ onMounted(async () => {
 
     <template v-else>
      <section
-          class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-700 via-sky-600 to-cyan-500 px-5 py-6 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8 sm:py-8"
+          class="relative overflow-hidden rounded-3xl hero-gradient px-5 py-6 text-white shadow-[0_18px_45px_rgba(2,132,199,0.22)] sm:px-8 sm:py-8"
         >
           <div
             class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10"

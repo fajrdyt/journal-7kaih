@@ -285,7 +285,7 @@ onMounted(async () => {
 
       <!-- Prioritas utama: progres + CTA -->
       <section
-        class="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-400 p-5 text-white shadow-[0_16px_36px_rgba(14,165,233,0.24)]"
+        class="relative overflow-hidden rounded-[26px] hero-gradient p-5 text-white shadow-[0_16px_36px_rgba(14,165,233,0.24)]"
       >
         <div
           class="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-white/10"

@@ -12,6 +12,13 @@
   --color-primary-dark: #0C447C;
   --color-primary-tint: #E6F4FF;
   --color-primary-hover: #0B7FCF;
+  --color-primary-light: #4DB8FF;
+
+  /* Anchor gradient yang TIDAK berubah di dark mode (beda dari
+     primary-dark, yang di dark mode dipakai sebagai warna teks aktif
+     dan jadi terang). Hero card butuh anchor gelap yang stabil di
+     kedua tema supaya teks putih di atasnya tetap kontras. */
+  --color-primary-deep: #0C447C;
 
   /* === Surface (background) === */
   --color-surface: #FFFFFF;
@@ -70,6 +77,26 @@ body {
 
 :root.theme-dark .border-slate-200 {
   border-color: #334155;
+}
+
+/* === Hero gradient terpusat ===
+   Dipakai di semua "hero card" biru (banner sambutan, ringkasan
+   rekap, profil anak, dsb) di seluruh halaman siswa/guru/orang tua/admin.
+   Satu sumber kebenaran — jangan tulis linear-gradient custom baru
+   per halaman, pakai class ini supaya warnanya selalu konsisten. */
+.hero-gradient {
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(255, 255, 255, 0.2),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      var(--color-primary-deep) 0%,
+      var(--color-primary) 55%,
+      var(--color-primary-light) 100%
+    );
 }
 
 /* === Dark mode override untuk token warna baru (sidebar & komponen terkait) ===

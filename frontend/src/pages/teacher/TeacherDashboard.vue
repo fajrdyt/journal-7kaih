@@ -463,7 +463,12 @@ function getLocalDate() {
       rgba(255, 255, 255, 0.22),
       transparent 24%
     ),
-    linear-gradient(135deg, #1d9bf0 0%, #1686d1 100%);
+    linear-gradient(
+      135deg,
+      var(--color-primary-deep) 0%,
+      var(--color-primary) 55%,
+      var(--color-primary-light) 100%
+    );
   color: #ffffff;
   box-shadow: 0 16px 38px rgba(29, 155, 240, 0.2);
 }

@@ -1036,7 +1036,12 @@ function extractApiError(error, fallback) {
       rgba(255, 255, 255, 0.2),
       transparent 28%
     ),
-    linear-gradient(135deg, #1d9bf0, #1686d1);
+    linear-gradient(
+      135deg,
+      var(--color-primary-deep) 0%,
+      var(--color-primary) 55%,
+      var(--color-primary-light) 100%
+    );
   color: #ffffff;
   box-shadow: 0 16px 36px rgba(29, 155, 240, 0.18);
 }
