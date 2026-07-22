@@ -1,6 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  /* === Primary brand color (biru) ===
+     border aktif, icon aktif, logo bg -> bg-primary / text-primary / border-primary
+     teks aktif, brand name           -> text-primary-dark
+     background item aktif            -> bg-primary-tint
+     hover pada tombol solid          -> hover:bg-primary-hover
+  */
+  --color-primary: #0D99FF;
+  --color-primary-dark: #0C447C;
+  --color-primary-tint: #E6F4FF;
+  --color-primary-hover: #0B7FCF;
+
+  /* === Surface (background) === */
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F7F7F5;
+
+  /* === Ink (teks & border netral) === */
+  --color-ink: #5F5E5A;
+  --color-ink-muted: #B4B2A9;
+  --color-ink-border: #E5E5E3;
+
+  /* === Status colors === */
+  --color-success: #0F6E56;
+  --color-success-tint: #E1F5EE;
+  --color-warning: #854F0B;
+  --color-warning-tint: #FAEEDA;
+  --color-danger: #A32D2D;
+  --color-danger-tint: #FCEBEB;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
 }
@@ -40,4 +70,35 @@ body {
 
 :root.theme-dark .border-slate-200 {
   border-color: #334155;
+}
+
+/* === Dark mode override untuk token warna baru (sidebar & komponen terkait) ===
+   Karena token ini didefinisikan sebagai CSS variable di @theme,
+   cukup redefinisi nilainya di sini — semua class seperti bg-surface,
+   text-ink, bg-primary-tint dsb otomatis ikut berubah tanpa perlu
+   override per-class satu-satu seperti bagian di atas. */
+:root.theme-dark {
+  --color-surface: #111827;        /* selaras dengan .bg-white dark di atas */
+  --color-surface-hover: #1f2937;  /* selaras dengan .bg-slate-50 dark di atas */
+
+  --color-ink: #cbd5e1;            /* selaras dengan text-slate-600/500 dark */
+  --color-ink-muted: #94a3b8;
+  --color-ink-border: #334155;     /* selaras dengan border-slate-200 dark */
+
+  /* primary-tint jadi navy gelap (bukan biru muda) supaya active item
+     tetap terlihat beda dari background, bukan malah menyilaukan */
+  --color-primary-tint: #123B5C;
+
+  /* primary-dark dipakai sebagai warna TEKS di atas primary-tint.
+     Di light mode dia gelap (kontras ke tint terang).
+     Di dark mode, tint-nya sudah gelap, jadi teks harus dibikin TERANG
+     supaya kontrasnya tetap terjaga. Nama variabel tetap sama,
+     cuma nilainya menyesuaikan peran fungsinya di tiap mode. */
+  --color-primary-dark: #8FD0FF;
+
+  --color-danger-tint: #3B1620;
+  --color-danger: #F87171;
+
+  --color-success-tint: #113B30;
+  --color-warning-tint: #3A2A0E;
 }

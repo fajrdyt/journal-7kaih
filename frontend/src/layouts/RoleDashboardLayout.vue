@@ -1,6 +1,6 @@
 <template>
-  <div class="dashboard-shell">
-    <AppSidebar :mobile-open="false" />
+  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }">
+    <AppSidebar />
 
     <section class="workspace">
       <header class="topbar">
@@ -204,6 +204,8 @@
       </Transition>
     </Teleport>
   </div>
+
+  <div class="dashboard-shell" :class="{ 'sidebar-collapsed': isCollapsed }"></div>
 </template>
 
 <script setup>
@@ -219,6 +221,9 @@ import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from '@/components/common/AppSidebar.vue'
 import MobileBottomNavigation from '@/components/navigation/MobileBottomNavigation.vue'
 import { useAuthStore } from '@/stores/authStore'
+
+import { useSidebarState } from '@/composables/useSidebarState'
+const { isCollapsed } = useSidebarState()
 
 const route = useRoute()
 const router = useRouter()
@@ -470,8 +475,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .dashboard-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
   background: #f5f8fc;
   color: #0f172a;
 }
@@ -479,6 +482,17 @@ onBeforeUnmount(() => {
 .workspace {
   min-width: 0;
   min-height: 100vh;
+  transition: margin-left 0.2s ease;
+}
+
+@media (min-width: 1024px) {
+  .workspace {
+    margin-left: 240px; /* selaras lebar AppSidebar (w-60) */
+  }
+
+  .dashboard-shell.sidebar-collapsed .workspace {
+    margin-left: 72px;
+  }
 }
 
 .topbar {

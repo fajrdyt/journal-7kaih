@@ -1,18 +1,17 @@
 <script setup>
 import HeaderBar from '../components/navigation/HeaderBar.vue'
 import MobileBottomNavigation from '../components/navigation/MobileBottomNavigation.vue'
-import Sidebar from '../components/navigation/Sidebar.vue'
+import AppSidebar from '../components/common/AppSidebar.vue'
+
+import { useSidebarState } from '@/composables/useSidebarState'
+const { isCollapsed } = useSidebarState()
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50">
-    <div class="hidden lg:block">
-      <Sidebar />
-    </div>
+    <AppSidebar />
 
-    <main
-      class="min-h-screen transition-[margin] duration-300 lg:ml-60"
-    >
+    <main :class="['min-h-screen transition-[margin] duration-300', isCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60']">
       <HeaderBar :show-menu-button="false" />
 
       <div
