@@ -11,7 +11,7 @@
 export const navConfig = {
   siswa: {
     items: [
-      { label: 'Dashboard', to: '/student/dashboard', icon: 'squares-2x2', exact: true },
+      { label: 'Beranda', to: '/student/dashboard', icon: 'squares-2x2', exact: true },
       { label: 'Check-in', to: '/student/checkin', icon: 'check-circle' },
       { label: 'Riwayat', to: '/student/history', icon: 'clock' },
       { label: 'Rekap', to: '/student/recap', icon: 'chart-bar' },
@@ -21,7 +21,7 @@ export const navConfig = {
  
   guru: {
     items: [
-      { label: 'Dashboard', to: '/teacher/dashboard', icon: 'squares-2x2', exact: true },
+      { label: 'Beranda', to: '/teacher/dashboard', icon: 'squares-2x2', exact: true },
       { label: 'Monitoring & Validasi', mobileLabel: 'Monitoring', to: '/teacher/monitoring', icon: 'users' },
       { label: 'Rekap Kelas', mobileLabel: 'Rekap', to: '/teacher/recap', icon: 'chart-bar' },
     ],
@@ -30,7 +30,7 @@ export const navConfig = {
  
   orang_tua: {
     items: [
-      { label: 'Dashboard', to: '/parent/dashboard', icon: 'squares-2x2', exact: true },
+      { label: 'Beranda', to: '/parent/dashboard', icon: 'squares-2x2', exact: true },
       { label: 'Validasi', to: '/parent/validation', icon: 'shield-check' },
       { label: 'Riwayat', to: '/parent/history', icon: 'clock' },
       { label: 'Rekap', to: '/parent/recap', icon: 'chart-bar' },
