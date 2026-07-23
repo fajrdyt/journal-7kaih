@@ -8,8 +8,6 @@ import {
   getStudentRecap,
 } from '../api/checkin'
 
-import { useSettingsStore } from './settingsStore'
-
 function unwrap(response) {
   return response?.data ?? response
 }

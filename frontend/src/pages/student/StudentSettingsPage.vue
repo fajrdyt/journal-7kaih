@@ -10,11 +10,9 @@ import {
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '../../stores/authStore'
-import { useSettingsStore } from '../../stores/settingsStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const settingsStore = useSettingsStore()
 
 const avatarInput = ref(null)
 const avatarFile = ref(null)
@@ -619,10 +617,6 @@ watch(
 )
 
 onMounted(async () => {
-  if (!settingsStore.initialized) {
-    settingsStore.init()
-  }
-
   if (!authStore.token) return
 
   try {
@@ -1323,67 +1317,6 @@ onBeforeUnmount(() => {
             }}
           </button>
         </form>
-
-        <div
-          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"
-        >
-          <h2 class="text-lg font-bold text-slate-900">
-            Tampilan
-          </h2>
-
-          <p class="mt-1 text-sm text-slate-500">
-            Pilih tema yang nyaman digunakan saat mengisi
-            jurnal.
-          </p>
-
-          <div class="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              class="rounded-2xl border px-4 py-3 text-sm font-semibold transition"
-              :class="
-                settingsStore.theme === 'light'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300'
-              "
-              @click="
-                settingsStore.setTheme('light')
-              "
-            >
-              Terang
-            </button>
-
-            <button
-              type="button"
-              class="rounded-2xl border px-4 py-3 text-sm font-semibold transition"
-              :class="
-                settingsStore.theme === 'dark'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300'
-              "
-              @click="
-                settingsStore.setTheme('dark')
-              "
-            >
-              Gelap
-            </button>
-          </div>
-
-          <div class="mt-5 rounded-2xl bg-slate-50 p-4">
-            <p class="text-sm font-semibold text-slate-800">
-              Tema saat ini
-            </p>
-
-            <p class="mt-1 text-sm text-slate-500">
-              Kamu sedang menggunakan mode
-
-              <span
-                class="font-semibold text-slate-900"
-              >
-                {{ settingsStore.themeLabel }}
-              </span>.
-            </p>
-          </div>
-        </div>
 
         <div
           class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8"

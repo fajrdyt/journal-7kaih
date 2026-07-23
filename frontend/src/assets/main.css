@@ -14,10 +14,7 @@
   --color-primary-hover: #0B7FCF;
   --color-primary-light: #4DB8FF;
 
-  /* Anchor gradient yang TIDAK berubah di dark mode (beda dari
-     primary-dark, yang di dark mode dipakai sebagai warna teks aktif
-     dan jadi terang). Hero card butuh anchor gelap yang stabil di
-     kedua tema supaya teks putih di atasnya tetap kontras. */
+  /* Anchor gradient untuk hero card (lihat .hero-gradient di bawah) */
   --color-primary-deep: #0C447C;
 
   /* === Surface (background) === */
@@ -42,43 +39,6 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
-:root.theme-light {
-  color-scheme: light;
-}
-
-:root.theme-dark {
-  color-scheme: dark;
-}
-
-:root.theme-dark body {
-  background: #0f172a;
-}
-
-:root.theme-dark .bg-white {
-  background-color: #111827;
-}
-
-:root.theme-dark .bg-slate-50 {
-  background-color: #1f2937;
-}
-
-:root.theme-dark .text-slate-900 {
-  color: #f8fafc;
-}
-
-:root.theme-dark .text-slate-800 {
-  color: #e5e7eb;
-}
-
-:root.theme-dark .text-slate-600,
-:root.theme-dark .text-slate-500 {
-  color: #cbd5e1;
-}
-
-:root.theme-dark .border-slate-200 {
-  border-color: #334155;
-}
-
 /* === Hero gradient terpusat ===
    Dipakai di semua "hero card" biru (banner sambutan, ringkasan
    rekap, profil anak, dsb) di seluruh halaman siswa/guru/orang tua/admin.
@@ -97,35 +57,4 @@ body {
       var(--color-primary) 55%,
       var(--color-primary-light) 100%
     );
-}
-
-/* === Dark mode override untuk token warna baru (sidebar & komponen terkait) ===
-   Karena token ini didefinisikan sebagai CSS variable di @theme,
-   cukup redefinisi nilainya di sini — semua class seperti bg-surface,
-   text-ink, bg-primary-tint dsb otomatis ikut berubah tanpa perlu
-   override per-class satu-satu seperti bagian di atas. */
-:root.theme-dark {
-  --color-surface: #111827;        /* selaras dengan .bg-white dark di atas */
-  --color-surface-hover: #1f2937;  /* selaras dengan .bg-slate-50 dark di atas */
-
-  --color-ink: #cbd5e1;            /* selaras dengan text-slate-600/500 dark */
-  --color-ink-muted: #94a3b8;
-  --color-ink-border: #334155;     /* selaras dengan border-slate-200 dark */
-
-  /* primary-tint jadi navy gelap (bukan biru muda) supaya active item
-     tetap terlihat beda dari background, bukan malah menyilaukan */
-  --color-primary-tint: #123B5C;
-
-  /* primary-dark dipakai sebagai warna TEKS di atas primary-tint.
-     Di light mode dia gelap (kontras ke tint terang).
-     Di dark mode, tint-nya sudah gelap, jadi teks harus dibikin TERANG
-     supaya kontrasnya tetap terjaga. Nama variabel tetap sama,
-     cuma nilainya menyesuaikan peran fungsinya di tiap mode. */
-  --color-primary-dark: #8FD0FF;
-
-  --color-danger-tint: #3B1620;
-  --color-danger: #F87171;
-
-  --color-success-tint: #113B30;
-  --color-warning-tint: #3A2A0E;
 }
