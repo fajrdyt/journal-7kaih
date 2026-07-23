@@ -50,7 +50,7 @@ export const routes = [
             '@/pages/student/StudentDashboardPage.vue'
           ),
         meta: {
-          title: 'Dashboard Siswa',
+          title: 'Beranda Siswa',
         },
       },
       {
@@ -121,7 +121,7 @@ export const routes = [
             '@/pages/parent/ParentDashboardPage.vue'
           ),
         meta: {
-          title: 'Dashboard Orang Tua',
+          title: 'Beranda Orang Tua',
         },
       },
       {
@@ -187,7 +187,7 @@ export const routes = [
             '@/pages/teacher/TeacherDashboard.vue'
           ),
         meta: {
-          title: 'Dashboard Guru',
+          title: 'Beranda Guru',
         },
       },
       {
