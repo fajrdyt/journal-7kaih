@@ -1,4 +1,11 @@
 <script setup>
+import {
+  AcademicCapIcon,
+  CheckCircleIcon,
+  ArrowTrendingUpIcon,
+  HeartIcon,
+} from '@heroicons/vue/24/outline'
+
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -93,9 +100,9 @@ function clearError() {
   <AuthLayout>
     <template #hero>
       <span class="platform-badge">
-        <span>✦</span>
-        Platform Edukasi
-      </span>
+          <AcademicCapIcon class="h-4 w-4" />
+          Platform Edukasi
+        </span>
 
       <h2 class="hero-title">
         <span class="desktop-title-prefix">
@@ -111,17 +118,23 @@ function clearError() {
 
       <ul class="hero-features">
         <li>
-          <span class="feature-icon">✓</span>
+          <span class="feature-icon">
+            <CheckCircleIcon class="h-4 w-4" />
+          </span>
           <span>Catat 7 kebiasaan harianmu</span>
         </li>
 
         <li>
-          <span class="feature-icon">⌁</span>
+          <span class="feature-icon">
+            <ArrowTrendingUpIcon class="h-4 w-4" />
+          </span>
           <span>Pantau perkembangan dari waktu ke waktu</span>
         </li>
 
         <li>
-          <span class="feature-icon">♧</span>
+          <span class="feature-icon">
+            <HeartIcon class="h-4 w-4" />
+          </span>
           <span>Bangun karakter positif dan konsisten</span>
         </li>
       </ul>
