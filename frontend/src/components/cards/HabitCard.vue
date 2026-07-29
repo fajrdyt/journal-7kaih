@@ -1,4 +1,6 @@
 <script setup>
+import { resolveHabitIcon } from '@/config/habitIconRegistry'
+
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -19,21 +21,7 @@ const isDone = computed(() => {
 })
 
 const habitCode = computed(() => {
-  return String(props.habit.code ?? '').toUpperCase()
-})
-
-const habitIcon = computed(() => {
-  const icons = {
-    BANGUN_PAGI: '☼',
-    BERIBADAH: '✦',
-    BEROLAHRAGA: '⚡',
-    MAKAN_SEHAT_BERGIZI: '♨',
-    GEMAR_BELAJAR: '▣',
-    BERMASYARAKAT: '⌘',
-    TIDUR_CEPAT: '☾',
-  }
-
-  return icons[habitCode.value] ?? '✓'
+  return resolveHabitIcon(props.habit.code)
 })
 
 function handleToggle() {
@@ -61,14 +49,14 @@ function handleNoteInput(event) {
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 items-center gap-3">
         <div
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-bold transition-all duration-300 ease-out group-hover:scale-110 group-active:scale-105"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ease-out group-hover:scale-110 group-active:scale-105"
           :class="
             isDone
               ? 'bg-sky-100 text-sky-700 group-hover:bg-sky-600 group-hover:text-white group-active:bg-sky-600 group-active:text-white'
               : 'bg-slate-100 text-slate-500 group-hover:bg-sky-500 group-hover:text-white group-active:bg-sky-500 group-active:text-white'
           "
         >
-          {{ habitIcon }}
+          <component :is="habitIcon" class="h-5 w-5" />
         </div>
 
         <h3

@@ -1,4 +1,6 @@
 <script setup>
+import { resolveHabitIcon } from '@/config/habitIconRegistry'
+
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -143,21 +145,7 @@ function formatValidationTime(value) {
 }
 
 function habitIcon(item) {
-  const code = String(
-    item?.habit?.code ?? '',
-  ).toUpperCase()
-
-  const icons = {
-    BANGUN_PAGI: '☼',
-    BERIBADAH: '✦',
-    BEROLAHRAGA: '⚡',
-    MAKAN_SEHAT_BERGIZI: '♨',
-    GEMAR_BELAJAR: '▣',
-    BERMASYARAKAT: '⌘',
-    TIDUR_CEPAT: '☾',
-  }
-
-  return icons[code] ?? '✓'
+   return resolveHabitIcon(item?.habit?.code)
 }
 
 function checkinProgress(checkin) {
@@ -773,7 +761,7 @@ onMounted(async () => {
                 >
                   <div class="flex min-w-0 items-start gap-4">
                     <div
-                      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-bold"
+                      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                       :class="
                         isParentValidated(item)
                           ? 'bg-emerald-100 text-emerald-700'
@@ -782,7 +770,7 @@ onMounted(async () => {
                             : 'bg-slate-200 text-slate-500'
                       "
                     >
-                      {{ habitIcon(item) }}
+                      <component :is="habitIcon(item)" class="h-5 w-5" />
                     </div>
 
                     <div class="min-w-0">

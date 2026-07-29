@@ -185,87 +185,9 @@
           </div>
 
           <div class="habit-icon">
-            <svg
-              v-if="habitIcon(habit) === 'sun'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2" />
-              <path d="m4.93 4.93 1.42 1.42" />
-              <path d="m17.65 17.65 1.42 1.42" />
-              <path d="M2 12h2M20 12h2" />
-              <path d="m4.93 19.07 1.42-1.42" />
-              <path d="m17.65 6.35 1.42-1.42" />
-            </svg>
-
-            <svg
-              v-else-if="habitIcon(habit) === 'pray'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path d="M12 3v7" />
-              <path d="m8 6 4 4 4-4" />
-              <path d="M7 21v-4a5 5 0 0 1 10 0v4" />
-              <path d="M4 21h16" />
-            </svg>
-
-            <svg
-              v-else-if="habitIcon(habit) === 'exercise'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path d="M6 7v10M18 7v10" />
-              <path d="M3 9v6M21 9v6" />
-              <path d="M6 12h12" />
-            </svg>
-
-            <svg
-              v-else-if="habitIcon(habit) === 'food'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path d="M7 3v8" />
-              <path d="M4 3v5a3 3 0 0 0 6 0V3" />
-              <path d="M7 11v10" />
-              <path d="M16 3v18" />
-              <path d="M16 3c3 2 4 5 4 8h-4" />
-            </svg>
-
-            <svg
-              v-else-if="habitIcon(habit) === 'learn'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"
-              />
-              <path
-                d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"
-              />
-            </svg>
-
-            <svg
-              v-else-if="habitIcon(habit) === 'community'"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle cx="9" cy="8" r="3" />
-              <path d="M3 20a6 6 0 0 1 12 0" />
-              <circle cx="17" cy="9" r="2.5" />
-              <path d="M15 15a5 5 0 0 1 6 5" />
-            </svg>
-
-            <svg
-              v-else
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path d="M6 4h12v16H6z" />
-              <path d="M9 8h6M9 12h6" />
-              <path d="M9 16h3" />
-            </svg>
+            <component :is="habitIcon(habit)" class="h-6 w-6" />
           </div>
+
 
           <div class="habit-content">
             <span class="habit-code">
@@ -292,6 +214,8 @@
 </template>
 
 <script setup>
+import { resolveHabitIcon } from '@/config/habitIconRegistry'
+
 import {
   computed,
   onMounted,
@@ -410,20 +334,7 @@ function normalizeHabitCode(habit) {
 }
 
 function habitIcon(habit) {
-  const code = normalizeHabitCode(habit)
-
-  const icons = {
-    BANGUN_PAGI: 'sun',
-    BERIBADAH: 'pray',
-    BEROLAHRAGA: 'exercise',
-    MAKAN_SEHAT_DAN_BERGIZI: 'food',
-    GEMAR_BELAJAR: 'learn',
-    BERMASYARAKAT: 'community',
-    TIDUR_CEPAT: 'sleep',
-  }
-
-  return icons[code] ?? 'default'
-}
+  return resolveHabitIcon(habit.code)
 
 function habitDescription(habit) {
   const code = normalizeHabitCode(habit)

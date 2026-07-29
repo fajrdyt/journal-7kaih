@@ -1,4 +1,6 @@
 <script setup>
+import { resolveHabitIcon } from '@/config/habitIconRegistry'
+
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -157,21 +159,8 @@ function formatDate(value) {
 }
 
 function habitIcon(item) {
-  const code = String(item?.habit?.code ?? '').toUpperCase()
-
-  const icons = {
-    BANGUN_PAGI: '☼',
-    BERIBADAH: '✦',
-    BEROLAHRAGA: '⚡',
-    MAKAN_SEHAT_BERGIZI: '♨',
-    GEMAR_BELAJAR: '▣',
-    BERMASYARAKAT: '⌘',
-    TIDUR_CEPAT: '☾',
-  }
-
-  return icons[code] ?? '✓'
+  return resolveHabitIcon(item?.habit?.code)
 }
-
 async function loadSelectedChildData() {
   if (!selectedChildId.value) return
 
@@ -534,14 +523,14 @@ onMounted(async () => {
           >
             <div class="flex items-center gap-3">
               <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-bold"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                 :class="
                   item.is_done
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-slate-200 text-slate-500'
                 "
               >
-                {{ habitIcon(item) }}
+                <component :is="habitIcon(item)" class="h-5 w-5" />
               </div>
 
               <div class="min-w-0">
