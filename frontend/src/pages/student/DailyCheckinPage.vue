@@ -6,6 +6,7 @@ import {
   ref,
 } from 'vue'
 
+import { FireIcon, Bars3BottomLeftIcon } from '@heroicons/vue/24/outline'
 import HabitCard from '../../components/cards/HabitCard.vue'
 import { useCheckinStore } from '../../stores/checkinStore'
 
@@ -242,9 +243,9 @@ onUnmounted(() => {
           </div>
 
           <div
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-lg text-sky-600 sm:h-12 sm:w-12 sm:text-xl"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 sm:h-12 sm:w-12"
           >
-            ⚡
+            <FireIcon class="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
         </div>
       </div>
@@ -311,9 +312,9 @@ onUnmounted(() => {
         >
           <div class="flex items-center gap-3">
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-lg font-bold text-sky-600"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600"
             >
-              ≡
+              <Bars3BottomLeftIcon class="h-5 w-5" />
             </div>
 
             <h3 class="text-sm font-bold text-slate-900">
