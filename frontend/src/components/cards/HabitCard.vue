@@ -20,7 +20,7 @@ const isDone = computed(() => {
   return Boolean(props.habit.is_done ?? props.habit.completed)
 })
 
-const habitCode = computed(() => {
+const habitIcon = computed(() => {
   return resolveHabitIcon(props.habit.code)
 })
 
