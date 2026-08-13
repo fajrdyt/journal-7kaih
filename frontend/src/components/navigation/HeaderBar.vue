@@ -276,11 +276,7 @@ onBeforeUnmount(() => {
       </button>
 
       <div class="min-w-0">
-        <p
-          class="mb-0.5 truncate text-[10px] font-extrabold uppercase tracking-wider text-slate-400"
-        >
-          {{ roleLabel }}
-        </p>
+        
 
         <h1
           class="max-w-[440px] truncate text-base font-bold text-slate-800 sm:text-xl"

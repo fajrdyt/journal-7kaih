@@ -6,7 +6,7 @@
       <header class="topbar">
         <div class="topbar-left">
           <div class="page-info">
-            <span>{{ roleLabel }}</span>
+            
             <h1>{{ pageTitle }}</h1>
           </div>
         </div>
