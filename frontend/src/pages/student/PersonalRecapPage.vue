@@ -1,4 +1,6 @@
 <script setup>
+import { resolveHabitIcon } from '@/config/habitIconRegistry'
+
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -200,30 +202,7 @@ function habitTheme(habit) {
 }
 
 function habitIcon(habit) {
-  const code = String(habit.code ?? '').toUpperCase()
-  const name = String(habit.name ?? '').toLowerCase()
-
-  const icons = {
-    BANGUN_PAGI: '☼',
-    BERIBADAH: '✦',
-    BEROLAHRAGA: '⚡',
-    MAKAN_SEHAT_BERGIZI: '♨',
-    GEMAR_BELAJAR: '▣',
-    BERMASYARAKAT: '⌘',
-    TIDUR_CEPAT: '☾',
-  }
-
-  if (icons[code]) return icons[code]
-
-  if (name.includes('bangun')) return '☼'
-  if (name.includes('ibadah')) return '✦'
-  if (name.includes('olahraga')) return '⚡'
-  if (name.includes('makan')) return '♨'
-  if (name.includes('belajar')) return '▣'
-  if (name.includes('masyarakat')) return '⌘'
-  if (name.includes('tidur')) return '☾'
-
-  return '✓'
+  return resolveHabitIcon(habit.habit?.code)
 }
 
 function goToCheckin() {
@@ -674,10 +653,10 @@ onMounted(async () => {
                 class="flex min-w-0 items-center gap-3 md:col-span-4"
               >
                 <div
-                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-bold"
+                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                   :class="habitTheme(habit).iconClass"
                 >
-                  {{ habitIcon(habit) }}
+                  <component :is="habitIcon(habit)" class="h-5 w-5" />
                 </div>
 
                 <div class="min-w-0">
