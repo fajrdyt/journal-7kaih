@@ -49,10 +49,7 @@
     <div class="stats-grid">
       <article class="stat-card">
         <div class="stat-icon blue">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z" />
-            <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z" />
-          </svg>
+          <BookOpenIcon />
         </div>
 
         <div>
@@ -66,12 +63,7 @@
 
       <article class="stat-card">
         <div class="stat-icon cyan">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="9" cy="8" r="3" />
-            <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
-            <circle cx="17" cy="9" r="2.5" />
-            <path d="M15.5 15a4.5 4.5 0 0 1 5 5" />
-          </svg>
+          <UserGroupIcon />
         </div>
 
         <div>
@@ -85,10 +77,7 @@
 
       <article class="stat-card">
         <div class="stat-icon green">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m8 12 2.5 2.5L16.5 8" />
-          </svg>
+          <CheckBadgeIcon />
         </div>
 
         <div>
@@ -102,11 +91,7 @@
 
       <article class="stat-card">
         <div class="stat-icon orange">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5" />
-            <path d="M12 16h.01" />
-          </svg>
+          <ClockIcon />
         </div>
 
         <div>
@@ -144,10 +129,7 @@
 
       <div v-else-if="classes.length === 0" class="state-card empty-state">
         <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z" />
-            <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z" />
-          </svg>
+          <BookOpenIcon />
         </div>
 
         <strong>Belum ada kelas yang diampu</strong>
@@ -252,6 +234,9 @@
 </template>
 
 <script setup>
+
+import { BookOpenIcon, UserGroupIcon, CheckBadgeIcon, ClockIcon } from '@heroicons/vue/24/outline'
+
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { recapApi } from '@/api/recap'

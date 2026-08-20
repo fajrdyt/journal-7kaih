@@ -1,4 +1,5 @@
 <script setup>
+import { CalendarDaysIcon, ChartBarIcon, ArrowTrendingUpIcon, UserGroupIcon } from '@heroicons/vue/24/outline'
 import { resolveHabitIcon } from '@/config/habitIconRegistry'
 
 import { computed, onMounted, ref } from 'vue'
@@ -308,9 +309,9 @@ onMounted(async () => {
       class="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm"
     >
       <div
-        class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl"
+        class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"
       >
-        👨‍👩‍👧
+        <UserGroupIcon class="h-7 w-7" />
       </div>
 
       <h2 class="mt-5 text-lg font-bold text-slate-900">
@@ -388,79 +389,103 @@ onMounted(async () => {
         <article
           class="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)]"
         >
-          <p
-            class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
-          >
-            Check-in Terbaru
-          </p>
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p
+                class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
+              >
+                Check-in Terbaru
+              </p>
 
-          <p class="mt-3 text-lg font-extrabold text-slate-950">
-            {{ formatDate(latestCheckin?.checkin_date) }}
-          </p>
+              <p class="mt-3 text-lg font-extrabold text-slate-950">
+                {{ formatDate(latestCheckin?.checkin_date) }}
+              </p>
 
-          <span
-            class="mt-3 inline-flex rounded-full px-3 py-1.5 text-xs font-bold"
-            :class="latestStatus.badgeClass"
-          >
-            {{ latestStatus.label }}
-          </span>
-        </article>
+              <span
+                class="mt-3 inline-flex rounded-full px-3 py-1.5 text-xs font-bold"
+                :class="latestStatus.badgeClass"
+              >
+                {{ latestStatus.label }}
+              </span>
+            </div>
 
-        <article
-          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)]"
-        >
-          <div class="flex items-center justify-between">
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
-            >
-              Progres Terbaru
-            </p>
-
-            <p class="text-sm font-extrabold text-sky-600">
-              {{ latestCompletedCount }}/{{ latestTotalCount }}
-            </p>
-          </div>
-
-          <p class="mt-3 text-3xl font-extrabold text-slate-950">
-            {{ latestProgress }}%
-          </p>
-
-          <div
-            class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-200"
-          >
-            <div
-              class="h-full rounded-full bg-sky-500 transition-all duration-500"
-              :style="{ width: `${latestProgress}%` }"
-            />
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <CalendarDaysIcon class="h-5 w-5" />
+            </div>
           </div>
         </article>
 
         <article
           class="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)]"
         >
-          <div class="flex items-center justify-between">
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
-            >
-              Progres Bulan Ini
-            </p>
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between">
+                <p
+                  class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
+                >
+                  Progres Terbaru
+                </p>
 
-            <p class="text-sm font-extrabold text-emerald-600">
-              {{ Math.round(recapPercentage) }}%
-            </p>
+                <p class="text-sm font-extrabold text-sky-600">
+                  {{ latestCompletedCount }}/{{ latestTotalCount }}
+                </p>
+              </div>
+
+              <p class="mt-3 text-3xl font-extrabold text-slate-950">
+                {{ latestProgress }}%
+              </p>
+
+              <div
+                class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-200"
+              >
+                <div
+                  class="h-full rounded-full bg-sky-500 transition-all duration-500"
+                  :style="{ width: `${latestProgress}%` }"
+                />
+              </div>
+            </div>
+
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <ChartBarIcon class="h-5 w-5" />
+            </div>
           </div>
+        </article>
 
-          <p class="mt-3 text-sm font-semibold text-slate-700">
-            {{ recapCompletedDays }} dari {{ recapTotalDays }} hari lengkap
-          </p>
+        <article
+          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)]"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between">
+                <p
+                  class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400"
+                >
+                  Progres Bulan Ini
+                </p>
 
-          <div
-            class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-200"
-          >
-            <div
-              class="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              :style="{ width: `${recapPercentage}%` }"
-            />
+                <p class="text-sm font-extrabold text-emerald-600">
+                  {{ Math.round(recapPercentage) }}%
+                </p>
+              </div>
+
+              <p class="mt-3 text-sm font-semibold text-slate-700">
+                {{ recapCompletedDays }} dari {{ recapTotalDays }} hari lengkap
+              </p>
+
+              <div
+                class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-200"
+              >
+                <div
+                  class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  :style="{ width: `${recapPercentage}%` }"
+                />
+              </div>
+            </div>
+
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <ArrowTrendingUpIcon class="h-5 w-5" />
+            </div>
           </div>
         </article>
       </div>
