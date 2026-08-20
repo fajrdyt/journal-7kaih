@@ -2,7 +2,7 @@
   <section class="teacher-page">
     <div class="welcome-card">
       <div class="welcome-copy">
-        <p class="eyebrow">Dashboard Guru</p>
+        <p class="eyebrow">Beranda Guru</p>
 
         <h1>Selamat Datang, {{ teacherName }}!</h1>
 

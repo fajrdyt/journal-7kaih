@@ -613,7 +613,7 @@ onMounted(async () => {
               <span
                 class="mb-5 inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-700"
               >
-                Dashboard Utama
+                Beranda Siswa
               </span>
 
               <h2

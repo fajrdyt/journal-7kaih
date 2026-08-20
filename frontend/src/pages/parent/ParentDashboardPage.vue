@@ -245,7 +245,7 @@ onMounted(async () => {
           <p
             class="text-xs font-bold uppercase tracking-[0.18em] text-sky-600"
           >
-            Dashboard Orang Tua
+            Beranda Orang Tua
           </p>
 
           <h1
