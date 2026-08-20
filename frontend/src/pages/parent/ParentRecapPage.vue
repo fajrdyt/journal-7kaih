@@ -1,4 +1,6 @@
 <script setup>
+import { CalendarDaysIcon, ExclamationTriangleIcon, ChartBarIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline'
+
 import { computed, onMounted, ref } from 'vue'
 
 import { validationApi } from '@/api/validation'
@@ -445,29 +447,61 @@ function getApiError(error, fallback) {
 
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold text-slate-400">Total Check-in</p>
-          <p class="mt-2 text-3xl font-bold text-slate-900">{{ summary.totalCheckins }}</p>
-          <p class="mt-1 text-sm text-slate-500">jurnal pada periode ini</p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold text-slate-400">Total Check-in</p>
+              <p class="mt-2 text-3xl font-bold text-slate-900">{{ summary.totalCheckins }}</p>
+              <p class="mt-1 text-sm text-slate-500">jurnal pada periode ini</p>
+            </div>
+
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <CalendarDaysIcon class="h-5 w-5" />
+            </div>
+          </div>
         </article>
 
         <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold text-slate-400">Hari Terlewat</p>
-          <p class="mt-2 text-3xl font-bold text-red-600">{{ missedDays }}</p>
-          <p class="mt-1 text-sm text-slate-500">hari tanpa jurnal</p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold text-slate-400">Hari Terlewat</p>
+              <p class="mt-2 text-3xl font-bold text-red-600">{{ missedDays }}</p>
+              <p class="mt-1 text-sm text-slate-500">hari tanpa jurnal</p>
+            </div>
+
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <ExclamationTriangleIcon class="h-5 w-5" />
+            </div>
+          </div>
         </article>
 
         <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold text-slate-400">Penyelesaian</p>
-          <p class="mt-2 text-3xl font-bold text-blue-600">{{ summary.completion }}%</p>
-          <p class="mt-1 text-sm text-slate-500">
-            {{ summary.totalDone }} dari {{ summary.totalItems }} item
-          </p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold text-slate-400">Penyelesaian</p>
+              <p class="mt-2 text-3xl font-bold text-blue-600">{{ summary.completion }}%</p>
+              <p class="mt-1 text-sm text-slate-500">
+                {{ summary.totalDone }} dari {{ summary.totalItems }} item
+              </p>
+            </div>
+
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <ChartBarIcon class="h-5 w-5" />
+            </div>
+          </div>
         </article>
 
         <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p class="text-xs font-semibold text-slate-400">Validasi Orang Tua</p>
-          <p class="mt-2 text-3xl font-bold text-emerald-600">{{ summary.parentValidated }}</p>
-          <p class="mt-1 text-sm text-slate-500">kebiasaan tervalidasi</p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold text-slate-400">Validasi Orang Tua</p>
+              <p class="mt-2 text-3xl font-bold text-emerald-600">{{ summary.parentValidated }}</p>
+              <p class="mt-1 text-sm text-slate-500">kebiasaan tervalidasi</p>
+            </div>
+
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <ShieldCheckIcon class="h-5 w-5" />
+            </div>
+          </div>
         </article>
       </div>
 

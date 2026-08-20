@@ -1,5 +1,6 @@
 <script setup>
 import { resolveHabitIcon } from '@/config/habitIconRegistry'
+import { CalendarDaysIcon, CheckBadgeIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -464,29 +465,7 @@ onMounted(async () => {
             <div
               class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600 transition-colors duration-300 group-hover:bg-sky-500 group-hover:text-white"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                class="h-5 w-5"
-                aria-hidden="true"
-              >
-                <rect
-                  x="5"
-                  y="4"
-                  width="14"
-                  height="16"
-                  rx="2"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                />
-
-                <path
-                  d="M9 9h6M9 13h4"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                />
-              </svg>
+              <CalendarDaysIcon class="h-5 w-5" />
             </div>
           </div>
         </article>
@@ -519,28 +498,7 @@ onMounted(async () => {
             <div
               class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-colors duration-300 group-hover:bg-emerald-500 group-hover:text-white"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                class="h-5 w-5"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="8"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                />
-
-                <path
-                  d="m8.5 12 2.3 2.4 4.8-5"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
+              <CheckBadgeIcon class="h-5 w-5" />
             </div>
           </div>
         </article>
@@ -573,19 +531,7 @@ onMounted(async () => {
             <div
               class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-colors duration-300 group-hover:bg-amber-400 group-hover:text-white"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                class="h-5 w-5"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6 18V11M12 18V6M18 18V9"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
-              </svg>
+              <ChartBarIcon class="h-5 w-5" />
             </div>
           </div>
         </article>
