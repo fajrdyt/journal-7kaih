@@ -339,8 +339,8 @@ function getApiError(error, fallback) {
   <section class="space-y-5 pb-10 sm:space-y-6">
     <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+        <div><p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">
+          
             Rekap Anak
           </p>
           <h1 class="mt-2 text-2xl font-bold text-slate-900">
@@ -357,7 +357,7 @@ function getApiError(error, fallback) {
             <select
               v-model="selectedStudentId"
               :disabled="loadingChildren || !children.length"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               @change="loadRecap"
             >
               <option
@@ -376,7 +376,7 @@ function getApiError(error, fallback) {
               v-model="selectedMonth"
               type="month"
               :max="getCurrentMonth()"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
               @change="handleFilterChange"
             />
           </label>
@@ -395,7 +395,7 @@ function getApiError(error, fallback) {
       v-if="loadingChildren || loadingRecap"
       class="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm"
     >
-      <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+      <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600"></div>
       <p class="mt-4 text-sm font-medium text-slate-500">Memuat rekap perkembangan...</p>
     </div>
 
@@ -426,19 +426,19 @@ function getApiError(error, fallback) {
       <div class="rounded-3xl hero-gradient p-6 text-white shadow-sm">
         <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-              Perkembangan {{ formatMonth(selectedMonth) }}
-            </p>
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
+                Perkembangan {{ formatMonth(selectedMonth) }}
+              </p>
             <h2 class="mt-2 text-2xl font-bold">{{ getStudentName() }}</h2>
             <p class="mt-1 text-sm text-blue-100">{{ getClassLabel() }}</p>
           </div>
 
           <div class="rounded-2xl bg-white/15 px-5 py-4">
-            <p class="text-xs font-semibold text-blue-100">Kebiasaan Terbaik</p>
+            <p class="text-xs font-semibold text-white/75">Kebiasaan Terbaik</p>
             <p class="mt-1 text-lg font-bold">
               {{ bestHabit ? getHabitName(bestHabit) : 'Belum ada data' }}
             </p>
-            <p class="mt-1 text-sm text-blue-100">
+            <p class="mt-1 text-sm text-white/75">
               {{ bestHabit ? `${bestHabit.percentage}% penyelesaian` : 'Belum ada jurnal' }}
             </p>
           </div>
@@ -478,13 +478,13 @@ function getApiError(error, fallback) {
           <div class="flex items-center justify-between gap-4">
             <div>
               <p class="text-xs font-semibold text-slate-400">Penyelesaian</p>
-              <p class="mt-2 text-3xl font-bold text-blue-600">{{ summary.completion }}%</p>
+              <p class="mt-2 text-3xl font-bold text-sky-600">{{ summary.completion }}%</p>
               <p class="mt-1 text-sm text-slate-500">
                 {{ summary.totalDone }} dari {{ summary.totalItems }} item
               </p>
             </div>
 
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
               <ChartBarIcon class="h-5 w-5" />
             </div>
           </div>
@@ -539,10 +539,10 @@ function getApiError(error, fallback) {
                 <span>{{ habit.percentage }}%</span>
               </div>
               <div class="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  class="h-full rounded-full bg-blue-600"
-                  :style="{ width: `${habit.percentage}%` }"
-                ></div>
+               <div
+                class="h-full rounded-full bg-sky-500"
+                :style="{ width: `${habit.percentage}%` }"
+              ></div>
               </div>
             </div>
 
