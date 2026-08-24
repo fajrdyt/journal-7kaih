@@ -377,7 +377,7 @@ function getApiError(error, fallback) {
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">
             Riwayat Anak
           </p>
           <h1 class="mt-2 text-2xl font-bold text-slate-900">
