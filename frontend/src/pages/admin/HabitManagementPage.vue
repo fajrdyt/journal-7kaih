@@ -335,7 +335,7 @@ function normalizeHabitCode(habit) {
 
 function habitIcon(habit) {
   return resolveHabitIcon(habit.code)
-
+}
 function habitDescription(habit) {
   const code = normalizeHabitCode(habit)
 
