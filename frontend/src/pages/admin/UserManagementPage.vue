@@ -17,15 +17,7 @@
           :disabled="loading"
           @click="refreshData"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            :class="{ rotating: loading }"
-          >
-            <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-            <path d="M20 4v6h-6" />
-          </svg>
-
+          <ArrowPathIcon :class="{ rotating: loading }" />
           <span>Perbarui</span>
         </button>
 
@@ -35,10 +27,7 @@
           :disabled="loading || !roles.length"
           @click="openCreateModal"
         >
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-
+          <PlusIcon />
           <span>Tambah Pengguna</span>
         </button>
       </div>
@@ -83,10 +72,7 @@
     <section class="data-panel">
       <div class="toolbar">
         <div class="search-field">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
+          <MagnifyingGlassIcon />
 
           <input
             v-model="search"
@@ -175,12 +161,7 @@
         class="empty-state"
       >
         <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="9" cy="8" r="3" />
-            <path d="M3 20a6 6 0 0 1 12 0" />
-            <path d="M16 5.5a3 3 0 0 1 0 5.5" />
-            <path d="M17 14a5 5 0 0 1 4 5" />
-          </svg>
+          <MagnifyingGlassIcon />
         </div>
 
         <strong>Pengguna tidak ditemukan</strong>
@@ -282,10 +263,7 @@
                       aria-label="Edit pengguna"
                       @click="openEditModal(user)"
                     >
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="m4 16 10.5-10.5a2.1 2.1 0 0 1 3 3L7 19H4v-3Z" />
-                        <path d="m13 7 3 3" />
-                      </svg>
+                      <PencilSquareIcon />
                     </button>
 
                     <button
@@ -295,11 +273,7 @@
                       aria-label="Reset password"
                       @click="openResetModal(user)"
                     >
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <rect x="5" y="10" width="14" height="10" rx="2" />
-                        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                        <path d="M12 14v2" />
-                      </svg>
+                      <KeyIcon />
                     </button>
 
                     <button
@@ -310,12 +284,7 @@
                       :disabled="isCurrentUser(user)"
                       @click="openDeleteModal(user)"
                     >
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 7h16" />
-                        <path d="M9 7V4h6v3" />
-                        <path d="m7 7 1 13h8l1-13" />
-                        <path d="M10 11v5M14 11v5" />
-                      </svg>
+                      <TrashIcon />
                     </button>
                   </div>
                 </td>
@@ -443,10 +412,7 @@
             :disabled="currentPage === 1"
             @click="currentPage -= 1"
           >
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-
+            <ChevronLeftIcon />
             <span>Sebelumnya</span>
           </button>
 
@@ -463,10 +429,7 @@
             @click="currentPage += 1"
           >
             <span>Berikutnya</span>
-
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            <ChevronRightIcon />
           </button>
         </div>
       </template>
@@ -857,10 +820,7 @@
           aria-labelledby="delete-user-title"
         >
           <div class="danger-icon">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4M12 17h.01" />
-              <path d="M10.3 3.8 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
-            </svg>
+            <ExclamationTriangleIcon />
           </div>
 
           <h3 id="delete-user-title">
@@ -909,6 +869,18 @@
 </template>
 
 <script setup>
+import {
+  ArrowPathIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  KeyIcon,
+  TrashIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/vue/24/outline'
+
 import {
   computed,
   onBeforeUnmount,

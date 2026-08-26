@@ -18,14 +18,7 @@
         :disabled="loading"
         @click="loadHabits"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          :class="{ rotating: loading }"
-        >
-          <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-          <path d="M20 4v6h-6" />
-        </svg>
+        <ArrowPathIcon :class="{ rotating: loading }" />
 
         <span>
           {{ loading ? 'Memuat...' : 'Perbarui' }}
@@ -35,11 +28,7 @@
 
     <section class="information-card">
       <div class="information-icon">
-        <svg viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 11v5" />
-          <path d="M12 8h.01" />
-        </svg>
+        <InformationCircleIcon />
       </div>
 
       <div>
@@ -75,10 +64,7 @@
     <section class="data-panel">
       <div class="toolbar">
         <div class="search-field">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
+          <MagnifyingGlassIcon />
 
           <input
             v-model="search"
@@ -139,16 +125,7 @@
         class="empty-state"
       >
         <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none">
-            <rect
-              x="4"
-              y="4"
-              width="16"
-              height="16"
-              rx="3"
-            />
-            <path d="m8 12 2.5 2.5L16 9" />
-          </svg>
+          <MagnifyingGlassIcon />
         </div>
 
         <strong>Kebiasaan tidak ditemukan</strong>
@@ -214,6 +191,12 @@
 </template>
 
 <script setup>
+import {
+  ArrowPathIcon,
+  InformationCircleIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/vue/24/outline'
+
 import { resolveHabitIcon } from '@/config/habitIconRegistry'
 
 import {

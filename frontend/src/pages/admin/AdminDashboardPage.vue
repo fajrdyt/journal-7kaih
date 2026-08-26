@@ -18,14 +18,7 @@
         :disabled="loading"
         @click="loadSummary"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          :class="{ rotating: loading }"
-        >
-          <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-          <path d="M20 4v6h-6" />
-        </svg>
+        <ArrowPathIcon :class="{ rotating: loading }" />
 
         <span>
           {{ loading ? 'Memuat...' : 'Perbarui' }}
@@ -70,50 +63,10 @@
               class="summary-icon"
               :class="card.theme"
             >
-              <svg
-                v-if="card.icon === 'student'"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle cx="9" cy="8" r="3" />
-                <path d="M3 20a6 6 0 0 1 12 0" />
-                <path d="M16 5.5a3 3 0 0 1 0 5.5" />
-                <path d="M17 14a5 5 0 0 1 4 5" />
-              </svg>
-
-              <svg
-                v-else-if="card.icon === 'teacher'"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path d="M3 6.5 12 2l9 4.5-9 4.5-9-4.5Z" />
-                <path d="M7 9v5.5c0 1.7 2.2 3.5 5 3.5s5-1.8 5-3.5V9" />
-                <path d="M21 7v6" />
-              </svg>
-
-              <svg
-                v-else-if="card.icon === 'parent'"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle cx="8" cy="8" r="3" />
-                <circle cx="17" cy="9" r="2.5" />
-                <path d="M2.5 20a5.5 5.5 0 0 1 11 0" />
-                <path d="M14 20a4.5 4.5 0 0 1 8 0" />
-              </svg>
-
-              <svg
-                v-else
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"
-                />
-                <path
-                  d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"
-                />
-              </svg>
+              <UserGroupIcon v-if="card.icon === 'student'" />
+              <AcademicCapIcon v-else-if="card.icon === 'teacher'" />
+              <UserIcon v-else-if="card.icon === 'parent'" />
+              <BookOpenIcon v-else />
             </div>
 
             <div class="summary-copy">
@@ -419,10 +372,7 @@
           class="empty-state"
         >
           <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 6h16v14H4z" />
-              <path d="M8 3v6M16 3v6M4 10h16" />
-            </svg>
+            <CalendarDaysIcon />
           </div>
 
           <strong>Belum ada check-in terbaru</strong>
@@ -470,6 +420,15 @@
 </template>
 
 <script setup>
+import {
+  ArrowPathIcon,
+  UserGroupIcon,
+  AcademicCapIcon,
+  BookOpenIcon,
+  CalendarDaysIcon,
+  UserIcon,
+} from '@heroicons/vue/24/outline'
+
 import {
   computed,
   onMounted,

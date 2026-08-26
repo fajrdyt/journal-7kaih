@@ -17,6 +17,7 @@
           :disabled="loading"
           @click="loadPageData"
         >
+          <ArrowPathIcon :class="{ rotating: loading }" />
           {{ loading ? 'Memuat...' : 'Perbarui' }}
         </button>
 
@@ -26,6 +27,7 @@
           :disabled="loading || !students.length || !parents.length"
           @click="openCreateModal"
         >
+          <PlusIcon />
           Tambah Relasi
         </button>
       </div>
@@ -61,10 +63,7 @@
     <section class="data-panel">
       <div class="toolbar">
         <div class="search-field">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
+          <MagnifyingGlassIcon />
           <input
             v-model="search"
             type="search"
@@ -404,7 +403,9 @@
         @mousedown.self="closeDeleteModal"
       >
         <section class="modal-card compact" role="dialog" aria-modal="true">
-          <div class="danger-icon">!</div>
+          <div class="danger-icon">
+            <ExclamationTriangleIcon />
+          </div>
           <h3>Hapus Relasi?</h3>
           <p class="delete-copy">
             Hubungan antara
@@ -443,6 +444,13 @@
 </template>
 
 <script setup>
+import {
+  ArrowPathIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/vue/24/outline'
+
 import {
   computed,
   onBeforeUnmount,
@@ -936,8 +944,21 @@ function getInitials(name) {
 
 .primary-button,
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 42px;
   padding: 0 15px;
+}
+
+.primary-button svg,
+.secondary-button svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .primary-button,
@@ -1525,8 +1546,15 @@ td {
   border-radius: 16px;
   background: #fff1f2;
   color: #dc2626;
-  font-size: 24px;
-  font-weight: 900;
+}
+
+.danger-icon svg {
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .delete-copy {

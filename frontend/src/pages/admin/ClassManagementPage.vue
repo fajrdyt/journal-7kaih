@@ -14,6 +14,7 @@
         :disabled="loading || exporting"
         @click="loadPageData"
       >
+        <ArrowPathIcon :class="{ rotating: loading }" />
         {{ loading ? 'Memuat...' : 'Perbarui' }}
       </button>
 
@@ -23,6 +24,7 @@
         :disabled="exporting"
         @click="exportClasses"
       >
+        <ArrowDownTrayIcon />
         {{
           exporting
             ? 'Mengunduh...'
@@ -36,6 +38,7 @@
         :disabled="loading || !teachers.length"
         @click="openCreateModal"
       >
+        <PlusIcon />
         Tambah Kelas
       </button>
     </div>
@@ -68,10 +71,7 @@
     <section class="data-panel">
       <div class="toolbar">
         <div class="search-field">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
+          <MagnifyingGlassIcon />
           <input
             v-model="search"
             type="search"
@@ -119,10 +119,7 @@
           >
             <div class="card-head">
               <div class="class-icon">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z" />
-                  <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z" />
-                </svg>
+                <BookOpenIcon />
               </div>
 
               <span
@@ -323,6 +320,14 @@
 </template>
 
 <script setup>
+import {
+  ArrowPathIcon,
+  ArrowDownTrayIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  BookOpenIcon,
+} from '@heroicons/vue/24/outline'
+
 import {
   computed,
   onBeforeUnmount,
@@ -893,8 +898,21 @@ function getInitials(name) {
 
 .primary-button,
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 42px;
   padding: 0 15px;
+}
+
+.primary-button svg,
+.secondary-button svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .primary-button,
