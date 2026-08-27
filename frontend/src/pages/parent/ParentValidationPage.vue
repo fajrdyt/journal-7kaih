@@ -2,12 +2,11 @@
 import { resolveHabitIcon } from '@/config/habitIconRegistry'
 
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import { useParentStore } from '../../stores/parentStore'
 
 const route = useRoute()
-const router = useRouter()
 const parentStore = useParentStore()
 
 const selectedCheckinId = ref(null)
@@ -371,9 +370,6 @@ async function handleValidateAll() {
   }
 }
 
-function goToDashboard() {
-  router.push('/parent/dashboard')
-}
 
 onMounted(async () => {
   clearFeedback()
@@ -434,33 +430,27 @@ onMounted(async () => {
           </p>
         </div>
 
-        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <button
-            type="button"
-            class="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 sm:w-auto"
-            @click="goToDashboard"
-          >
-            Kembali ke Dashboard
-          </button>
+        <div
+          v-if="children.length"
+          class="w-full lg:w-72"
+        >
+          <label class="text-xs font-semibold text-slate-600">
+            Pilih Anak
+          </label>
 
-          <div
-            v-if="children.length"
-            class="w-full sm:min-w-56"
+          <select
+            v-model="selectedChildId"
+            class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+            @change="handleChildChange"
           >
-            <select
-              v-model="selectedChildId"
-              class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              @change="handleChildChange"
+            <option
+              v-for="child in children"
+              :key="child.id"
+              :value="child.id"
             >
-              <option
-                v-for="child in children"
-                :key="child.id"
-                :value="child.id"
-              >
-                {{ child.full_name }}
-              </option>
-            </select>
-          </div>
+              {{ child.full_name }}
+            </option>
+          </select>
         </div>
       </div>
     </div>
@@ -727,16 +717,16 @@ onMounted(async () => {
             <!-- General notes -->
             <div
               v-if="currentCheckin.notes"
-              class="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-5"
+              class="mt-5 rounded-2xl border border-sky-100 bg-sky-50 p-5"
             >
               <p
-                class="text-xs font-bold uppercase tracking-wide text-blue-500"
+                class="text-xs font-bold uppercase tracking-wide text-sky-600"
               >
                 Catatan Umum
               </p>
 
               <p
-                class="mt-2 text-sm leading-6 text-blue-900"
+                class="mt-2 text-sm leading-6 text-sky-900"
               >
                 {{ currentCheckin.notes }}
               </p>

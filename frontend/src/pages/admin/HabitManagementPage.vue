@@ -661,7 +661,7 @@ function habitDescription(habit) {
   height: 31px;
   place-items: center;
   border-radius: 10px;
-  background: #172033;
+  background: #475569;
   color: #ffffff;
   font-size: 11px;
   font-weight: 900;

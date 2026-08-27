@@ -393,7 +393,7 @@ function getApiError(error, fallback) {
             <span class="text-xs font-semibold text-slate-600">Pilih Anak</span>
             <select
               v-model="selectedStudentId"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
               :disabled="loadingChildren || !children.length"
               @change="handleFilterChange"
             >
@@ -413,7 +413,7 @@ function getApiError(error, fallback) {
               v-model="selectedMonth"
               type="month"
               :max="getCurrentMonth()"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
               @change="handleFilterChange"
             />
           </label>
@@ -434,13 +434,13 @@ function getApiError(error, fallback) {
     >
       <div class="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-            Anak yang Dipantau
+          <p class="text-xs font-semibold text-white/75">
+            Anak yang dipantau
           </p>
           <h2 class="mt-2 text-2xl font-bold">
             {{ selectedChild.student_name }}
           </h2>
-          <p class="mt-1 text-sm text-blue-100">
+          <p class="mt-1 text-sm text-white/75">
             {{ getClassLabel(selectedChild) }} · {{ periodLabel }}
           </p>
         </div>
@@ -448,19 +448,19 @@ function getApiError(error, fallback) {
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div class="rounded-2xl bg-white/15 px-4 py-3 text-center">
             <strong class="block text-xl">{{ summary.totalDays }}</strong>
-            <span class="text-xs text-blue-100">Hari</span>
+            <span class="text-xs text-white/75">Hari</span>
           </div>
           <div class="rounded-2xl bg-white/15 px-4 py-3 text-center">
             <strong class="block text-xl">{{ summary.submitted }}</strong>
-            <span class="text-xs text-blue-100">Check-in</span>
+            <span class="text-xs text-white/75">Check-in</span>
           </div>
           <div class="rounded-2xl bg-white/15 px-4 py-3 text-center">
             <strong class="block text-xl">{{ summary.missed }}</strong>
-            <span class="text-xs text-blue-100">Terlewat</span>
+            <span class="text-xs text-white/75">Terlewat</span>
           </div>
           <div class="rounded-2xl bg-white/15 px-4 py-3 text-center">
             <strong class="block text-xl">{{ summary.completion }}%</strong>
-            <span class="text-xs text-blue-100">Selesai</span>
+            <span class="text-xs text-white/75">Selesai</span>
           </div>
         </div>
       </div>
@@ -470,7 +470,7 @@ function getApiError(error, fallback) {
       v-if="loadingChildren || loadingHistory"
       class="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm"
     >
-      <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+      <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-sky-100 border-t-sky-500"></div>
       <p class="mt-4 text-sm font-medium text-slate-500">Memuat riwayat check-in...</p>
     </div>
 
@@ -529,7 +529,7 @@ function getApiError(error, fallback) {
             class="w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold transition lg:w-auto"
             :class="
               item.id
-                ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                ? 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
                 : 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
             "
             :disabled="!item.id"
@@ -549,7 +549,7 @@ function getApiError(error, fallback) {
       <section class="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-3xl">
         <header class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Detail Jurnal</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-sky-600">Detail Jurnal</p>
             <h2 class="mt-1 text-xl font-bold text-slate-900">
               {{ selectedCheckin ? formatLongDate(selectedCheckin.checkin_date) : 'Memuat jurnal' }}
             </h2>
@@ -565,7 +565,7 @@ function getApiError(error, fallback) {
         </header>
 
         <div v-if="loadingDetail" class="px-6 py-16 text-center">
-          <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+          <div class="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-sky-100 border-t-sky-500"></div>
           <p class="mt-4 text-sm text-slate-500">Memuat detail jurnal...</p>
         </div>
 
@@ -579,10 +579,10 @@ function getApiError(error, fallback) {
         <div v-else-if="selectedCheckin" class="space-y-4 p-5 sm:p-6">
           <div
             v-if="selectedCheckin.notes"
-            class="rounded-2xl border border-blue-100 bg-blue-50 p-4"
+            class="rounded-2xl border border-sky-100 bg-sky-50 p-4"
           >
-            <p class="text-xs font-semibold text-blue-500">Catatan Umum</p>
-            <p class="mt-2 text-sm leading-6 text-blue-900">{{ selectedCheckin.notes }}</p>
+            <p class="text-xs font-semibold text-sky-600">Catatan Umum</p>
+            <p class="mt-2 text-sm leading-6 text-sky-900">{{ selectedCheckin.notes }}</p>
           </div>
 
           <article
@@ -604,7 +604,7 @@ function getApiError(error, fallback) {
                 </span>
                 <span
                   v-if="isParentValidated(item)"
-                  class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                  class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700"
                 >
                   Divalidasi Orang Tua
                 </span>
