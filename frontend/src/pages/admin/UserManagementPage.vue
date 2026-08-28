@@ -1589,9 +1589,14 @@ function isCurrentUser(user) {
   color: #168ad3;
 }
 
-.primary-button:hover:not(:disabled),
+.primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #147ab8;
+}
+
 .secondary-button:hover:not(:disabled) {
   transform: translateY(-1px);
+  background: #e0f2fe;
 }
 
 .primary-button:disabled,

@@ -940,6 +940,9 @@ function getInitials(name) {
   font-size: 11.5px;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease;
 }
 
 .primary-button,
@@ -971,6 +974,16 @@ function getInitials(name) {
 .edit-button {
   background: #edf7fe;
   color: #168ad3;
+}
+
+.primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #147ab8;
+}
+
+.secondary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #e0f2fe;
 }
 
 .delete-button,
