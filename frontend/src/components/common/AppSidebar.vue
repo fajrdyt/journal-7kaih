@@ -42,11 +42,11 @@ async function handleLogout() {
         :to="items[0]?.to ?? '/login'"
         class="flex min-w-0 items-center gap-3"
       >
-        <div
-          class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-white shadow-[0_8px_20px_rgba(13,153,255,0.24)]"
-        >
-          7K
-        </div>
+        <img
+          src="/favicon.svg"
+          alt="Logo Jurnal 7KAIH"
+          class="h-10 w-10 flex-shrink-0"
+        />
         <div v-show="!isCollapsed" class="min-w-0">
           <p class="truncate text-[15px] font-black leading-tight text-primary-dark">
             {{ brand }}

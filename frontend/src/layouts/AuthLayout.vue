@@ -3,9 +3,7 @@
     <section class="auth-shell">
       <div class="auth-form-panel">
         <div class="desktop-brand">
-          <div class="brand-mark">
-            7K
-          </div>
+         <img src="/favicon.svg" alt="Logo Jurnal 7KAIH" class="brand-mark" />
 
           <span class="brand-name">
             Jurnal 7 KAIH
@@ -22,9 +20,7 @@
         <div class="hero-decoration hero-decoration-bottom" />
 
         <div class="mobile-brand">
-          <div class="brand-mark brand-mark-light">
-            J7
-          </div>
+          <img src="/logo-white-bg.svg" alt="Logo Jurnal 7KAIH" class="brand-mark-mobile" />
 
           <span class="brand-name brand-name-light">
             Jurnal 7 KAIH
@@ -103,15 +99,8 @@
 .brand-mark {
   width: 38px;
   height: 38px;
-  display: grid;
   flex-shrink: 0;
-  place-items: center;
-  border-radius: 11px;
-  background: #168ce0;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  display: block;
 }
 
 .brand-name {
@@ -320,12 +309,11 @@
     display: flex;
   }
 
-  .brand-mark-light {
+    .brand-mark-mobile {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+    display: block;
   }
 
   .brand-name-light {
