@@ -1,9 +1,9 @@
 <script setup>
+import { useRouter } from 'vue-router' 
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavConfig } from '@/composables/useNavConfig'
 import { resolveIcon } from '@/config/iconRegistry'
-import { Bars3Icon } from '@heroicons/vue/24/outline'
 
 import { OhVueIcon, addIcons } from 'oh-vue-icons'
 import { OiSidebarCollapse, OiSidebarExpand } from 'oh-vue-icons/icons'
@@ -16,14 +16,24 @@ const { isCollapsed, toggleSidebar } = useSidebarState()
 import { ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
+const router = useRouter() // 2. Definisikan instance router
 const roleRef = computed(() => authStore.role)
 
 // `mobileItems` sengaja tidak dipakai di sini — itu dipakai oleh
 // MobileBottomNavigation.vue supaya tidak ada dua bottom bar tumpang tindih.
 const { brand, subtitle, items, settingsItem, isActive } = useNavConfig(roleRef)
 
+// 3. Modifikasi fungsi penanganan logout
 async function handleLogout() {
-  await authStore.logout()
+  try {
+    // Jalankan pembersihan data API / token di Pinia Store
+    await authStore.logout()
+    
+    // Alihkan langsung ke halaman login untuk menghindari layar membeku
+    router.replace('/login')
+  } catch (error) {
+    console.error("Logout gagal:", error)
+  }
 }
 </script>
 
