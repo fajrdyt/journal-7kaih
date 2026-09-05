@@ -161,7 +161,7 @@ export const routes = [
         path: 'settings',
         name: 'parent-settings',
         component: () =>
-          import('@/pages/shared/ProfilePage.vue'),
+          import('@/pages/shared/AccountSettingsPage.vue'),
         meta: {
           title: 'Pengaturan Akun',
         },
@@ -291,7 +291,7 @@ export const routes = [
         path: '',
         name: 'settings',
         component: () =>
-          import('@/pages/shared/ProfilePage.vue'),
+          import('@/pages/shared/AccountSettingsPage.vue'),
         meta: {
           title: 'Pengaturan Akun',
         },
