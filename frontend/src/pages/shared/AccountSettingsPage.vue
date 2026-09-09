@@ -1,11 +1,9 @@
 <template>
   <section class="settings-page">
-    <div class="page-banner">
+    <div class="page-banner hero-gradient">
       <div>
         <p class="banner-kicker">Pengaturan Akun</p>
-
         <h1>Kelola Profil dan Keamanan</h1>
-
         <p>
           Perbarui informasi akun, password, dan sesi masuk yang digunakan
           pada Jurnal 7KAIH.
@@ -21,7 +19,6 @@
             @load="avatarLoadError = false"
             @error="avatarLoadError = true"
           />
-
           <span v-else>{{ initials }}</span>
         </span>
 
@@ -32,18 +29,11 @@
       </div>
     </div>
 
-    <div
-      v-if="pageError"
-      class="alert error-alert"
-      role="alert"
-    >
+    <div v-if="pageError" class="alert error-alert" role="alert">
       {{ pageError }}
     </div>
 
-    <div
-      v-if="loadingProfile"
-      class="loading-card"
-    >
+    <div v-if="loadingProfile" class="loading-card">
       <span class="loader"></span>
       <p>Memuat profil...</p>
     </div>
@@ -51,7 +41,9 @@
     <template v-else>
       <section class="settings-grid">
         <article class="settings-card profile-card">
-          <div class="card-heading">
+          <AvatarUploadCard />
+
+          <div class="card-heading" style="margin-top: 22px">
             <div>
               <p class="section-kicker">Informasi Profil</p>
               <h2>Edit Profil</h2>
@@ -62,26 +54,15 @@
             </div>
           </div>
 
-          <div
-            v-if="profileSuccess"
-            class="alert success-alert"
-            role="status"
-          >
+          <div v-if="profileSuccess" class="alert success-alert" role="status">
             {{ profileSuccess }}
           </div>
 
-          <div
-            v-if="profileError"
-            class="alert error-alert"
-            role="alert"
-          >
+          <div v-if="profileError" class="alert error-alert" role="alert">
             {{ profileError }}
           </div>
 
-          <form
-            class="profile-form"
-            @submit.prevent="saveProfile"
-          >
+          <form class="profile-form" @submit.prevent="saveProfile">
             <div class="form-grid">
               <div class="form-group full-width">
                 <label for="fullName">Nama Lengkap</label>
@@ -97,10 +78,7 @@
                   @input="clearProfileFeedback"
                 />
 
-                <small
-                  v-if="profileErrors.full_name"
-                  class="field-error"
-                >
+                <small v-if="profileErrors.full_name" class="field-error">
                   {{ profileErrors.full_name }}
                 </small>
               </div>
@@ -119,10 +97,7 @@
                   @input="clearProfileFeedback"
                 />
 
-                <small
-                  v-if="profileErrors.username"
-                  class="field-error"
-                >
+                <small v-if="profileErrors.username" class="field-error">
                   {{ profileErrors.username }}
                 </small>
 
@@ -145,10 +120,7 @@
                   @input="clearProfileFeedback"
                 />
 
-                <small
-                  v-if="profileErrors.email"
-                  class="field-error"
-                >
+                <small v-if="profileErrors.email" class="field-error">
                   {{ profileErrors.email }}
                 </small>
               </div>
@@ -168,10 +140,7 @@
                   @input="clearProfileFeedback"
                 />
 
-                <small
-                  v-if="profileErrors.phone"
-                  class="field-error"
-                >
+                <small v-if="profileErrors.phone" class="field-error">
                   {{ profileErrors.phone }}
                 </small>
               </div>
@@ -202,337 +171,40 @@
                 class="primary-button"
                 :disabled="savingProfile || !isProfileDirty"
               >
-                <span
-                  v-if="savingProfile"
-                  class="small-loader"
-                ></span>
-
-                {{
-                  savingProfile
-                    ? 'Menyimpan...'
-                    : 'Simpan Perubahan'
-                }}
+                <span v-if="savingProfile" class="small-loader"></span>
+                {{ savingProfile ? 'Menyimpan...' : 'Simpan Perubahan' }}
               </button>
             </div>
           </form>
         </article>
 
         <div class="settings-side">
-          <article class="settings-card security-card">
-            <div class="card-heading">
-              <div>
-                <p class="section-kicker">Keamanan</p>
-                <h2>Ganti Password</h2>
-                <p>
-                  Gunakan minimal 8 karakter dan jangan membagikan password
-                  kepada pengguna lain.
-                </p>
-              </div>
-            </div>
-
-            <div
-              v-if="passwordSuccess"
-              class="alert success-alert"
-              role="status"
-            >
-              {{ passwordSuccess }}
-            </div>
-
-            <div
-              v-if="passwordError"
-              class="alert error-alert"
-              role="alert"
-            >
-              {{ passwordError }}
-            </div>
-
-            <form
-              class="password-form"
-              @submit.prevent="changePassword"
-            >
-              <div class="form-group">
-                <label for="currentPassword">
-                  Password Saat Ini
-                </label>
-
-                <div class="password-field">
-                  <input
-                    id="currentPassword"
-                    v-model="passwordForm.current_password"
-                    :type="showCurrentPassword ? 'text' : 'password'"
-                    autocomplete="current-password"
-                    :class="{
-                      'input-error': passwordErrors.current_password,
-                    }"
-                    required
-                    @input="clearPasswordFeedback"
-                  />
-
-                  <button
-                    type="button"
-                    class="password-toggle"
-                    :aria-label="
-                      showCurrentPassword
-                        ? 'Sembunyikan password saat ini'
-                        : 'Tampilkan password saat ini'
-                    "
-                    @click="showCurrentPassword = !showCurrentPassword"
-                  >
-                    {{ showCurrentPassword ? 'Sembunyikan' : 'Lihat' }}
-                  </button>
-                </div>
-
-                <small
-                  v-if="passwordErrors.current_password"
-                  class="field-error"
-                >
-                  {{ passwordErrors.current_password }}
-                </small>
-              </div>
-
-              <div class="form-group">
-                <label for="newPassword">Password Baru</label>
-
-                <div class="password-field">
-                  <input
-                    id="newPassword"
-                    v-model="passwordForm.new_password"
-                    :type="showNewPassword ? 'text' : 'password'"
-                    minlength="8"
-                    autocomplete="new-password"
-                    :class="{ 'input-error': passwordErrors.new_password }"
-                    required
-                    @input="clearPasswordFeedback"
-                  />
-
-                  <button
-                    type="button"
-                    class="password-toggle"
-                    :aria-label="
-                      showNewPassword
-                        ? 'Sembunyikan password baru'
-                        : 'Tampilkan password baru'
-                    "
-                    @click="showNewPassword = !showNewPassword"
-                  >
-                    {{ showNewPassword ? 'Sembunyikan' : 'Lihat' }}
-                  </button>
-                </div>
-
-                <small
-                  v-if="passwordErrors.new_password"
-                  class="field-error"
-                >
-                  {{ passwordErrors.new_password }}
-                </small>
-              </div>
-
-              <div class="form-group">
-                <label for="confirmPassword">
-                  Konfirmasi Password Baru
-                </label>
-
-                <div class="password-field">
-                  <input
-                    id="confirmPassword"
-                    v-model="passwordForm.new_password_confirmation"
-                    :type="
-                      showPasswordConfirmation
-                        ? 'text'
-                        : 'password'
-                    "
-                    minlength="8"
-                    autocomplete="new-password"
-                    :class="{
-                      'input-error':
-                        passwordErrors.new_password_confirmation,
-                    }"
-                    required
-                    @input="clearPasswordFeedback"
-                  />
-
-                  <button
-                    type="button"
-                    class="password-toggle"
-                    :aria-label="
-                      showPasswordConfirmation
-                        ? 'Sembunyikan konfirmasi password'
-                        : 'Tampilkan konfirmasi password'
-                    "
-                    @click="
-                      showPasswordConfirmation =
-                        !showPasswordConfirmation
-                    "
-                  >
-                    {{
-                      showPasswordConfirmation
-                        ? 'Sembunyikan'
-                        : 'Lihat'
-                    }}
-                  </button>
-                </div>
-
-                <small
-                  v-if="passwordErrors.new_password_confirmation"
-                  class="field-error"
-                >
-                  {{ passwordErrors.new_password_confirmation }}
-                </small>
-              </div>
-
-              <button
-                type="submit"
-                class="primary-button password-button"
-                :disabled="savingPassword"
-              >
-                <span
-                  v-if="savingPassword"
-                  class="small-loader"
-                ></span>
-
-                {{
-                  savingPassword
-                    ? 'Memproses...'
-                    : 'Perbarui Password'
-                }}
-              </button>
-            </form>
-          </article>
-
-          <article class="settings-card session-card">
-            <div class="card-heading">
-              <div>
-                <p class="section-kicker danger-kicker">Sesi Akun</p>
-                <h2>Keluar dari Akun</h2>
-                <p>
-                  Kamu sedang masuk sebagai
-                  <strong>{{ accountIdentity }}</strong>.
-                  Keluar jika perangkat ini digunakan bersama orang lain.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              class="logout-button"
-              @click="openLogoutModal"
-            >
-              Logout
-            </button>
-          </article>
+          <ChangePasswordCard />
+          <LogoutSessionCard :identity-label="accountIdentity" />
         </div>
       </section>
     </template>
-
-    <Teleport to="body">
-      <Transition name="modal-fade">
-        <div
-          v-if="logoutModalOpen"
-          class="logout-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="profile-logout-title"
-          @click.self="closeLogoutModal"
-        >
-          <div class="logout-modal">
-            <div class="logout-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4" />
-                <path d="M14 8l4 4-4 4M18 12H9" />
-              </svg>
-            </div>
-
-            <h2 id="profile-logout-title">
-              Keluar dari akun?
-            </h2>
-
-            <p>
-              Kamu perlu login kembali untuk mengakses aplikasi dan melihat
-              jurnal kebiasaan.
-            </p>
-
-            <div
-              v-if="logoutError"
-              class="alert error-alert logout-error"
-            >
-              {{ logoutError }}
-            </div>
-
-            <div class="logout-actions">
-              <button
-                type="button"
-                class="secondary-button"
-                :disabled="loggingOut"
-                @click="closeLogoutModal"
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                class="confirm-logout-button"
-                :disabled="loggingOut"
-                @click="confirmLogout"
-              >
-                <span
-                  v-if="loggingOut"
-                  class="small-loader"
-                ></span>
-
-                {{
-                  loggingOut
-                    ? 'Sedang keluar...'
-                    : 'Ya, Logout'
-                }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </section>
 </template>
 
 <script setup>
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-  watch,
-} from 'vue'
-import { useRouter } from 'vue-router'
-
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import AvatarUploadCard from '@/components/settings/AvatarUploadCard.vue'
+import ChangePasswordCard from '@/components/settings/ChangePasswordCard.vue'
+import LogoutSessionCard from '@/components/settings/LogoutSessionCard.vue'
 
-const router = useRouter()
 const auth = useAuthStore()
 
 const loadingProfile = ref(true)
 const savingProfile = ref(false)
-const savingPassword = ref(false)
-const loggingOut = ref(false)
 
 const pageError = ref('')
 const profileError = ref('')
 const profileSuccess = ref('')
 const profileErrors = ref({})
-const passwordError = ref('')
-const passwordSuccess = ref('')
-const passwordErrors = ref({})
-const logoutError = ref('')
 
-const logoutModalOpen = ref(false)
 const avatarLoadError = ref(false)
-const showCurrentPassword = ref(false)
-const showNewPassword = ref(false)
-const showPasswordConfirmation = ref(false)
-
 const loadedProfile = ref(null)
 
 const profileForm = reactive({
@@ -540,12 +212,6 @@ const profileForm = reactive({
   username: '',
   email: '',
   phone: '',
-})
-
-const passwordForm = reactive({
-  current_password: '',
-  new_password: '',
-  new_password_confirmation: '',
 })
 
 const displayName = computed(() => {
@@ -563,41 +229,21 @@ const avatarUrl = computed(() => {
 })
 
 const initials = computed(() => {
-  const words = displayName.value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-
-  if (!words.length) {
-    return 'U'
-  }
-
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase()
-  }
-
+  const words = displayName.value.trim().split(/\s+/).filter(Boolean)
+  if (!words.length) return 'U'
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
   return `${words[0][0]}${words.at(-1)[0]}`.toUpperCase()
 })
 
 const normalizedRole = computed(() => {
-  const sourceRole =
-    loadedProfile.value?.role ??
-    auth.user?.role ??
-    auth.role ??
-    'pengguna'
+  const sourceRole = loadedProfile.value?.role ?? auth.user?.role ?? auth.role ?? 'pengguna'
 
   const role =
     typeof sourceRole === 'object'
-      ? sourceRole.name ??
-        sourceRole.code ??
-        sourceRole.slug ??
-        ''
+      ? sourceRole.name ?? sourceRole.code ?? sourceRole.slug ?? ''
       : sourceRole
 
-  return String(role)
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_')
+  return String(role).trim().toLowerCase().replace(/[\s-]+/g, '_')
 })
 
 const roleLabel = computed(() => {
@@ -625,9 +271,7 @@ const classLabel = computed(() => {
     auth.user?.classRoom
 
   if (!classData) {
-    return normalizedRole.value === 'orang_tua' ||
-      normalizedRole.value === 'orangtua' ||
-      normalizedRole.value === 'parent'
+    return ['orang_tua', 'orangtua', 'parent'].includes(normalizedRole.value)
       ? 'Tidak berlaku'
       : 'Tidak terikat kelas'
   }
@@ -635,38 +279,22 @@ const classLabel = computed(() => {
   const grade = String(classData.grade_level ?? '').trim()
   const name = String(classData.name ?? '').trim()
 
-  if (
-    name &&
-    grade &&
-    name.toUpperCase().startsWith(grade.toUpperCase())
-  ) {
+  if (name && grade && name.toUpperCase().startsWith(grade.toUpperCase())) {
     return name
   }
 
-  return (
-    [grade, name].filter(Boolean).join(' - ') ||
-    'Tidak terikat kelas'
-  )
+  return [grade, name].filter(Boolean).join(' - ') || 'Tidak terikat kelas'
 })
 
 const accountIdentity = computed(() => {
-  return (
-    auth.user?.username ??
-    auth.user?.email ??
-    roleLabel.value
-  )
+  return auth.user?.username ?? auth.user?.email ?? roleLabel.value
 })
 
 const isProfileDirty = computed(() => {
-  const profile =
-    loadedProfile.value ??
-    auth.user ??
-    {}
+  const profile = loadedProfile.value ?? auth.user ?? {}
 
   return (
-    profileForm.full_name !== stringValue(
-      profile.full_name ?? profile.name,
-    ) ||
+    profileForm.full_name !== stringValue(profile.full_name ?? profile.name) ||
     profileForm.username !== stringValue(profile.username) ||
     profileForm.email !== stringValue(profile.email) ||
     profileForm.phone !== stringValue(profile.phone)
@@ -674,27 +302,15 @@ const isProfileDirty = computed(() => {
 })
 
 onMounted(async () => {
-  document.addEventListener('keydown', handleKeydown)
   await loadProfile()
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
 })
 
 watch(avatarUrl, () => {
   avatarLoadError.value = false
 })
 
-watch(logoutModalOpen, (isOpen) => {
-  document.body.style.overflow = isOpen ? 'hidden' : ''
-})
-
 function stringValue(value) {
-  return value === null || value === undefined
-    ? ''
-    : String(value)
+  return value === null || value === undefined ? '' : String(value)
 }
 
 async function loadProfile() {
@@ -703,23 +319,17 @@ async function loadProfile() {
     pageError.value = ''
 
     const profile = await auth.fetchProfile()
-
     loadedProfile.value = profile ?? auth.user ?? {}
     fillProfileForm(loadedProfile.value)
   } catch (error) {
-    pageError.value = extractApiError(
-      error,
-      'Gagal memuat data profil.',
-    )
+    pageError.value = extractApiError(error, 'Gagal memuat data profil.')
   } finally {
     loadingProfile.value = false
   }
 }
 
 function fillProfileForm(profile = {}) {
-  profileForm.full_name = stringValue(
-    profile.full_name ?? profile.name,
-  )
+  profileForm.full_name = stringValue(profile.full_name ?? profile.name)
   profileForm.username = stringValue(profile.username)
   profileForm.email = stringValue(profile.email)
   profileForm.phone = stringValue(profile.phone)
@@ -731,29 +341,13 @@ function clearProfileFeedback() {
   profileErrors.value = {}
 }
 
-function clearPasswordFeedback() {
-  passwordError.value = ''
-  passwordSuccess.value = ''
-  passwordErrors.value = {}
-}
-
 function resetProfileForm() {
   clearProfileFeedback()
-
-  fillProfileForm(
-    loadedProfile.value ??
-    auth.user ??
-    {},
-  )
+  fillProfileForm(loadedProfile.value ?? auth.user ?? {})
 }
 
 async function saveProfile() {
-  if (
-    savingProfile.value ||
-    !isProfileDirty.value
-  ) {
-    return
-  }
+  if (savingProfile.value || !isProfileDirty.value) return
 
   clearProfileFeedback()
 
@@ -764,234 +358,58 @@ async function saveProfile() {
 
   const localErrors = {}
 
-  if (!fullName) {
-    localErrors.full_name = 'Nama lengkap wajib diisi.'
-  }
-
-  if (!username) {
-    localErrors.username = 'Username wajib diisi.'
-  }
-
-  if (
-    email &&
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  ) {
+  if (!fullName) localErrors.full_name = 'Nama lengkap wajib diisi.'
+  if (!username) localErrors.username = 'Username wajib diisi.'
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     localErrors.email = 'Format email tidak valid.'
   }
-
-  if (phone.length > 20) {
-    localErrors.phone =
-      'Nomor telepon maksimal 20 karakter.'
-  }
+  if (phone.length > 20) localErrors.phone = 'Nomor telepon maksimal 20 karakter.'
 
   if (Object.keys(localErrors).length) {
     profileErrors.value = localErrors
-    profileError.value =
-      'Periksa kembali data profil yang diisi.'
+    profileError.value = 'Periksa kembali data profil yang diisi.'
     return
   }
 
   savingProfile.value = true
 
-  const payload = {
-    full_name: fullName,
-    username,
-    phone: phone || null,
-  }
-
-  if (email) {
-    payload.email = email
-  }
+  const payload = { full_name: fullName, username, phone: phone || null }
+  if (email) payload.email = email
 
   try {
     const result = await auth.updateProfile(payload)
-
-    loadedProfile.value =
-      result?.user ??
-      auth.user ??
-      loadedProfile.value
-
+    loadedProfile.value = result?.user ?? auth.user ?? loadedProfile.value
     fillProfileForm(loadedProfile.value)
-
-    profileSuccess.value =
-      result?.message ??
-      'Profil berhasil diperbarui.'
+    profileSuccess.value = result?.message ?? 'Profil berhasil diperbarui.'
   } catch (error) {
-    profileErrors.value =
-      extractValidationErrors(error)
-
+    profileErrors.value = extractValidationErrors(error)
     profileError.value =
-      Object.values(profileErrors.value)[0] ??
-      extractApiError(
-        error,
-        'Gagal memperbarui profil.',
-      )
+      Object.values(profileErrors.value)[0] ?? extractApiError(error, 'Gagal memperbarui profil.')
   } finally {
     savingProfile.value = false
   }
 }
 
-async function changePassword() {
-  if (savingPassword.value) {
-    return
-  }
-
-  clearPasswordFeedback()
-
-  const currentPassword =
-    passwordForm.current_password.trim()
-
-  const newPassword =
-    passwordForm.new_password.trim()
-
-  const confirmation =
-    passwordForm.new_password_confirmation.trim()
-
-  const localErrors = {}
-
-  if (!currentPassword) {
-    localErrors.current_password =
-      'Password saat ini wajib diisi.'
-  }
-
-  if (!newPassword) {
-    localErrors.new_password =
-      'Password baru wajib diisi.'
-  } else if (newPassword.length < 8) {
-    localErrors.new_password =
-      'Password baru minimal 8 karakter.'
-  }
-
-  if (!confirmation) {
-    localErrors.new_password_confirmation =
-      'Konfirmasi password baru wajib diisi.'
-  } else if (newPassword !== confirmation) {
-    localErrors.new_password_confirmation =
-      'Konfirmasi password baru tidak sama.'
-  }
-
-  if (Object.keys(localErrors).length) {
-    passwordErrors.value = localErrors
-    passwordError.value =
-      'Periksa kembali data password yang diisi.'
-    return
-  }
-
-  savingPassword.value = true
-
-  try {
-    const result = await auth.updatePassword({
-      current_password: currentPassword,
-      new_password: newPassword,
-      new_password_confirmation: confirmation,
-    })
-
-    passwordForm.current_password = ''
-    passwordForm.new_password = ''
-    passwordForm.new_password_confirmation = ''
-
-    showCurrentPassword.value = false
-    showNewPassword.value = false
-    showPasswordConfirmation.value = false
-
-    passwordSuccess.value =
-      result?.message ??
-      'Password berhasil diperbarui.'
-  } catch (error) {
-    passwordErrors.value =
-      extractValidationErrors(error)
-
-    passwordError.value =
-      Object.values(passwordErrors.value)[0] ??
-      extractApiError(
-        error,
-        'Gagal memperbarui password.',
-      )
-  } finally {
-    savingPassword.value = false
-  }
-}
-
-function openLogoutModal() {
-  logoutError.value = ''
-  logoutModalOpen.value = true
-}
-
-function closeLogoutModal() {
-  if (loggingOut.value) {
-    return
-  }
-
-  logoutModalOpen.value = false
-  logoutError.value = ''
-}
-
-async function confirmLogout() {
-  if (loggingOut.value) {
-    return
-  }
-
-  loggingOut.value = true
-  logoutError.value = ''
-
-  try {
-    await auth.logout()
-    logoutModalOpen.value = false
-    await router.replace('/login')
-  } catch (error) {
-    logoutError.value = extractApiError(
-      error,
-      'Gagal keluar dari akun. Silakan coba kembali.',
-    )
-  } finally {
-    loggingOut.value = false
-  }
-}
-
-function handleKeydown(event) {
-  if (
-    event.key === 'Escape' &&
-    logoutModalOpen.value &&
-    !loggingOut.value
-  ) {
-    closeLogoutModal()
-  }
-}
-
 function extractValidationErrors(error) {
   const errors = error.response?.data?.errors
-
-  if (!errors || typeof errors !== 'object') {
-    return {}
-  }
+  if (!errors || typeof errors !== 'object') return {}
 
   const aliases = {
     password: 'new_password',
-    password_confirmation:
-      'new_password_confirmation',
+    password_confirmation: 'new_password_confirmation',
   }
 
   return Object.fromEntries(
     Object.entries(errors).map(([field, messages]) => {
       const normalizedField = aliases[field] ?? field
-      let message = Array.isArray(messages)
-        ? messages[0]
-        : String(messages)
+      let message = Array.isArray(messages) ? messages[0] : String(messages)
 
-      if (
-        normalizedField === 'username' &&
-        /taken|digunakan|terdaftar|unique/i.test(message)
-      ) {
-        message =
-          'Username sudah digunakan. Silakan pilih username lain.'
+      if (normalizedField === 'username' && /taken|digunakan|terdaftar|unique/i.test(message)) {
+        message = 'Username sudah digunakan. Silakan pilih username lain.'
       }
 
-      if (
-        normalizedField === 'email' &&
-        /taken|digunakan|terdaftar|unique/i.test(message)
-      ) {
-        message =
-          'Email sudah digunakan oleh akun lain.'
+      if (normalizedField === 'email' && /taken|digunakan|terdaftar|unique/i.test(message)) {
+        message = 'Email sudah digunakan oleh akun lain.'
       }
 
       return [normalizedField, message]
@@ -1004,10 +422,7 @@ function extractApiError(error, fallback) {
   const errors = response?.errors
 
   if (errors && typeof errors === 'object') {
-    return Object.values(errors)
-      .flat()
-      .filter(Boolean)
-      .join(' ')
+    return Object.values(errors).flat().filter(Boolean).join(' ')
   }
 
   return response?.message ?? fallback
@@ -1030,20 +445,8 @@ function extractApiError(error, fallback) {
   gap: 26px;
   padding: 30px 32px;
   border-radius: 22px;
-  background:
-    radial-gradient(
-      circle at 91% 8%,
-      rgba(255, 255, 255, 0.2),
-      transparent 28%
-    ),
-    linear-gradient(
-      135deg,
-      var(--color-primary-deep) 0%,
-      var(--color-primary) 55%,
-      var(--color-primary-light) 100%
-    );
   color: #ffffff;
-  box-shadow: 0 16px 36px rgba(29, 155, 240, 0.18);
+  box-shadow: 0 16px 36px rgba(13, 153, 255, 0.18);
 }
 
 .banner-kicker,
@@ -1094,7 +497,7 @@ function extractApiError(error, fallback) {
   overflow: hidden;
   border-radius: 15px;
   background: #ffffff;
-  color: #1686d1;
+  color: var(--color-primary-deep);
   font-size: 14px;
   font-weight: 900;
 }
@@ -1131,9 +534,7 @@ function extractApiError(error, fallback) {
 
 .settings-grid {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1.45fr)
-    minmax(320px, 0.8fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
   gap: 22px;
   align-items: start;
 }
@@ -1176,11 +577,7 @@ function extractApiError(error, fallback) {
 }
 
 .section-kicker {
-  color: #209cee;
-}
-
-.danger-kicker {
-  color: #dc2626;
+  color: var(--color-primary);
 }
 
 .card-heading h2 {
@@ -1197,12 +594,7 @@ function extractApiError(error, fallback) {
   line-height: 1.65;
 }
 
-.card-heading strong {
-  color: #334155;
-}
-
-.profile-form,
-.password-form {
+.profile-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1250,9 +642,9 @@ function extractApiError(error, fallback) {
 }
 
 .form-group input:focus {
-  border-color: #209cee;
+  border-color: var(--color-primary);
   background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(32, 156, 238, 0.1);
+  box-shadow: 0 0 0 4px var(--color-primary-tint);
 }
 
 .form-group input.input-error {
@@ -1261,8 +653,8 @@ function extractApiError(error, fallback) {
 }
 
 .form-group input.input-error:focus {
-  border-color: #f43f5e;
-  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 4px var(--color-danger-tint);
 }
 
 .readonly-value {
@@ -1279,35 +671,8 @@ function extractApiError(error, fallback) {
 }
 
 .form-group .field-error {
-  color: #dc2626;
+  color: var(--color-danger);
   font-weight: 700;
-}
-
-.password-field {
-  position: relative;
-}
-
-.password-field input {
-  padding-right: 92px;
-}
-
-.password-toggle {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  bottom: 0;
-  border: 0;
-  padding: 0 8px;
-  background: transparent;
-  color: #1686d1;
-  font: inherit;
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.password-toggle:hover {
-  color: #0369a1;
 }
 
 .form-actions {
@@ -1318,9 +683,7 @@ function extractApiError(error, fallback) {
 }
 
 .primary-button,
-.secondary-button,
-.confirm-logout-button,
-.logout-button {
+.secondary-button {
   min-height: 43px;
   display: inline-flex;
   align-items: center;
@@ -1341,12 +704,12 @@ function extractApiError(error, fallback) {
 
 .primary-button {
   border: 0;
-  background: #209cee;
+  background: var(--color-primary);
   color: #ffffff;
 }
 
 .primary-button:hover:not(:disabled) {
-  background: #1686d1;
+  background: var(--color-primary-hover);
 }
 
 .secondary-button {
@@ -1360,27 +723,9 @@ function extractApiError(error, fallback) {
 }
 
 .primary-button:disabled,
-.secondary-button:disabled,
-.confirm-logout-button:disabled {
+.secondary-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.password-button,
-.logout-button {
-  width: 100%;
-  margin-top: 3px;
-}
-
-.logout-button {
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #dc2626;
-}
-
-.logout-button:hover {
-  border-color: #fca5a5;
-  background: #fee2e2;
 }
 
 .alert {
@@ -1393,15 +738,15 @@ function extractApiError(error, fallback) {
 }
 
 .error-alert {
-  border: 1px solid #fecdd3;
-  background: #fff1f2;
-  color: #be123c;
+  border: 1px solid var(--color-danger-tint);
+  background: var(--color-danger-tint);
+  color: var(--color-danger);
 }
 
 .success-alert {
-  border: 1px solid #bbf7d0;
-  background: #ecfdf5;
-  color: #047857;
+  border: 1px solid var(--color-success-tint);
+  background: var(--color-success-tint);
+  color: var(--color-success);
 }
 
 .loader,
@@ -1414,8 +759,8 @@ function extractApiError(error, fallback) {
 .loader {
   width: 25px;
   height: 25px;
-  border: 3px solid #dbeafe;
-  border-top-color: #209cee;
+  border: 3px solid var(--color-primary-tint);
+  border-top-color: var(--color-primary);
 }
 
 .small-loader {
@@ -1423,92 +768,6 @@ function extractApiError(error, fallback) {
   height: 13px;
   border: 2px solid rgba(255, 255, 255, 0.45);
   border-top-color: #ffffff;
-}
-
-.logout-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.5);
-}
-
-.logout-modal {
-  width: 100%;
-  max-width: 370px;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  background: #ffffff;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
-}
-
-.logout-icon {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: #fff1f2;
-  color: #dc2626;
-}
-
-.logout-icon svg {
-  width: 24px;
-  height: 24px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.logout-modal h2 {
-  margin: 20px 0 0;
-  color: #0f172a;
-  font-size: 20px;
-  font-weight: 900;
-}
-
-.logout-modal > p {
-  margin: 9px 0 0;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.logout-error {
-  margin-top: 16px;
-  margin-bottom: 0;
-}
-
-.logout-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 25px;
-}
-
-.confirm-logout-button {
-  border: 0;
-  background: #dc2626;
-  color: #ffffff;
-}
-
-.confirm-logout-button:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.18s ease;
-}
-
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
 }
 
 @keyframes spin {
@@ -1558,14 +817,12 @@ function extractApiError(error, fallback) {
     grid-column: auto;
   }
 
-  .form-actions,
-  .logout-actions {
+  .form-actions {
     flex-direction: column-reverse;
   }
 
   .primary-button,
-  .secondary-button,
-  .confirm-logout-button {
+  .secondary-button {
     width: 100%;
   }
 }
@@ -1590,17 +847,6 @@ function extractApiError(error, fallback) {
 
   .page-banner h1 {
     font-size: 25px;
-  }
-
-  .logout-overlay {
-    align-items: flex-end;
-    padding: 12px;
-  }
-
-  .logout-modal {
-    max-width: none;
-    padding: 20px;
-    border-radius: 22px;
   }
 }
 </style>
